@@ -1,7 +1,7 @@
 # faas_inspector
 
 This project provides coding templates to support tracing FaaS function server infrastructure for code deployments.
-A generic Hello World function is provided for each language as starting point to write infrastructure traceable FaaS functions to support tracing code containers and hosts (VMs). 
+A generic Hello World function is provided for different FaaS platform/language combinations as a starting point to write infrastructure traceable FaaS functions to enable tracing code containers and hosts (VMs) created by FaaS platform providers for hosting FaaS functions.  This information can help verify the state of infrastructure (COLD vs. WARM) to understand performance results, and help preserve infrastructure for better FaaS performance.
 
 __**Example Input/Output:**__
 
