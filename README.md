@@ -28,4 +28,7 @@ __**Example Input/Output:**__
 | newcontainer | 0-indicates the container has been recycled, 1-indicates the container is new |
 
 **Platforms/Languages Supported:**
+
+| **Platform/Language** | **Description** |
+| --------------------- | --------------- |
 | lambda/java_template | skeleton hello function for AWS Lambda/Java provided as a mvn project |
