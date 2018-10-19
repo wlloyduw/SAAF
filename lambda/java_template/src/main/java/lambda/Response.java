@@ -12,89 +12,52 @@ import java.lang.annotation.Native;
  * @author wlloyd
  */
 public class Response {
-    private String value;
-    private String uuid;
-    private String error;
-    long vmuptime;
-    int newcontainer;
     
+    //
+    // User Defined Attributes
+    //
+    //
+    // ADD Customer attributes getters and setters here
+    //
+
+    // Return value
+    private String value;
     public String getValue()
     {
         return value;
     }
-
     public void setValue(String value)
     {
         this.value = value;
     }
+    
 
-    public String getUuid()
-    {
-        return uuid;
-    }
 
-    public void setUuid(String uuid)
-    {
-        this.uuid = uuid;
-    }
+    
+    
+    //
+    //
+    //
+    // Faas Inspector required return attributes
+    //
+    //
+    // DO NOT MODIFY
+    //
+    //
+    private String uuid;
+    private String error;
+    long vmuptime;
+    int newcontainer;
 
-    public String getError()
-    {
-        return error;
-    }
-
-    public void setError(String err)
-    {
-        this.error = err;
-    }
-
-    public long getVmuptime()
-    {
-        return this.vmuptime;
-    }
-
-    public void setVmuptime(long vmuptime)
-    {
-        this.vmuptime = vmuptime;
-    }
-
-    public int getNewcontainer()
-    {
-        return this.newcontainer;
-    }
-
-    public void setNewcontainer(int newcontainer)
-    {
-        this.newcontainer = newcontainer;
-    }
-        
-    public Response(String value, String uuid)
-    {
-        this.value = value;
-        this.uuid = uuid;
-    }
-
-    public Response(String value, String uuid, long vuptime, int newcontainer)
-    {
-        this.value = value;
-        this.uuid = uuid;
-        this.vmuptime = vuptime;
-        this.newcontainer = newcontainer;
-    }
-
-    public Response(String value, String error, String uuid, long vuptime, int newcontainer)
-    {
-        this.value = value;
-        this.error = error;
-        this.uuid = uuid;
-        this.vmuptime = vuptime;
-        this.newcontainer = newcontainer;
-    }
-
-    public Response()
-    {
-        
-    }
+    public Response()                             {                                   }
+    public String getUuid()                       {        return uuid;               }
+    public void setUuid(String uuid)              {        this.uuid = uuid;          }
+    public String getError()                      {        return error;              }
+    public void setError(String err)              {        this.error = err;          }
+    public long getVmuptime()                     {        return this.vmuptime;      }
+    public void setVmuptime(long vmuptime)        {        this.vmuptime = vmuptime;  }
+    public int getNewcontainer()                  {        return this.newcontainer;  }
+    public void setNewcontainer(int newcontainer) { this.newcontainer = newcontainer; }
     
     @Override
     public String toString()

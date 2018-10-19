@@ -87,7 +87,12 @@ public class register
         if (!sError.isEmpty())
             logger.log("UUID:" + uuid + " VM:" + vuptime + " | " + sError );
         
-        return new Response("",sError,uuid,vuptime,newcontainer);
+        Response r = new Response();
+        r.setError(sError);
+        r.setUuid(uuid);
+        r.setVmuptime(vuptime);
+        r.setNewcontainer(newcontainer);
+        return r;
     }
     
     public class VmCpuStat
