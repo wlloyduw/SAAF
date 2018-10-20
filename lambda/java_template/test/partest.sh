@@ -53,12 +53,12 @@ callservice() {
     ####################################
     # CURL invocation with $parurl variable
     ####################################
-    output=`curl -H "Content-Type: application/json" -X POST -d  $json $parurl 2>/dev/null`
+    #output=`curl -H "Content-Type: application/json" -X POST -d  $json $parurl 2>/dev/null`
 
     ####################################
     # Uncomment for AWS Lambda CLI function invocation with $parfunction variable
     ####################################
-    #output=`aws lambda invoke --invocation-type RequestResponse --function-name $parfunction --region us-east-1 --payload $json /dev/stdout | head -n 1 | head -c -2 ; echo`
+    output=`aws lambda invoke --invocation-type RequestResponse --function-name $parfunction --region us-east-1 --payload $json /dev/stdout | head -n 1 | head -c -2 ; echo`
 
     ####################################
     # Uncomment for CURL invocation with inline URL
