@@ -5,7 +5,7 @@
     <artifactId>lambda_test</artifactId>
     <version>1.0-SNAPSHOT</version>
     <packaging>jar</packaging>
-    <name>java_template</name>
+    <name>faas_rds</name>
     <dependencies>
         <dependency>
             <groupId>com.amazonaws</groupId>
@@ -42,6 +42,7 @@
             <directory>src/main/resources</directory>
             <includes>
                 <include>**/*.jpg</include>
+                <include>**/*.properties</include>
             </includes>
         </resource>
     </resources>
