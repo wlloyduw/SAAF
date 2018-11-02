@@ -19,9 +19,6 @@ public class Request {
     {
         this.name = name;
     }
-    
-    String dbUrl;
-    
     public Request(String name)
     {
         this.name = name;
