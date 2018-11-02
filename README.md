@@ -32,4 +32,3 @@ __**Example Input/Output:**__
 | **Platform/Language** | **Description** |
 | --------------------- | --------------- |
 | lambda/java_template | skeleton hello function for AWS Lambda/Java provided as a mvn project |
-# faas_rds_serverless
