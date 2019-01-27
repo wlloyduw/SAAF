@@ -73,7 +73,8 @@ callservice() {
     cpuusr=`echo $output | jq '.cpuUsr'`  
     cpukrn=`echo $output | jq '.cpuKrn'`
     pid=`echo $output | jq '.pid'`
-    cputype="unknown"
+    cputype=`echo $output | jq '.cpuType'`
+    cputype=${cputype// /_}
     cpusteal=`echo $output | jq '.vmcpusteal'`
     vuptime=`echo $output | jq '.vmuptime'`
     newcont=`echo $output | jq '.newcontainer'`
@@ -82,7 +83,7 @@ callservice() {
     sleeptime=`echo $onesecond - $elapsedtime | bc -l`
     sleeptimems=`echo $sleeptime/$onesecond | bc -l`
     echo "$i,$threadid,$uuid,$cputype,$cpusteal,$vuptime,$pid,$cpuusr,$cpukrn,$elapsedtime,$sleeptimems,$newcont"
-    echo "$uuid,$elapsedtime,$vuptime,$newcont" >> .uniqcont
+    echo "$uuid,$elapsedtime,$vuptime,$newcont,$cputype" >> .uniqcont
     if (( $sleeptime > 0 ))
     then
       sleep $sleeptimems
@@ -131,6 +132,7 @@ do
     time=`echo $line | cut -d',' -f 2`
     host=`echo $line | cut -d',' -f 3`
     isnewcont=`echo $line | cut -d',' -f 4`
+    cputype=`echo $line | cut -d',' -f 5` 
     alltimes=`expr $alltimes + $time`
     #echo "Uuid read from file - $uuid"
     # if uuid is already in array
@@ -155,6 +157,7 @@ do
     if [ $found != 1 ]; then
         containers+=($uuid)
         chosts+=($host)
+        ccputype+=($cputype)
         cuses+=(1)
         ctimes+=($time)
     fi
@@ -171,6 +174,7 @@ do
     if [ $hfound != 1 ]; then
         hosts+=($host)
         huses+=(1)
+        hcputype+=($cputype)
         htimes+=($time)
         #hcontainers+=($uuid)
     fi
@@ -215,14 +219,14 @@ runspercont=`echo $totalruns / ${#containers[@]} | bc -l`
 runsperhost=`echo $totalruns / ${#hosts[@]} | bc -l`
 avgtime=`echo $alltimes / $totalruns | bc -l`
 rm .uniqcont
-echo "uuid,host,uses,totaltime,avgruntime_cont,uses_minus_avguses_sq"
+echo "uuid,host,cputype,uses,totaltime,avgruntime_cont,uses_minus_avguses_sq"
 total=0
 for ((i=0;i < ${#containers[@]};i++)) {
   avg=`echo ${ctimes[$i]} / ${cuses[$i]} | bc -l`
   stdiff=`echo ${cuses[$i]} - $runspercont | bc -l` 
   stdiffsq=`echo "$stdiff * $stdiff" | bc -l` 
   total=`echo $total + $stdiffsq | bc -l`
-  echo "${containers[$i]},${chosts[$i]},${cuses[$i]},${ctimes[$i]},$avg,$stdiffsq"
+  echo "${containers[$i]},${chosts[$i]},${ccputype[$i]},${cuses[$i]},${ctimes[$i]},$avg,$stdiffsq"
 }
 
 #########################################################################################################################################################
@@ -235,7 +239,7 @@ stdev=`echo $total / ${#containers[@]} | bc -l`
 # hosts info
 currtime=$(date +%s)
 echo "Current time of test=$currtime"
-echo "host,host_up_time,uses,containers,totaltime,avgruntime_host,uses_minus_avguses_sq"
+echo "host,host_cpu,host_up_time,uses,containers,totaltime,avgruntime_host,uses_minus_avguses_sq"
 total=0
 if [[ ! -z $vmreport && $vmreport -eq 1 ]]
 then
@@ -256,7 +260,7 @@ for ((i=0;i < ${#hosts[@]};i++)) {
           (( ccount ++ ))
       fi
   } 
-  echo "${hosts[$i]},$uptime,${huses[$i]},$ccount,${htimes[$i]},$avg,$stdiffsq"
+  echo "${hosts[$i]},${hcputype[$i]},$uptime,${huses[$i]},$ccount,${htimes[$i]},$avg,$stdiffsq"
 
   ##  Determine count of recycled hosts...
   ## 

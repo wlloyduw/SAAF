@@ -17,6 +17,7 @@ public class fiResponse
     // Faas Inspector return attributes
     //
     //
+    private String cpuType;
     private String uuid;
     private String error;
     long vmuptime;
@@ -67,10 +68,19 @@ public class fiResponse
         this.newcontainer = newcontainer; 
     }
     
+    public String getCpuType()
+    {
+        return this.cpuType;
+    }
+    public void setCpuType(String cputype)
+    {
+        this.cpuType = cputype;
+    }
+    
     @Override
     public String toString()
     {
-        return "\nuuid=" + this.getUuid() + "\nvmuptime=" + this.getVmuptime();
+        return "\nuuid=" + this.getUuid() + "\nvmuptime=" + this.getVmuptime() + "\ncputype=" + this.getCpuType();
     }
     
 }

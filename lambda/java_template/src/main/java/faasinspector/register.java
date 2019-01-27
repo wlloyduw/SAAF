@@ -92,6 +92,7 @@ public class register
         r.setUuid(uuid);
         r.setVmuptime(vuptime);
         r.setNewcontainer(newcontainer);
+        r.setCpuType(getCpuType());
         return r;
     }
     
@@ -205,6 +206,15 @@ public class register
             }
         }
         return sb.toString();
+    }
+    
+    public String getCpuType()
+    {
+        String text = getFileAsString("/proc/cpuinfo");
+        int start = text.indexOf("name") + 7;
+        int end = start + text.substring(start).indexOf(":");
+        String cpuType = text.substring(start,end).trim();
+        return cpuType;
     }
     
 }
