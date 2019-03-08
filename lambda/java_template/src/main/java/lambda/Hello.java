@@ -24,11 +24,14 @@ public class Hello implements RequestHandler<Request, Response>
     
     // Lambda Function Handler
     public Response handleRequest(Request request, Context context) {
+        // Register function to start timing
+        register reg = new register();
+
         // Create logger
         LambdaLogger logger = context.getLogger();
         
-        // Register function
-        register reg = new register(logger);
+        // Register logger 
+        reg.setLogger(logger);
 
         //stamp container with uuid
         Response r = reg.StampContainer();
@@ -43,7 +46,7 @@ public class Hello implements RequestHandler<Request, Response>
         
         // Set return result in Response class, class is marshalled into JSON
         r.setValue(hello);
-        
+        reg.setRuntime();
         return r;
     }
     

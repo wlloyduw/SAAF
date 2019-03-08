@@ -36,12 +36,21 @@ public class register
     private String uuid = "unset";      // universal unique identifier for container - uniquely identifies runtime container on Lambda
     private int newcontainer = 0;       // integer that tracks if this lambda invocation created a new container (0=no, 1=yes)
     private long vuptime = 0;
+    private long startTime = 0;
+    private long endTime = 0;
+    private Response myResponse; 
     private String sError = STAMP_ERR_NONE;
     
     private LambdaLogger logger;
     
+    public register()
+    {
+        startTime = System.currentTimeMillis();
+    }
+    
     public register(LambdaLogger l)
     {
+        this();
         this.logger = l;
     }
     
@@ -87,13 +96,13 @@ public class register
         if (!sError.isEmpty())
             logger.log("UUID:" + uuid + " VM:" + vuptime + " | " + sError );
         
-        Response r = new Response();
-        r.setError(sError);
-        r.setUuid(uuid);
-        r.setVmuptime(vuptime);
-        r.setNewcontainer(newcontainer);
-        r.setCpuType(getCpuType());
-        return r;
+        myResponse = new Response();
+        myResponse.setError(sError);
+        myResponse.setUuid(uuid);
+        myResponse.setVmuptime(vuptime);
+        myResponse.setNewcontainer(newcontainer);
+        myResponse.setCpuType(getCpuType());
+        return myResponse;
     }
     
     public class VmCpuStat
@@ -164,6 +173,11 @@ public class register
             return new VmCpuStat();
     }
     
+    public void setLogger(LambdaLogger l)
+    {
+        this.logger = l;
+    }
+    
     public long getUpTime(VmCpuStat vmcpustat)
     {
         return vmcpustat.btime;
@@ -182,6 +196,11 @@ public class register
     public long getVmUpTime()
     {
         return vuptime;
+    }
+    
+    public void setRuntime()
+    {
+        myResponse.setRuntime(System.currentTimeMillis()-startTime);
     }
 
     // Helper function - retrieves file as a String from file system

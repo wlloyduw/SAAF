@@ -21,6 +21,7 @@ public class fiResponse
     private String uuid;
     private String error;
     long vmuptime;
+    long runtime;
     int newcontainer;
 
     public fiResponse()                             
@@ -56,6 +57,16 @@ public class fiResponse
     public void setVmuptime(long vmuptime)        
     {        
         this.vmuptime = vmuptime;  
+    }
+    
+    public long getRuntime()
+    {
+        return this.runtime;
+    }
+    
+    public void setRuntime(long runtime)
+    {
+        this.runtime = runtime;
     }
     
     public int getNewcontainer()                  
