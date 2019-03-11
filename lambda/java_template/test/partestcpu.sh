@@ -19,7 +19,7 @@ ctimes=()
 csstimes=()
 clatency=()
 price_gbsec=.00001667
-memory_mb=1024
+memory_mb=3008
 memory_gb=`echo $memory_mb / 1000 | bc -l`
 
 #########################################################################################################################################################
@@ -261,10 +261,15 @@ then
 fi
 
 runspercont=`echo $totalruns / ${#containers[@]} | bc -l`
+runspercont=`printf '%.*f\n' 3 $runspercont`
 runsperhost=`echo $totalruns / ${#hosts[@]} | bc -l`
+runsperhost=`printf '%.*f\n' 3 $runsperhost`
 avgtime=`echo $alltimes / $totalruns | bc -l`
+avgtime=`printf '%.*f\n' 0 $avgtime`
 avgsstime=`echo $allsstimes / $totalruns | bc -l`
+avgsstime=`printf '%.*f\n' 0 $avgsstime`
 avglatency=`echo $alllatency / $totalruns | bc -l`
+avglatency=`printf '%.*f\n' 0 $avglatency`
 allsstimes_sec=`echo $allsstimes / 1000 | bc -l`
 totalcost=`echo "$allsstimes_sec * $price_gbsec * $memory_gb" | bc -l`
 totalcost=`printf '%.*f\n' 4 $totalcost`
@@ -273,8 +278,11 @@ echo "uuid,host,cputype,uses,totaltime,avgruntime_cont,avgsstuntime_cont,avglate
 total=0
 for ((i=0;i < ${#containers[@]};i++)) {
   avg=`echo ${ctimes[$i]} / ${cuses[$i]} | bc -l`
+  avg=`printf '%.*f\n' 0 $avg`
   ssavg=`echo ${csstimes[$i]} / ${cuses[$i]} | bc -l`
+  ssavg=`printf '%.*f\n' 0 $ssavg`
   latencyavg=`echo ${clatency[$i]} / ${cuses[$i]} | bc -l`
+  latencyavg=`printf '%.*f\n' 0 $latencyavg`
   stdiff=`echo ${cuses[$i]} - $runspercont | bc -l` 
   stdiffsq=`echo "$stdiff * $stdiff" | bc -l` 
   total=`echo $total + $stdiffsq | bc -l`
@@ -287,6 +295,7 @@ for ((i=0;i < ${#containers[@]};i++)) {
 #########################################################################################################################################################
 
 stdev=`echo $total / ${#containers[@]} | bc -l`
+stdev=`printf '%.*f\n' 3 $stdev`
 
 # hosts info
 currtime=$(date +%s)
@@ -301,8 +310,11 @@ fi
 # Loop through list of hosts - generate summary data
 for ((i=0;i < ${#hosts[@]};i++)) {
   avg=`echo ${htimes[$i]} / ${huses[$i]} | bc -l`
+  avg=`printf '%.*f\n' 0 $avg`
   ssavg=`echo ${hsstimes[$i]} / ${huses[$i]} | bc -l`
+  ssavg=`printf '%.*f\n' 0 $ssavg`
   latencyavg=`echo ${hlatency[$i]} / ${huses[$i]} | bc -l`
+  latencyavg=`printf '%.*f\n' 0 $latencyavg`
   stdiff=`echo ${huses[$i]} - $runsperhost | bc -l` 
   stdiffsq=`echo "$stdiff * $stdiff" | bc -l` 
   total=`echo $total + $stdiffsq | bc -l`
@@ -347,6 +359,7 @@ for ((i=0;i < ${#hosts[@]};i++)) {
   fi
 }
 stdevhost=`echo $total / ${#hosts[@]} | bc -l`
+stdevhost=`printf '%.*f\n' 3 $stdevhost`
 
 #########################################################################################################################################################
 # Generate CSV output - group by CPU Types
@@ -363,8 +376,11 @@ fi
 # Loop through CPU Types and make summary data
 for ((i=0;i < ${#cpuTypes[@]};i++)) {
   cpuavg=`echo ${cputimes[$i]} / ${cpuuses[$i]} | bc -l`
+  cpuavg=`printf '%.*f\n' 0 $cpuavg`
   cpussavg=`echo ${cpusstimes[$i]} / ${cpuuses[$i]} | bc -l`
+  cpussavg=`printf '%.*f\n' 0 $cpussavg`
   cpulatency=`echo ${cpulatency[$i]} / ${cpuuses[$i]} | bc -l`
+  cpulatency=`printf '%.*f\n' 0 $cpulatency`
   echo "${cpuTypes[$i]},${cpuuses[$i]},${cputimes[$i]},$cpuavg,$cpussavg,$cpulatency"
 }
 	
