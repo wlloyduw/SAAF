@@ -18,6 +18,9 @@ cuses=()
 ctimes=()
 csstimes=()
 clatency=()
+price_gbsec=.00001667
+memory_mb=1024
+memory_gb=`echo $memory_mb / 1000 | bc -l`
 
 #########################################################################################################################################################
 #  callservice method - uses separate threads to call AWS Lambda in parallel
@@ -49,7 +52,7 @@ callservice() {
   do
     # JSON object to pass to Lambda Function
     json={"\"name\"":"\"Fred\u0020Smith\",\"param1\"":1,\"param2\"":2,\"param3\"":3}
-    #json={"\"name\"":"\"\",\"calcs\"":600000,\"sleep\"":0,\"loops\"":25}
+    #json={"\"name\"":"\"\",\"calcs\"":400000,\"sleep\"":0,\"loops\"":25}
 
 
     time1=( $(($(date +%s%N)/1000000)) )
@@ -262,6 +265,9 @@ runsperhost=`echo $totalruns / ${#hosts[@]} | bc -l`
 avgtime=`echo $alltimes / $totalruns | bc -l`
 avgsstime=`echo $allsstimes / $totalruns | bc -l`
 avglatency=`echo $alllatency / $totalruns | bc -l`
+allsstimes_sec=`echo $allsstimes / 1000 | bc -l`
+totalcost=`echo "$allsstimes_sec * $price_gbsec * $memory_gb" | bc -l`
+totalcost=`printf '%.*f\n' 4 $totalcost`
 rm .uniqcont
 echo "uuid,host,cputype,uses,totaltime,avgruntime_cont,avgsstuntime_cont,avglatency_cont,uses_minus_avguses_sq"
 total=0
@@ -370,5 +376,5 @@ for ((i=0;i < ${#cpuTypes[@]};i++)) {
 #
 # 
 #
-echo "containers,newcontainers,recycont,hosts,recyvms,avgruntime,avgssruntime,avglatency,runs_per_container,runs_per_cont_stdev,runs_per_host,runs_per_host_stdev"
-echo "${#containers[@]},$newconts,$recycont,${#hosts[@]},$recyvms,$avgtime,$avgsstime,$avglatency,$runspercont,$stdev,$runsperhost,$stdevhost"
+echo "containers,newcontainers,recycont,hosts,recyvms,avgruntime,avgssruntime,avglatency,runs_per_container,runs_per_cont_stdev,runs_per_host,runs_per_host_stdev,totalcost"
+echo "${#containers[@]},$newconts,$recycont,${#hosts[@]},$recyvms,$avgtime,$avgsstime,$avglatency,$runspercont,$stdev,$runsperhost,$stdevhost,\$$totalcost"
