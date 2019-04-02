@@ -1,10 +1,10 @@
-class Register{
-    constructor(){
+class Inspector {
+    constructor() {
         this.hrst = process.hrtime();
     }
     
 
-    profileVM(){
+    profileVM() {
         let vmbt = getUpTime();
         let cpuType = getVmCpuStat();
         let resArr = stampContainer();
@@ -30,7 +30,8 @@ class Register{
         return res;
     }
 }
-function getUpTime(){
+
+function getUpTime() {
     // uses child process like subprocess in python.
     // with spawnSync is Sync, without Sync is Async.
     const { spawnSync } = require('child_process');
@@ -45,7 +46,7 @@ function getUpTime(){
     return res;
 }
 
-function getVmCpuStat(){
+function getVmCpuStat() {
     // uses child process like subprocess in python.
     // with execSync is Sync, without exec is Async.
     const { execSync } = require('child_process');
@@ -59,7 +60,7 @@ function getVmCpuStat(){
     return res;
 }
 
-function getCpuMetrics(){
+function getCpuMetrics() {
     // uses child process like subprocess in python.
     // with execSync is Sync, without exec is Async.
     const { execSync } = require('child_process');
@@ -73,7 +74,7 @@ function getCpuMetrics(){
     return res;
 }
 
-function stampContainer(){
+function stampContainer() {
     let fs = require('fs');
     let myUuid = ''
     let newContainer = 1
@@ -87,4 +88,5 @@ function stampContainer(){
     }
     return [myUuid, newContainer];
 }
-module.exports = Register;
+
+module.exports = Inspector;
