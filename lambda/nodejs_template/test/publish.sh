@@ -29,6 +29,13 @@ do
 done < "$filename"
 cd ..
 
+#Define the memory value.
+memory=512
+if [[ ! -z $5 ]]
+then
+	memory=$5
+fi
+
 
 # Deploy onto AWS Lambda.
 if [[ ! -z $1 && $1 -eq 1 ]]
@@ -40,6 +47,7 @@ then
 	cp ../platforms/aws.js index.js
 	zip -X -r ./index.zip *
 	aws lambda update-function-code --function-name $function --zip-file fileb://index.zip
+	aws lambda update-function-configuration --function-name $function --memory-size $memory --runtime nodejs8.10
 	rm index.zip
 	rm index.js
 	cd ..
@@ -54,7 +62,7 @@ then
 	echo
 	cd scr
 	cp ../platforms/google.js index.js
-	gcloud functions deploy $function --source=. --runtime nodejs8 --trigger-http
+	gcloud functions deploy $function --source=. --runtime nodejs8 --trigger-http --memory $memory
 	rm index.js
 	cd ..
 fi
@@ -69,7 +77,7 @@ then
 	cd scr
 	cp ../platforms/ibm.js index.js
 	zip -X -r ./index.zip *
-	ibmcloud fn action update $function --kind nodejs:8 index.zip
+	ibmcloud fn action update $function --kind nodejs:8 --memory $memory index.zip
 	rm index.js
 	rm index.zip
 	cd ..

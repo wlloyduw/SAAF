@@ -1,5 +1,5 @@
 /**
- * IBM Cloud Functions Default Function
+ * IBM Cloud Functions/OpenWhisk Default Function
  *
  * @param params
  * @returns {{message: string}}
