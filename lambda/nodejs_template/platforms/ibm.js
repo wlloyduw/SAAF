@@ -7,3 +7,5 @@
 function main(params) {
 	return (require('./function'))(params);
 }
+
+exports.main = main;

@@ -25,7 +25,7 @@
 filename="parfunction"
 while read -r line
 do
-	parfunction=$line
+	function=$line
 done < "$filename"
 cd ..
 
@@ -39,7 +39,7 @@ then
 	cd scr
 	cp ../platforms/aws.js index.js
 	zip -X -r ./index.zip *
-	aws lambda update-function-code --function-name $parfunction --zip-file fileb://index.zip
+	aws lambda update-function-code --function-name $function --zip-file fileb://index.zip
 	rm index.zip
 	rm index.js
 	cd ..
@@ -54,7 +54,7 @@ then
 	echo
 	cd scr
 	cp ../platforms/google.js index.js
-	gcloud functions deploy $parfunction --source=. --runtime nodejs8 --trigger-http
+	gcloud functions deploy $function --source=. --runtime nodejs8 --trigger-http
 	rm index.js
 	cd ..
 fi
@@ -68,10 +68,10 @@ then
 	echo
 	cd scr
 	cp ../platforms/ibm.js index.js
-	cat Inspector.js >> index.js
-	cat function.js >> index.js
-	ibmcloud fn action update $parfunction index.js
+	zip -X -r ./index.zip *
+	ibmcloud fn action update $function --kind nodejs:8 index.zip
 	rm index.js
+	rm index.zip
 	cd ..
 fi
 
