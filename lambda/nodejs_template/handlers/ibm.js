@@ -5,5 +5,5 @@
  * @returns {{message: string}}
  */
 function main(params) {
-	return (require('./yourFunction'))(params);
+	return (require('./function'))(params);
 }

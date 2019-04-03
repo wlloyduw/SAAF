@@ -5,5 +5,5 @@
  * @param res
  */
 exports.helloWorld = (req, res) => {
-	res.status(200).send((require('./yourFunction'))(req));
+	res.status(200).send((require('./function'))(req.body));
 };
