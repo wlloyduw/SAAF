@@ -44,7 +44,7 @@ then
 	echo "----- Deploying onto AWS Lambda -----"
 	echo
 	cd scr
-	cp ../platforms/aws.js index.js
+	cp ../platforms/aws/aws.js index.js
 	zip -X -r ./index.zip *
 	aws lambda update-function-code --function-name $function --zip-file fileb://index.zip
 	aws lambda update-function-configuration --function-name $function --memory-size $memory --runtime nodejs8.10
@@ -53,6 +53,22 @@ then
 	cd ..
 fi
 
+# Deploy onto IBM Cloud Functions
+if [[ ! -z $3 && $3 -eq 1 ]]
+then
+	echo
+	echo "----- Deploying onto IBM Cloud Functions -----"
+	echo
+	cd scr
+	cp ../platforms/ibm/ibm.js index.js
+	cp ../platforms/ibm/package.json package.json
+	zip -X -r ./index.zip *
+	ibmcloud fn action update $function --kind nodejs:8 --memory $memory index.zip
+	rm index.js
+	rm index.zip
+	rm package.json
+	cd ..
+fi
 
 # Deploy onto Google Cloud Functions
 if [[ ! -z $2 && $2 -eq 1 ]]
@@ -61,25 +77,11 @@ then
 	echo "----- Deploying onto Google Cloud Functions -----"
 	echo
 	cd scr
-	cp ../platforms/google.js index.js
+	cp ../platforms/google/package.json package.json
+	cp ../platforms/google/google.js index.js
 	gcloud functions deploy $function --source=. --runtime nodejs8 --trigger-http --memory $memory
 	rm index.js
-	cd ..
-fi
-
-
-# Deploy onto IBM Cloud Functions
-if [[ ! -z $3 && $3 -eq 1 ]]
-then
-	echo
-	echo "----- Deploying onto IBM Cloud Functions -----"
-	echo
-	cd scr
-	cp ../platforms/ibm.js index.js
-	zip -X -r ./index.zip *
-	ibmcloud fn action update $function --kind nodejs:8 --memory $memory index.zip
-	rm index.js
-	rm index.zip
+	rm package.json
 	cd ..
 fi
 
@@ -91,8 +93,18 @@ then
 	echo "----- Deploying onto Azure Functions -----"
 	echo
 	cd scr
-	cp ../platforms/azure.js ./index.js
-
-	rm index.js
+	mkdir $function
+	cp ../platforms/azure/function.json ./$function/function.json
+	cp ../platforms/azure/host.json host.json
+	cp ../platforms/azure/azure.js ./$function/index.js
+	mv function.js ./$function/functions.js
+	mv Inspector.js ./$function/Inspector.js
+	func azure functionapp publish UWT-Workspace --force
+	mv ./$function/functions.js function.js 
+	mv ./$function/Inspector.js Inspector.js
+	rm host.json
+	rm ./$function/function.json
+	rm ./$function/index.js
+	rmdir $function
 	cd ..
 fi
