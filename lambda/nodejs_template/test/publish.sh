@@ -3,7 +3,7 @@
 # Mutli-platform Publisher. Used to publish FaaS Inspector Node.js functions onto AWS Lambda, Google Cloud Functions, IBM
 # Cloud Functions, and Azure Functions.
 #
-# Each platform's default handler is defined in the handlers folder. These are copied into the source folder as index.js
+# Each platform's default function is defined in the platforms folder. These are copied into the source folder as index.js
 # and deployed onto each platform accordingly. Developers should write their function in the function.js file.
 #
 # This script requires each platform's CLI to be installed and properly configured to update functions.
@@ -37,7 +37,7 @@ then
 	echo "----- Deploying onto AWS Lambda -----"
 	echo
 	cd scr
-	cp ../handlers/aws.js index.js
+	cp ../platforms/aws.js index.js
 	zip -X -r ./index.zip *
 	aws lambda update-function-code --function-name $parfunction --zip-file fileb://index.zip
 	rm index.zip
@@ -53,7 +53,7 @@ then
 	echo "----- Deploying onto Google Cloud Functions -----"
 	echo
 	cd scr
-	cp ../handlers/google.js index.js
+	cp ../platforms/google.js index.js
 	gcloud functions deploy $parfunction --source=. --runtime nodejs8 --trigger-http
 	rm index.js
 	cd ..
@@ -67,7 +67,7 @@ then
 	echo "----- Deploying onto IBM Cloud Functions -----"
 	echo
 	cd scr
-	cp ../handlers/ibm.js index.js
+	cp ../platforms/ibm.js index.js
 	cat Inspector.js >> index.js
 	cat function.js >> index.js
 	ibmcloud fn action update $parfunction index.js
@@ -83,7 +83,7 @@ then
 	echo "----- Deploying onto Azure Functions -----"
 	echo
 	cd scr
-	cp ../handlers/azure.js ./index.js
+	cp ../platforms/azure.js ./index.js
 
 	rm index.js
 	cd ..

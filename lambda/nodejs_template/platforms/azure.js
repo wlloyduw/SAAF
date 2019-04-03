@@ -1,5 +1,5 @@
 /**
- * Azure Functions Default Handler
+ * Azure Functions Default Function
  *
  * @param context
  * @param req

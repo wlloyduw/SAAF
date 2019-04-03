@@ -1,5 +1,5 @@
 /**
- * AWS Lambda Default Handler
+ * AWS Lambda Default Function
  *
  * @param event
  */

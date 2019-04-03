@@ -1,5 +1,5 @@
 /**
- * IBM Cloud Functions Default Handler
+ * IBM Cloud Functions Default Function
  *
  * @param params
  * @returns {{message: string}}

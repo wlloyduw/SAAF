@@ -1,5 +1,5 @@
 /**
- * Google Cloud Functions Default Handler
+ * Google Cloud Functions Default Function
  *
  * @param req
  * @param res
