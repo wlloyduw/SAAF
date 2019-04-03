@@ -16,9 +16,8 @@
 # file: parfunction   The name of the function.
 #
 # Choose which platforms to deploy to using command line arguments:
-# ./publish.sh AWS GCF IBM AZURE
-# Example to deploy to AWS and Azure: ./publish.sh 1 0 0 1
-#
+# ./publish.sh AWS GCF IBM AZURE MEMORY
+# Example to deploy to AWS and Azure: ./publish.sh 1 0 0 1 1024
 
 
 # Get the function name from the parfunction file.
@@ -61,12 +60,10 @@ then
 	echo
 	cd scr
 	cp ../platforms/ibm/ibm.js index.js
-	cp ../platforms/ibm/package.json package.json
 	zip -X -r ./index.zip *
 	ibmcloud fn action update $function --kind nodejs:8 --memory $memory index.zip
 	rm index.js
 	rm index.zip
-	rm package.json
 	cd ..
 fi
 
@@ -77,11 +74,9 @@ then
 	echo "----- Deploying onto Google Cloud Functions -----"
 	echo
 	cd scr
-	cp ../platforms/google/package.json package.json
 	cp ../platforms/google/google.js index.js
 	gcloud functions deploy $function --source=. --runtime nodejs8 --trigger-http --memory $memory
 	rm index.js
-	rm package.json
 	cd ..
 fi
 
@@ -94,17 +89,17 @@ then
 	echo
 	cd scr
 	mkdir $function
+	mv  -v ./* ./$function/
 	cp ../platforms/azure/function.json ./$function/function.json
 	cp ../platforms/azure/host.json host.json
+	cp ../platforms/azure/local.settings.json local.settings.json
 	cp ../platforms/azure/azure.js ./$function/index.js
-	mv function.js ./$function/functions.js
-	mv Inspector.js ./$function/Inspector.js
 	func azure functionapp publish UWT-Workspace --force
-	mv ./$function/functions.js function.js 
-	mv ./$function/Inspector.js Inspector.js
 	rm host.json
+	rm local.settings.json
 	rm ./$function/function.json
 	rm ./$function/index.js
+	mv  -v ./$function/* ./
 	rmdir $function
 	cd ..
 fi

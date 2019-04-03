@@ -65,7 +65,19 @@ callservice() {
     ####################################
     # Uncomment for AWS Lambda CLI function invocation with $parfunction variable
     ####################################
-    output=`aws lambda invoke --invocation-type RequestResponse --function-name $parfunction --region us-east-1 --payload $json /dev/stdout | head -n 1 | head -c -2 ; echo`
+    #output=`aws lambda invoke --invocation-type RequestResponse --function-name $parfunction --region us-east-1 --payload $json /dev/stdout | head -n 1 | head -c -2 ; echo`
+    
+    ####################################
+    # Uncomment for Google Cloud CLI function invocation with $parfunction variable
+    ####################################
+    #output=`gcloud functions call $parfunction --data $json | head -n 1 | head -c -2 ; echo`
+    
+    ####################################
+    # Uncomment for IBM Cloud CLI function invocation with $parfunction variable
+    ####################################
+    cat $json > input.temp
+    output=`ibmcloud fn action invoke $parfunction -P input.temp -r | head -n 1 | head -c -2 ; echo`
+    rm input.temp
 
     ####################################
     # Uncomment for CURL invocation with inline URL
