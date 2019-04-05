@@ -102,3 +102,6 @@ then
 	rm index.js
 	cd ..
 fi
+
+
+./simpleTest.sh
