@@ -21,8 +21,11 @@ This folder contains all of the platform specific files needed to deploy onto ea
 ### 📁 scr Folder
 
 The scr folder contains all of the code for your function. 
+
   *Inspector.js* is the FaaS Inspector itself and is completely independent of any files or folders in this project. If you do not plan to use this file sctructure, Inspector.js can be used and moved to any Node.js project.
+  
   *function.js* file is the handler that each cloud provider will execute. 
+  
   *package.json* is where 3rd party dependencies must be defined (*WARNING:* If you are deploying onto Azure Functions, depencies must also be downloaded into test/node_modules). 
 
 ### 📁 test Folder
