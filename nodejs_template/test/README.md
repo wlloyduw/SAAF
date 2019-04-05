@@ -18,11 +18,11 @@
 
 The scr folder contains all of the code for your function. 
 
-  * [**Inspector.js**](nodejs_template/src/Inspector.js) is the FaaS Inspector itself and is completely independent of any files or folders in this project. If you do not plan to use this file sctructure, Inspector.js can be used and moved to any Node.js project.
+  * [**Inspector.js**](../src/Inspector.js) is the FaaS Inspector itself and is completely independent of any files or folders in this project. If you do not plan to use this file sctructure, Inspector.js can be used and moved to any Node.js project.
   
-  * [**function.js**](nodejs_template/src/function.js) file is the handler that each cloud provider will execute. 
+  * [**function.js**](../src/function.js) file is the handler that each cloud provider will execute. 
 
-  * [**package.json**](nodejs_template/src/package.json) is where 3rd party dependencies must be defined (**WARNING:** If you are deploying onto Azure Functions, dependencies must also be downloaded into test/node_modules). 
+  * [**package.json**](../src/package.json) is where 3rd party dependencies must be defined (**WARNING:** If you are deploying onto Azure Functions, dependencies must also be downloaded into test/node_modules). 
     
 ### 📁 test Folder
 
