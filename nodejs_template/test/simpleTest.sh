@@ -34,3 +34,5 @@ ibmcloud fn action invoke $parfunction -p name bob --result
 echo
 echo Invoking $parfunction on Azure Functions...
 echo
+
+func azure function 
