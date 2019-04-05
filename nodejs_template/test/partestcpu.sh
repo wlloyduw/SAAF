@@ -7,7 +7,7 @@
 #
 # To use this parallel test script, create files to provide your function name and AWS gateway URL
 # file: parurl        Provide URL from AWS-Gateway
-# file: parfunction   Provide AWS Lambda function name on a single line text file
+# file: function   Provide AWS Lambda function name on a single line text file
 #
 totalruns=$1
 threads=$2
@@ -38,11 +38,7 @@ callservice() {
     parurl=$line
   done < "$filename"
 
-  filename="parfunction"
-  while read -r line
-  do
-    parfunction=$line
-  done < "$filename"
+  function=`cat config.json | jq '.functionName' | tr -d '"'`
 
   if [ $threadid -eq 1 ]
   then
@@ -63,20 +59,20 @@ callservice() {
     #output=`curl -H "Content-Type: application/json" -X POST -d  $json $parurl 2>/dev/null`
 
     ####################################
-    # Uncomment for AWS Lambda CLI function invocation with $parfunction variable
+    # Uncomment for AWS Lambda CLI function invocation with $function variable
     ####################################
-    #output=`aws lambda invoke --invocation-type RequestResponse --function-name $parfunction --region us-east-1 --payload $json /dev/stdout | head -n 1 | head -c -2 ; echo`
+    #output=`aws lambda invoke --invocation-type RequestResponse --function-name $function --region us-east-1 --payload $json /dev/stdout | head -n 1 | head -c -2 ; echo`
     
     ####################################
-    # Uncomment for Google Cloud CLI function invocation with $parfunction variable
+    # Uncomment for Google Cloud CLI function invocation with $function variable
     ####################################
-    #output=`gcloud functions call $parfunction --data $json | head -n 1 | head -c -2 ; echo`
+    #output=`gcloud functions call $function --data $json | head -n 1 | head -c -2 ; echo`
     
     ####################################
-    # Uncomment for IBM Cloud CLI function invocation with $parfunction variable
+    # Uncomment for IBM Cloud CLI function invocation with $function variable
     ####################################
     cat $json > input.temp
-    output=`ibmcloud fn action invoke $parfunction -P input.temp -r | head -n 1 | head -c -2 ; echo`
+    output=`ibmcloud fn action invoke $function -P input.temp -r | head -n 1 | head -c -2 ; echo`
     rm input.temp
 
     ####################################

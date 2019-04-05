@@ -4,7 +4,8 @@
 # Cloud Functions, and Azure Functions.
 #
 # Each platform's default function is defined in the platforms folder. These are copied into the source folder as index.js
-# and deployed onto each platform accordingly. Developers should write their function in the function.js file. All source files should be in the scr folder and dependencies defined in package.json.
+# and deployed onto each platform accordingly. Developers should write their function in the function.js file. 
+# All source files should be in the scr folder and dependencies defined in package.json.
 #
 # This script requires each platform's CLI to be installed and properly configured to update functions.
 # AWS CLI: apt install awscli 
@@ -18,14 +19,14 @@
 # Choose which platforms to deploy to using command line arguments:
 # ./publish.sh AWS GCF IBM AZURE MEMORY
 # Example to deploy to AWS and Azure: ./publish.sh 1 0 0 1 1024
+#
+# WARNING for Azure: Azure Functions DOES NOT automatically download dependencies in the package.json file like IBM or Google. 
+# You must manually install them to the ./test directory and this script will automatically copy the node_modules folder and deploy it with your Azure function.
 
 
-# Get the function name from the parfunction file.
-filename="parfunction"
-while read -r line
-do
-	function=$line
-done < "$filename"
+# Get the function name from the config.json file.
+function=`cat config.json | jq '.functionName' | tr -d '"'`
+functionApp=`cat config.json | jq '.azureFunctionApp' | tr -d '"'`
 cd ..
 
 #Define the memory value.
@@ -83,7 +84,7 @@ then
 	cp ../platforms/azure/host.json host.json
 	cp ../platforms/azure/local.settings.json local.settings.json
 	cp ../platforms/azure/azure.js ./$function/index.js
-	func azure functionapp publish UWT-Workspace --force
+	func azure functionapp publish $functionApp --force
 	rm host.json
 	rm local.settings.json
 	rm ./$function/function.json
@@ -109,4 +110,4 @@ then
 fi
 
 cd test
-./simpleTest.sh
+#./simpleTest.sh

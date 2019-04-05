@@ -1,5 +1,6 @@
 /**
  * Execute this function to test your function locally.
+ * Execute with: node local.js
  *
  * Required Node Modules:
  * npm install uuid 
