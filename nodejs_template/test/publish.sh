@@ -4,7 +4,7 @@
 # Cloud Functions, and Azure Functions.
 #
 # Each platform's default function is defined in the platforms folder. These are copied into the source folder as index.js
-# and deployed onto each platform accordingly. Developers should write their function in the function.js file.
+# and deployed onto each platform accordingly. Developers should write their function in the function.js file. All source files should be in the scr folder and dependencies defined in package.json.
 #
 # This script requires each platform's CLI to be installed and properly configured to update functions.
 # AWS CLI: apt install awscli 
@@ -67,20 +67,6 @@ then
 	cd ..
 fi
 
-# Deploy onto Google Cloud Functions
-if [[ ! -z $2 && $2 -eq 1 ]]
-then
-	echo
-	echo "----- Deploying onto Google Cloud Functions -----"
-	echo
-	cd scr
-	cp ../platforms/google/google.js index.js
-	gcloud functions deploy $function --source=. --runtime nodejs8 --trigger-http --memory $memory
-	rm index.js
-	cd ..
-fi
-
-
 # Deploy onto Azure Functions
 if [[ ! -z $4 && $4 -eq 1 ]]
 then
@@ -101,5 +87,18 @@ then
 	rm ./$function/index.js
 	mv  -v ./$function/* ./
 	rmdir $function
+	cd ..
+fi
+
+# Deploy onto Google Cloud Functions
+if [[ ! -z $2 && $2 -eq 1 ]]
+then
+	echo
+	echo "----- Deploying onto Google Cloud Functions -----"
+	echo
+	cd scr
+	cp ../platforms/google/google.js index.js
+	gcloud functions deploy $function --source=. --runtime nodejs8 --trigger-http --memory $memory
+	rm index.js
 	cd ..
 fi
