@@ -44,7 +44,7 @@ then
 	echo "----- Deploying onto AWS Lambda -----"
 	echo
 	cd scr
-	cp ../platforms/aws/aws.js index.js
+	cp ../platforms/aws/index.js index.js
 	zip -X -r ./index.zip *
 	aws lambda update-function-code --function-name $function --zip-file fileb://index.zip
 	aws lambda update-function-configuration --function-name $function --memory-size $memory --runtime nodejs8.10
@@ -60,7 +60,7 @@ then
 	echo "----- Deploying onto IBM Cloud Functions -----"
 	echo
 	cd scr
-	cp ../platforms/ibm/ibm.js index.js
+	cp ../platforms/ibm/index.js index.js
 	zip -X -r ./index.zip *
 	ibmcloud fn action update $function --kind nodejs:8 --memory $memory index.zip
 	rm index.js
@@ -83,7 +83,7 @@ then
 	cp ../platforms/azure/function.json ./$function/function.json
 	cp ../platforms/azure/host.json host.json
 	cp ../platforms/azure/local.settings.json local.settings.json
-	cp ../platforms/azure/azure.js ./$function/index.js
+	cp ../platforms/azure/index.js ./$function/index.js
 	func azure functionapp publish $functionApp --force
 	rm host.json
 	rm local.settings.json
@@ -103,7 +103,7 @@ then
 	echo "----- Deploying onto Google Cloud Functions -----"
 	echo
 	cd scr
-	cp ../platforms/google/google.js index.js
+	cp ../platforms/google/index.js index.js
 	gcloud functions deploy $function --source=. --runtime nodejs8 --trigger-http --memory $memory
 	rm index.js
 	cd ..

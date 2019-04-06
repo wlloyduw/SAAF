@@ -9,7 +9,7 @@ echo
 
 function=`cat config.json | jq '.functionName' | tr -d '"'`
 
-json={"\"name\"":"\"bob\",\"param1\"":1,\"param2\"":2,\"param3\"":3}
+json={"\"command\"":"\"env\""}
 
 echo
 echo Invoking $function on AWS Lambda...
@@ -25,10 +25,10 @@ gcloud functions call $function --data $json
 echo
 echo Invoking $function on IBM Cloud Functions...
 echo
-ibmcloud fn action invoke $function -p name bob --result
+ibmcloud fn action invoke $function -p command env --result
 
 echo
 echo Invoking $function on Azure Functions...
 echo
 
-func azure function 
+#func azure function 
