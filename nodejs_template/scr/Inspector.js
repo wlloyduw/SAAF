@@ -96,6 +96,13 @@ class Inspector {
     inspectPlatform() {
 
     }
+    
+    /**
+     * Collect information about the linux operating system.
+     */
+    inspectLinux() {
+        
+    }
 
     /**
      * Finalize FaaS inspector. Calculator the total runtime and return the JSON object
