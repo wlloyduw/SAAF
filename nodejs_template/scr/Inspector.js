@@ -23,7 +23,7 @@ class Inspector {
      *
      * uuid:            A unique identifier assigned to a container if one does not already exist.
      * newcontainer:    Whether a container is new (no assigned uuid) or if it has been used before.
-     * vmuptime:
+     * vmuptime:        The time when the system started in Unix time.
      */
     inspectContainer() {
         let fs = require('fs');
@@ -73,9 +73,9 @@ class Inspector {
         this.attributes['cpuType'] = CPUModelName;
 
         child = execSync('grep \'model\' /proc/cpuinfo | head -1', { encoding : 'utf8' });
-        let CPUModel = child.replace('\n','');
-        CPUModel = CPUModel.replace('\t','');
-        CPUModel = CPUModel.replace('model: ', '');
+        let CPUModel = child.replace('\n', '');
+        CPUModel = CPUModel.replace('\t', '');
+        CPUModel = CPUModel.replace('model\t: ', '');
         this.attributes['cpuModel'] = CPUModel;
 
         child = execSync('cat /proc/stat | grep "^cpu" | head -1', { encoding : 'utf8' });
@@ -92,23 +92,49 @@ class Inspector {
 
     /**
      * Collect information about the current FaaS platform.
+     *
+     * platform:    The FaaS platform hosting this function.
      */
     inspectPlatform() {
+        const { execSync } = require('child_process');
+        let environment = execSync('env', { encoding : 'utf8' });
+        if (environment.indexOf("AWS_LAMBDA") > -1) {
+            this.attributes['platform'] = "AWS Lambda";
+            return 0;
+        }
+        if (environment.indexOf("X_GOOGLE") > -1) {
+            this.attributes['platform'] = "Google Cloud Functions";
+            return 0;
+        }
+        if (environment.indexOf("functions.cloud") > -1) {
+            this.attributes['platform'] = "IBM Cloud Functions";
+            return 0;
+        }
+        if (environment.indexOf("microsoft.com/azure-functions") > -1) {
+            this.attributes['platform'] = "Azure Functions";
+            return 0;
+        }
+        this.attributes['platform'] = "Unknown Platform";
 
     }
     
     /**
-     * Collect information about the linux operating system.
+     * Collect information about the linux kernel.
+     *
+     * linuxVersion:    The version of the linux kernel.
      */
     inspectLinux() {
-        
+        const { execSync } = require('child_process');
+        let child = execSync('uname -v', { encoding : 'utf8' });
+        let linuxVersion = child.replace('\n', '');
+        this.attributes['linuxVersion'] = linuxVersion;
     }
 
     /**
      * Finalize FaaS inspector. Calculator the total runtime and return the JSON object
      * containing all attributes collected.
      *
-     * @returns {{}}
+     * @returns Attributes collected by FaaS Inspector.
      */
     finish() {
         let endTime = process.hrtime(this.startTime);
