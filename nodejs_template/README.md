@@ -1,2 +1,78 @@
-# Faas Inspector Node JSThis is a Node JS version of the Faas Inspector framework to profile the cloud infrastructure which your code is running on, the example here will target AWS Lambda.### Getting StartedFirst of all, download the project as zip file or clone it from Git. Then put the Register.js file into the same folder of your other Node JS script for AWS Lambda.### Import the Module```const reg = require('./Register');```### AWS IO Example#### Input JSON```{	"Name": "Fred Smith"}```#### Creating an instance and getting the JSON```const myReg = new reg();let res = myReg.profileVM();```#### Output JSON```{  "cpuType": "Intel(R) Xeon(R) Processor @ 2.50GHz",  "vmuptime": 1551727835,  "uuid": "d241c618-78d8-48e2-9736-997dc1a931d4",  "newcontainer": 1,  "frameworkRuntime": 38.942128,  "name": "Fred Smith",  "message": "Hello Fred Smith from Node JS Lambda!",  "lambdaRuntime": 39.340805,  "cpuusr": "904",  "cpunice": "0",  "cpukrn": "585",  "cpuidle": "82428",  "cpuiowait": "226",  "cpuirq": "0",  "cpusoftirq": "7",  "cpusteal": "1594",}```| **Field** | **Description** || --------- | --------------- || cpuType | The CPU of the machine which your code is running on || vmuptime | This is the time at which the system booted, in seconds since the Unix epoch (January 1, 1970 )|| uuid | The unique ID we gave to the container/firecracker || newcontainer | 1 for new container/firecracker; otherwise, 0 || frameworkRuntime | The runtime/overhead of the framework || cpuusr | Normal processes executing in user mode || cpunice | Niced processes executing in user mode || cpukrn | Processes executing in kernel mode || cpuidle | Twiddling thumbs || cpuiowait | waiting for I/O to complete || cpuirq | Servicing interrupts || cpusoftirq | Servicing softirqs (Software interrupts) || cpusteal | The time a virtual CPU waits for a real CPU while the hypervisor is servicing another virtual processor |
-
+# Faas InspectorFaaS Inspector is a programming framework that allow for tracing FaaS function server infrastructure for code deployments. This framework includes a functions to enable tracing code containers and hosts (VMs) created by FaaS platform providers for hosting FaaS functions. This information can help verify the state of infrastructure (COLD vs. WARM) to understand performance results, and help preserve infrastructure for better FaaS performance.### Getting StartedTo use the core FaaS Inspector framework, download the [Inspector.js](./src/Inspector.js) script into an existing Node.js project and simply import the module as shown below.
+
+FaaS Inspector also includes tools to deploy and develop new functions for each supported platform automatically. To make use of these tools, download the entire repository and follow the directions in the [test directory](./test). ### Import the Module into an Existing Project```const inspector = new (require('./Inspector'))();```This should be the first line of your function as it begins recording the runtime.### Example Hello World Function
+
+```
+module.exports = function(request) {
+  
+  //Import the module and collect data
+  const inspector = new (require('./Inspector'))();
+  inspector.inspectContainer();
+  inspector.inspectCPU();
+  inspector.addTimeStamp("frameworkRuntime");
+
+  //Add custom message and finish the function
+  inspector.addAttribute("message", "Hello " + request.name + "!");
+  return inspector.finish();
+};
+```
+
+#### Example JSON Output
+
+```
+{
+  "version": 0.2,
+  "lang": "node.js",
+  "cpuType": "Intel(R) Xeon(R) Processor @ 2.50GHz",
+  "vmuptime": 1551727835,
+  "uuid": "d241c618-78d8-48e2-9736-997dc1a931d4",
+  "newcontainer": 1,
+  "cpuUsr": "904",
+  "cpuNice": "0",
+  "cpuKrn": "585",
+  "cpuIdle": "82428",
+  "cpuIowait": "226",
+  "cpuIrq": "0",
+  "cpuSoftIrq": "7",
+  "vmcpusteal": "1594",
+  "frameworkRuntime": 35.72,
+  "message": "Hello Bob!",
+  "runtime": 38.94
+}
+```
+&nbsp;
+
+# Attributes Collected by Each Function
+
+The amount of data collected is detemined by which functions are called. If some attributes are not needed, then some functions many not need to be called.
+
+### inspectContainer()| **Field** | **Description** || --------- | --------------- |
+| uuid | A unique identifier assigned to a container if one does not already exist. |
+| newcontainer | Whether a container is new (no assigned uuid) or if it has been used before. || vmuptime | The time when the system started in Unix time.|
+### inspectCPU()
+
+| **Field** | **Description** |
+| --------- | --------------- |
+| cpuType | The model name of the CPU. |
+| cpuModel | The model number of the CPU. |
+| cpuUsr | Time spent normally executing in user mode. |
+| cpuNice | Time spent executing niced processes in user mode. |
+| cpuKrn | Time spent executing processes in kernel mode. |
+| cpuIdle | Time spent idle. |
+| cpuIowait | Time spent waiting for I/O to complete. |
+| cpuIrq | Time spent servicing interrupts. |
+| cpuSoftIrq | Time spent servicing software interrupts. |
+| vmcpusteal | Time spent waiting for real CPU while hypervisor is using another virtual CPU. |
+### inspectPlatform()
+
+| **Field** | **Description** |
+| --------- | --------------- |
+| platform | The FaaS platform hosting this function. |
+
+### inspectLinux()
+
+| **Field** | **Description** |
+| --------- | --------------- |
+| linuxVersion | The version of the linux kernel. |
+
+&nbsp;

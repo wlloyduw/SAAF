@@ -129,6 +129,28 @@ class Inspector {
         let linuxVersion = child.replace('\n', '');
         this.attributes['linuxVersion'] = linuxVersion;
     }
+    
+    /**
+     * Add a custom attribute to the output.
+     *
+     * @param key A string ot use as the key value.
+     * @param value The value to associate with that key.
+     */
+    addAttribute(key, value) {
+        this.attributes[key] = value;
+    }
+    
+    /**
+     * Add custom time stamps to the output. The key value determines the name
+     * of the attribute and the value will be the time from Inspector initialization
+     * to this function call. 
+     *
+     * @param key The name of the time stamp.
+     */
+    addTimeStamp(key) {
+        let timeSinceStart = process.hrtime(this.startTime);
+        this.attributes[key] = timeSinceStart[0] * 1000 + Math.round(timeSinceStart[1] / 10000) / 100;
+    }
 
     /**
      * Finalize FaaS inspector. Calculator the total runtime and return the JSON object
