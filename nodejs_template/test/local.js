@@ -9,7 +9,7 @@
  * @returns {{message: string}}
  */
 function main(params) {
-	return (require('../scr/function'))(params);
+	return (require('../src/function'))(params);
 }
 
 console.log(main({"name": "bob"}));

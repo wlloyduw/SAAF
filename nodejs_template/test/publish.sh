@@ -5,7 +5,7 @@
 #
 # Each platform's default function is defined in the platforms folder. These are copied into the source folder as index.js
 # and deployed onto each platform accordingly. Developers should write their function in the function.js file. 
-# All source files should be in the scr folder and dependencies defined in package.json.
+# All source files should be in the src folder and dependencies defined in package.json.
 #
 # This script requires each platform's CLI to be installed and properly configured to update functions.
 # AWS CLI: apt install awscli 
@@ -43,7 +43,7 @@ then
 	echo
 	echo "----- Deploying onto AWS Lambda -----"
 	echo
-	cd scr
+	cd src
 	cp ../platforms/aws/index.js index.js
 	zip -X -r ./index.zip *
 	aws lambda update-function-code --function-name $function --zip-file fileb://index.zip
@@ -59,7 +59,7 @@ then
 	echo
 	echo "----- Deploying onto IBM Cloud Functions -----"
 	echo
-	cd scr
+	cd src
 	cp ../platforms/ibm/index.js index.js
 	zip -X -r ./index.zip *
 	ibmcloud fn action update $function --kind nodejs:8 --memory $memory index.zip
@@ -74,7 +74,7 @@ then
 	echo
 	echo "----- Deploying onto Azure Functions -----"
 	echo
-	cd scr
+	cd src
 	mkdir $function
 	mv  -v ./* ./$function/
 	mkdir node_modules
@@ -102,7 +102,7 @@ then
 	echo
 	echo "----- Deploying onto Google Cloud Functions -----"
 	echo
-	cd scr
+	cd src
 	cp ../platforms/google/index.js index.js
 	gcloud functions deploy $function --source=. --runtime nodejs8 --trigger-http --memory $memory
 	rm index.js

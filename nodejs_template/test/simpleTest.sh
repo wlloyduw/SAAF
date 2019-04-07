@@ -2,14 +2,12 @@
 
 # Simple test is meant to simply call each platform to verify that the publish script worked correctly.
 
+function=`cat config.json | jq '.functionName' | tr -d '"'`
+json={"\"command\"":"\"env\""}
+
 echo
 echo ----- Testing $function on each platform ------
 echo
-
-
-function=`cat config.json | jq '.functionName' | tr -d '"'`
-
-json={"\"command\"":"\"env\""}
 
 echo
 echo Invoking $function on AWS Lambda...
@@ -25,10 +23,13 @@ gcloud functions call $function --data $json
 echo
 echo Invoking $function on IBM Cloud Functions...
 echo
+
+# IBM CAN'T SEND JSON THROUGH CLI. EDIT THIS IF YOU EDIT THE JSON. :(
 ibmcloud fn action invoke $function -p command env --result
 
 echo
 echo Invoking $function on Azure Functions...
 echo
 
+#Azure CLI can't execute functions for some reason....
 #func azure function 
