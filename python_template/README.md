@@ -41,6 +41,7 @@ def my_handler(event, context):
   "version": 0.2,
   "lang": "python",
   "cpuType": "Intel(R) Xeon(R) Processor @ 2.50GHz",
+  "cpuModel": 63,
   "vmuptime": 1551727835,
   "uuid": "d241c618-78d8-48e2-9736-997dc1a931d4",
   "newcontainer": 1,
