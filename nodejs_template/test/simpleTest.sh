@@ -3,6 +3,7 @@
 # Simple test is meant to simply call each platform to verify that the publish script worked correctly.
 
 function=`cat config.json | jq '.functionName' | tr -d '"'`
+azureEndpoint=`cat config.json | jq '.azureEndpoint' | tr -d '"'`
 json={"\"command\"":"\"env\""}
 
 echo
@@ -31,5 +32,5 @@ echo
 echo Invoking $function on Azure Functions...
 echo
 
-#Azure CLI can't execute functions for some reason....
-#func azure function 
+#Azure CLI can't execute functions so you must define the azureEndpoint in config.json.
+curl -H "Content-Type: application/json" -X POST -d  $json $azureEndpoint

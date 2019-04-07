@@ -1,4 +1,8 @@
 {
 	"functionName": "test",
-	"azureFunctionApp": "UWT-Workspace"
+	"azureFunctionApp": "UWT-Workspace",
+	"awsEndpoint": "",
+	"googleEndpoint": "",
+	"ibmEndpoint": "",
+	"azureEndpoint": "https://uwt-workspace.azurewebsites.net/api/test?code=EVY0YavlKHErHt1HJ1EVTKJXa06KhFLcMGvVhVhtlUnFAdfu4Iea0A=="
 }

@@ -106,7 +106,7 @@ class Inspector {
             this.attributes['platform'] = "Google Cloud Functions";
             return 0;
         }
-        if (environment.indexOf("functions.cloud") > -1) {
+        if (environment.indexOf("functions.cloud.ibm") > -1) {
             this.attributes['platform'] = "IBM Cloud Functions";
             return 0;
         }

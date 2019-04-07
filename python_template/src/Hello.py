@@ -6,8 +6,9 @@
 # AWS Lambda function with JSON as input and 
 # output
 
+import json
 import logging
-from Register import *
+from Inspector import *
 import time
 
 # my_handler is the lambda function on aws that will be called
@@ -16,18 +17,9 @@ import time
 # return JSON with customized fields.
 
 def my_handler(event, context):
-    myReg = Register()
-    try:
-        name = event['name']
-        message = 'Hello {} from lambda!'.format(name)
-        vmSpec = myReg.profileVM()
-        vmSpec['message'] = message
-        vmSpec['name'] = name
-        return vmSpec
-    except:
-        logger = logging.getLogger()
-        logger.setLevel(logging.ERROR)
-        logger.error('THE INPUT JSON DOESN\'T HAVE SPECIFIED FIELD.')
-        return {
-                'error': 'please check log and input JSON'
-                }
+    inspector = Inspector()
+    inspector.inspectContainer()
+    inspector.inspectCPU()
+    inspector.inspectPlatform()
+    inspector.inspectLinux()
+    return inspector.finish()

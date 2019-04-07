@@ -13,6 +13,7 @@ module.exports = function(request) {
     inspector.inspectContainer();
     inspector.inspectCPU();
     inspector.inspectPlatform();
+    inspector.inspectLinux();
         
     //Get a command from input and execute the command.
     let command = request.command;
