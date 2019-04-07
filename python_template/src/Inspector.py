@@ -114,6 +114,7 @@ class Inspector:
             self.__attributes['platform'] = "Azure Functions"
             return 0
         self.__attributes['platform'] = "Unknown Platform"
+        
     #
     # Collect information about the linux kernel.
     #
@@ -124,6 +125,7 @@ class Inspector:
         linuxVersion = child.read()
         linuxVersion = re.sub('[\n]','', linuxVersion)
         self.__attributes['linuxVersion'] = linuxVersion
+        
     #
     # Add a custom attribute to the output.
     #
@@ -143,6 +145,7 @@ class Inspector:
     def addTimeStamp(self, key):
         timeSinceStart = int(round(time.time() - self.__startTime*1000))
         self.__attributes[key] = timeSinceStart
+        
     #
     # Add custom time stamps to the output. The key value determines the name
     # of the attribute and the value will be the time from Inspector initialization
