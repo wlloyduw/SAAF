@@ -15,7 +15,7 @@ from Inspector import *
 ...
 inspector = Inspector()
 ```
-This should be the first line of your function as it begins recording the runtime.
+Initializing the Inspector should be the first line of your function as it begins recording the runtime.
 
 ### Example Hello World Function
 
