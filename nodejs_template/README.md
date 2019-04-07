@@ -46,6 +46,14 @@ module.exports = function(request) {
 
 The amount of data collected is detemined by which functions are called. If some attributes are not needed, then some functions many not need to be called.
 
+### Core Attributes
+
+| **Field** | **Description** |
+| --------- | --------------- |
+| version | The version of the FaaS Inspector Framework. |
+| lang | The language of the function. |
+| runtime | The total runtime from when the Inspector is initialized until Inspector.finish() |
+
 ### inspectContainer()| **Field** | **Description** || --------- | --------------- |
 | uuid | A unique identifier assigned to a container if one does not already exist. |
 | newcontainer | Whether a container is new (no assigned uuid) or if it has been used before. || vmuptime | The time when the system started in Unix time.|

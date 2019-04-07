@@ -4,7 +4,7 @@ FaaS Inspector is a programming framework that allows for tracing FaaS function 
 
 ### Getting Started
 
-To use the core FaaS Inspector framework, download the [Inspector.py](./src/Inspector.py) script into an existing Node.js project and simply import the module as shown below.
+To use the core FaaS Inspector framework, download the [Inspector.py](./src/Inspector.py) script into an existing Python project and simply import the module as shown below.
 
 FaaS Inspector also includes tools to deploy and develop new functions for each supported platform automatically. To make use of these tools, download the entire repository and follow the directions in the [test directory](./test). 
 
@@ -62,6 +62,14 @@ def my_handler(event, context):
 # Attributes Collected by Each Function
 
 The amount of data collected is detemined by which functions are called. If some attributes are not needed, then some functions many not need to be called.
+
+### Core Attributes
+
+| **Field** | **Description** |
+| --------- | --------------- |
+| version | The version of the FaaS Inspector Framework. |
+| lang | The language of the function. |
+| runtime | The total runtime from when the Inspector is initialized until Inspector.finish() |
 
 ### inspectContainer()
 
