@@ -12,6 +12,8 @@ FaaS Inspector also includes tools to deploy and develop new functions for each 
 
 ```
 from Inspector import *
+...
+inspector = Inspector()
 ```
 This should be the first line of your function as it begins recording the runtime.
 
