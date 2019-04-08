@@ -1,8 +1,23 @@
-# Faas InspectorFaaS Inspector is a programming framework that allows for tracing FaaS function server infrastructure for code deployments. This framework includes functions to enable tracing code containers and hosts (VMs) created by FaaS platform providers for hosting FaaS functions. This information can help verify the state of infrastructure (COLD vs. WARM) to understand performance results, and help preserve infrastructure for better FaaS performance.### Getting StartedTo use the core FaaS Inspector framework, download the [Inspector.js](./src/Inspector.js) script into an existing Node.js project and simply import the module as shown below.
+# Faas Inspector
 
-FaaS Inspector also includes tools to deploy and develop new functions for each supported platform automatically. To make use of these tools, download the entire repository and follow the directions in the [test directory](./test). ### Import the Module into an Existing Project```const inspector = new (require('./Inspector'))();```This should be the first line of your function as it begins recording the runtime.### Example Hello World Function
+FaaS Inspector is a programming framework that allows for tracing FaaS function server infrastructure for code deployments. This framework includes functions to enable tracing code containers and hosts (VMs) created by FaaS platform providers for hosting FaaS functions. This information can help verify the state of infrastructure (COLD vs. WARM) to understand performance results, and help preserve infrastructure for better FaaS performance.
 
+### Getting Started
+
+To use the core FaaS Inspector framework, download the [Inspector.js](./src/Inspector.js) script into an existing Node.js project and simply import the module as shown below.
+
+FaaS Inspector also includes tools to deploy and develop new functions for each supported platform automatically. To make use of these tools, download the entire repository and follow the directions in the [test directory](./test). 
+
+### Import the Module into an Existing Project
+
+```node.js
+const inspector = new (require('./Inspector'))();
 ```
+This should be the first line of your function as it begins recording the runtime.
+
+### Example Hello World Function
+
+```node.js
 module.exports = function(request) {
   
   //Import the module and collect data
@@ -19,11 +34,12 @@ module.exports = function(request) {
 
 #### Example JSON Output
 
-```
+```json
 {
   "version": 0.2,
   "lang": "node.js",
   "cpuType": "Intel(R) Xeon(R) Processor @ 2.50GHz",
+  "cpuModel": 63,
   "vmuptime": 1551727835,
   "uuid": "d241c618-78d8-48e2-9736-997dc1a931d4",
   "newcontainer": 1,
@@ -54,10 +70,15 @@ The amount of data collected is detemined by which functions are called. If some
 | lang | The language of the function. |
 | runtime | The total runtime from when the Inspector is initialized until Inspector.finish() |
 
-### inspectContainer()| **Field** | **Description** || --------- | --------------- |
+### inspectContainer()
+
+| **Field** | **Description** |
+| --------- | --------------- |
 | uuid | A unique identifier assigned to a container if one does not already exist. |
-| newcontainer | Whether a container is new (no assigned uuid) or if it has been used before. || vmuptime | The time when the system started in Unix time.|
-### inspectCPU()
+| newcontainer | Whether a container is new (no assigned uuid) or if it has been used before. |
+| vmuptime | The time when the system started in Unix time.|
+
+### inspectCPU()
 
 | **Field** | **Description** |
 | --------- | --------------- |
@@ -71,7 +92,8 @@ The amount of data collected is detemined by which functions are called. If some
 | cpuIrq | Time spent servicing interrupts. |
 | cpuSoftIrq | Time spent servicing software interrupts. |
 | vmcpusteal | Time spent waiting for real CPU while hypervisor is using another virtual CPU. |
-### inspectPlatform()
+
+### inspectPlatform()
 
 | **Field** | **Description** |
 | --------- | --------------- |

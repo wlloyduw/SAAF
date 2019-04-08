@@ -10,14 +10,16 @@ FaaS Inspector also includes tools to deploy and develop new functions for each 
 
 ### Import the Module into an Existing Project
 
-```
+```python
 from Inspector import *
+...
+inspector = Inspector()
 ```
-This should be the first line of your function as it begins recording the runtime.
+Initializing the Inspector should be the first line of your function as it begins recording the runtime.
 
 ### Example Hello World Function
 
-```
+```python
 from Inspector import *
 
 def my_handler(event, context):
@@ -36,11 +38,12 @@ def my_handler(event, context):
 
 #### Example JSON Output
 
-```
+```json
 {
   "version": 0.2,
   "lang": "python",
   "cpuType": "Intel(R) Xeon(R) Processor @ 2.50GHz",
+  "cpuModel": 63,
   "vmuptime": 1551727835,
   "uuid": "d241c618-78d8-48e2-9736-997dc1a931d4",
   "newcontainer": 1,
