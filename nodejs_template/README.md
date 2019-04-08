@@ -10,14 +10,14 @@ FaaS Inspector also includes tools to deploy and develop new functions for each 
 
 ### Import the Module into an Existing Project
 
-```
+```node.js
 const inspector = new (require('./Inspector'))();
 ```
 This should be the first line of your function as it begins recording the runtime.
 
 ### Example Hello World Function
 
-```
+```node.js
 module.exports = function(request) {
   
   //Import the module and collect data
@@ -34,7 +34,7 @@ module.exports = function(request) {
 
 #### Example JSON Output
 
-```
+```json
 {
   "version": 0.2,
   "lang": "node.js",
