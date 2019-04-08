@@ -10,7 +10,7 @@ FaaS Inspector also includes tools to deploy and develop new functions for each 
 
 ### Import the Module into an Existing Project
 
-```
+```python
 from Inspector import *
 ...
 inspector = Inspector()
@@ -19,7 +19,7 @@ Initializing the Inspector should be the first line of your function as it begin
 
 ### Example Hello World Function
 
-```
+```python
 from Inspector import *
 
 def my_handler(event, context):
@@ -38,7 +38,7 @@ def my_handler(event, context):
 
 #### Example JSON Output
 
-```
+```json
 {
   "version": 0.2,
   "lang": "python",
