@@ -4,7 +4,7 @@
 
 function=`cat config.json | jq '.functionName' | tr -d '"'`
 azureEndpoint=`cat config.json | jq '.azureEndpoint' | tr -d '"'`
-json={"\"command\"":"\"env\""}
+json={"\"name\"":"\"Bob\""}
 
 echo
 echo ----- Testing $function on each platform ------
@@ -26,7 +26,7 @@ echo Invoking $function on IBM Cloud Functions...
 echo
 
 # IBM CAN'T SEND JSON THROUGH CLI. EDIT THIS IF YOU EDIT THE JSON. :(
-ibmcloud fn action invoke $function -p command env --result
+ibmcloud fn action invoke $function -p name Bob --result
 
 echo
 echo Invoking $function on Azure Functions...

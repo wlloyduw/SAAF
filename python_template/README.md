@@ -22,7 +22,7 @@ Initializing the Inspector should be the first line of your function as it begin
 ```python
 from Inspector import *
 
-def my_handler(event, context):
+def my_handler(request):
   
   # Import the module and collect data
   inspector = Inspector()

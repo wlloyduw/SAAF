@@ -18,9 +18,14 @@ import time
 # return JSON with customized fields.
 
 def yourFunction(request):
+    # Import the module and collect data
     inspector = Inspector()
     inspector.inspectContainer()
     inspector.inspectCPU()
     inspector.inspectPlatform()
     inspector.inspectLinux()
+    inspector.addTimeStamp("frameworkRuntime")
+
+    # Add custom message and finish the function
+    inspector.addAttribute("message", "Hello " + request['name'] + "!")
     return inspector.finish()
