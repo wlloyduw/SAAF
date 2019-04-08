@@ -1,0 +1,8 @@
+{
+	"functionName": "pythonTest",
+	"azureFunctionApp": "UWT-Workspace",
+	"awsEndpoint": "",
+	"googleEndpoint": "",
+	"ibmEndpoint": "",
+	"azureEndpoint": ""
+}

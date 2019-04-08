@@ -1,5 +1,6 @@
 # TCSS 499
 # Wen Shu
+# Robert Cordingly
 # Winter 2019
 
 # This is just a Hello world python script for
@@ -16,7 +17,7 @@ import time
 # context: https://docs.aws.amazon.com/lambda/latest/dg/python-context-object.html
 # return JSON with customized fields.
 
-def my_handler(event, context):
+def yourFunction(request):
     inspector = Inspector()
     inspector.inspectContainer()
     inspector.inspectCPU()

@@ -1,11 +1,3 @@
-# TCSS 499
-# Wen Shu
-# Winter 2019
-
-# This is just library for profiling the VM's
-# spec which your program is running on. It
-# targets AWS Lambda for now.
-
 import json
 import logging
 import os
@@ -15,8 +7,13 @@ import uuid
 import shlex
 import time
 
-# event: is the JSON object or message that passed in.
-# return JSON/Dictionary with customized fields.
+#
+# FaaS Inspector
+#
+# Wes Lloyd
+# Wen Shu
+# Robert Cordingly
+#
 class Inspector:
     
     #
