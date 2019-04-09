@@ -68,34 +68,6 @@ then
 	cd ..
 fi
 
-# Deploy onto Azure Functions
-if [[ ! -z $4 && $4 -eq 1 ]]
-then
-	echo
-	echo "----- Deploying onto Azure Functions -----"
-	echo
-	cd src
-	mkdir $function
-	mv  -v ./* ./$function/
-	mkdir node_modules
-	mv ./$function/package.json package.json
-	mv -v ../test/node_modules/* ./node_modules/
-	cp ../platforms/azure/function.json ./$function/function.json
-	cp ../platforms/azure/host.json host.json
-	cp ../platforms/azure/local.settings.json local.settings.json
-	cp ../platforms/azure/index.js ./$function/index.js
-	func azure functionapp publish $functionApp --force
-	rm host.json
-	rm local.settings.json
-	rm ./$function/function.json
-	rm ./$function/index.js
-	mv  -v ./$function/* ./
-	mv -v ./node_modules/* ../test/node_modules/
-	rmdir node_modules
-	rmdir $function
-	cd ..
-fi
-
 # Deploy onto Google Cloud Functions
 if [[ ! -z $2 && $2 -eq 1 ]]
 then
@@ -106,6 +78,38 @@ then
 	cp ../platforms/google/main.py main.py
 	gcloud functions deploy $function --source=. --runtime python37 --trigger-http --memory $memory
 	rm main.py
+	cd ..
+fi
+
+# Deploy onto Azure Functions
+if [[ ! -z $4 && $4 -eq 1 ]]
+then
+	echo
+	echo "----- Deploying onto Azure Functions -----"
+	echo
+	cd src
+	mkdir $function
+	mv  -v ./* ./$function/
+	cp ../platforms/azure/function.json ./$function/function.json
+	cp ../platforms/azure/host.json host.json
+	cp ../platforms/azure/requirements.txt requirements.txt
+	cp ../platforms/azure/local.settings.json local.settings.json
+	cp ../platforms/azure/__init__.py ./$function/__init__.py
+	
+	python3.6 -m venv .env
+	source .env/bin/activate
+	func azure functionapp publish $functionApp --force
+	deactivate
+	
+	rm host.json
+	rm local.settings.json
+	rm requirements.txt
+	rm ./$function/function.json
+	rm ./$function/__init__.py
+	mv  -v ./$function/* ./
+	rmdir $function
+	rm -rf .python_packages
+	rm -rf .env
 	cd ..
 fi
 
