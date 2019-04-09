@@ -30,7 +30,7 @@ functionApp=`cat config.json | jq '.azureFunctionApp' | tr -d '"'`
 cd ..
 
 #Define the memory value.
-memory=512
+memory=`cat config.json | jq '.memorySetting' | tr -d '"'`
 if [[ ! -z $5 ]]
 then
 	memory=$5
