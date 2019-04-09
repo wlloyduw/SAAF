@@ -10,9 +10,9 @@ import time
 #
 # FaaS Inspector
 #
-# Wes Lloyd
-# Wen Shu
-# Robert Cordingly
+# @author Wes Lloyd
+# @author Wen Shu
+# @author Robert Cordingly
 #
 class Inspector:
     
@@ -140,7 +140,7 @@ class Inspector:
     # @param key The name of the time stamp.
     #
     def addTimeStamp(self, key):
-        timeSinceStart = int(round(time.time() - self.__startTime*1000))
+        timeSinceStart = round((time.time() - self.__startTime) * 100000) / 100
         self.__attributes[key] = timeSinceStart
         
     #
@@ -151,5 +151,5 @@ class Inspector:
     # @param key The name of the time stamp.
     #
     def finish(self):
-        self.__attributes['runtime'] = int(round(time.time() - self.__startTime*1000))
+        self.__attributes['runtime'] = round((time.time() - self.__startTime) * 100000) / 100
         return self.__attributes

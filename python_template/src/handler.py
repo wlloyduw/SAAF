@@ -1,22 +1,15 @@
-# TCSS 499
-# Wen Shu
-# Robert Cordingly
-# Winter 2019
-
-# This is just a Hello world python script for
-# AWS Lambda function with JSON as input and 
-# output
-
 import json
 import logging
 from Inspector import *
 import time
 
-# my_handler is the lambda function on aws that will be called
-# event: is the JSON object or message that passed in
-# context: https://docs.aws.amazon.com/lambda/latest/dg/python-context-object.html
-# return JSON with customized fields.
-
+#
+# Define your FaaS Function here.
+# Each platform handler will call and pass parameters to this function.
+# 
+# @param request A JSON object provided by the platform handler.
+# @returns A JSON object to use as a response.
+#
 def yourFunction(request):
     # Import the module and collect data
     inspector = Inspector()
