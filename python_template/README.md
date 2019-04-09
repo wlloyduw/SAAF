@@ -22,7 +22,7 @@ Initializing the Inspector should be the first line of your function as it begin
 ```python
 from Inspector import *
 
-def my_handler(request):
+def myFunction(request):
   
   # Import the module and collect data
   inspector = Inspector()
@@ -31,7 +31,7 @@ def my_handler(request):
   inspector.addTimeStamp("frameworkRuntime")
 
   # Add custom message and finish the function
-  inspector.addAttribute("message", "Hello " + request.name + "!")
+  inspector.addAttribute("message", "Hello " + request['name'] + "!")
   return inspector.finish()
 
 ```
