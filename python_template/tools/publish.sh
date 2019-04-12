@@ -25,17 +25,20 @@
 
 
 # Get the function name from the config.json file.
-function=`cat config.json | jq '.functionName' | tr -d '"'`
-functionApp=`cat config.json | jq '.azureFunctionApp' | tr -d '"'`
+function=`cat ./config.json | jq '.functionName' | tr -d '"'`
+functionApp=`cat ./config.json | jq '.azureFunctionApp' | tr -d '"'`
 cd ..
 
+echo
+echo Deploying $function....
+echo
+
 #Define the memory value.
-memory=`cat config.json | jq '.memorySetting' | tr -d '"'`
+memory=`cat ./config.json | jq '.memorySetting' | tr -d '"'`
 if [[ ! -z $5 ]]
 then
 	memory=$5
 fi
-
 
 # Deploy onto AWS Lambda.
 if [[ ! -z $1 && $1 -eq 1 ]]

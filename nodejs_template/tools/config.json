@@ -1,6 +1,6 @@
 {
 	"functionName":     "test",
 	"memorySetting":    512,
-	
-	"azureFunctionApp": "UWT-Workspace",
+
+	"azureFunctionApp": "UWT-Workspace"
 }

@@ -21,21 +21,24 @@
 # Example to deploy to AWS and Azure: ./publish.sh 1 0 0 1 1024
 #
 # WARNING for Azure: Azure Functions DOES NOT automatically download dependencies in the package.json file like IBM or Google. 
-# You must manually install them to the ./test directory and this script will automatically copy the node_modules folder and deploy it with your Azure function.
+# You must manually install them to the ./tools directory and this script will automatically copy the node_modules folder and deploy it with your Azure function.
 
 
 # Get the function name from the config.json file.
-function=`cat config.json | jq '.functionName' | tr -d '"'`
-functionApp=`cat config.json | jq '.azureFunctionApp' | tr -d '"'`
+function=`cat ./config.json | jq '.functionName' | tr -d '"'`
+functionApp=`cat ./config.json | jq '.azureFunctionApp' | tr -d '"'`
 cd ..
 
+echo
+echo Deploying $function....
+echo
+
 #Define the memory value.
-memory=`cat config.json | jq '.memorySetting' | tr -d '"'`
+memory=`cat ./config.json | jq '.memorySetting' | tr -d '"'`
 if [[ ! -z $5 ]]
 then
 	memory=$5
 fi
-
 
 # Deploy onto AWS Lambda.
 if [[ ! -z $1 && $1 -eq 1 ]]
