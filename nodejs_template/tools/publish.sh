@@ -30,7 +30,7 @@ functionApp=`cat ./config.json | jq '.azureFunctionApp' | tr -d '"'`
 cd ..
 
 echo
-echo Deploying $function....
+echo Deploying $function...
 echo
 
 #Define the memory value.
