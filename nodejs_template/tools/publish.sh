@@ -79,7 +79,7 @@ then
 	mv  -v ./* ./$function/
 	mkdir node_modules
 	mv ./$function/package.json package.json
-	mv -v ../test/node_modules/* ./node_modules/
+	mv -v ../tools/node_modules/* ./node_modules/
 	cp ../platforms/azure/function.json ./$function/function.json
 	cp ../platforms/azure/host.json host.json
 	cp ../platforms/azure/local.settings.json local.settings.json
@@ -90,7 +90,7 @@ then
 	rm ./$function/function.json
 	rm ./$function/index.js
 	mv  -v ./$function/* ./
-	mv -v ./node_modules/* ../test/node_modules/
+	mv -v ./node_modules/* ../tools/node_modules/
 	rmdir node_modules
 	rmdir $function
 	cd ..
@@ -109,5 +109,4 @@ then
 	cd ..
 fi
 
-cd test
-#./simpleTest.sh
+cd tools

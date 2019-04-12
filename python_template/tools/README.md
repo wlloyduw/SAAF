@@ -1,4 +1,4 @@
-# Faas Inspector Testing and Deployment Tools
+# Faas Inspector Deployment Tools
 
 One goal of FaaS Inspector is to support multiple FaaS platforms. Currently AWS Lambda, Google Cloud Functions, IBM Cloud Functions/OpenWhisk, and Azure Function are the supported platforms. A few scripts have been developed to aid in development, deployment, and testing of each platform.
 
@@ -9,10 +9,9 @@ The project structure is meant to simplify deploying onto each of the supported 
         📁 src
             handler.py
             Inspector.py
-        📁 test
+        📁 tools
             config.json
             publish.sh
-            partestcpu.sh
         📁 platforms  
             ...
   
@@ -25,13 +24,12 @@ The src folder contains all of the code for your function.
   
   * [**handler.py**](../src/handler.py) file is the handler that each cloud provider will execute. 
     
-### 📁 test Folder
+### 📁 tools Folder
 
-This folder contains tools to help test and deploy serverless functions onto each supported platform. For more detailed documentation please see the comments at the beginning of each file. 
+This folder contains tools to help deploy serverless functions onto each supported platform. For more detailed documentation please see the comments at the beginning of each file. 
 
   * [**config.json**](./config.json) contains all of the neccessary variables to deploy a function. This includes the name of the function, the Azure Function app name, and other information.
   * [**publish.sh**](./publish.sh) is a script used to deploy a function onto each platform. This requires each each cloud providers CLI to be installed and properly configured.
-  * [**partestcpu.sh**](./partestcpu.sh) is a script to test a function after it has been deployed. The script can make many calls in parallel to create stress on each platform.
     
 ### 📁 platforms Folder
 

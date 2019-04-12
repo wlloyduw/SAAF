@@ -1,0 +1,6 @@
+{
+	"functionName":     "pythonTest",
+	"memorySetting":    512,
+	
+	"azureFunctionApp": "UWT-Workspace-Python",
+}

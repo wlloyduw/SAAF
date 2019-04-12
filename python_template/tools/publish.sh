@@ -21,7 +21,7 @@
 # Example to deploy to AWS and Azure: ./publish.sh 1 0 0 1 1024
 #
 # WARNING for Azure: Azure Functions DOES NOT automatically download dependencies in the package.json file like IBM or Google. 
-# You must manually install them to the ./test directory and this script will automatically copy the node_modules folder and deploy it with your Azure function.
+# You must manually install them to the ./tools directory and this script will automatically copy the node_modules folder and deploy it with your Azure function.
 
 
 # Get the function name from the config.json file.
@@ -113,5 +113,4 @@ then
 	cd ..
 fi
 
-cd test
-#./simpleTest.sh
+cd tools

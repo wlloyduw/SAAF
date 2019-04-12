@@ -1,0 +1,11 @@
+{
+	"awsGBps":         0.00001667,
+	"googleGBps":      0.0000025,
+	"ibmGBps":         0.000017,
+	"azureGBps":       0.000016,
+	
+	"awsRequest":      0.0000002,
+	"googleRequest":   0.0000004,
+	"ibmRequest":      0,
+	"azureRequest":    0.0000002
+}

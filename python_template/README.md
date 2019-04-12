@@ -6,7 +6,7 @@ FaaS Inspector is a programming framework that allows for tracing FaaS function 
 
 To use the core FaaS Inspector framework, download the [Inspector.py](./src/Inspector.py) script into an existing Python project and simply import the module as shown below.
 
-FaaS Inspector also includes tools to deploy and develop new functions for each supported platform automatically. To make use of these tools, download the entire repository and follow the directions in the [test directory](./test). 
+FaaS Inspector also includes tools to deploy and develop new functions for each supported platform automatically. To make use of these tools, download the entire repository and follow the directions in the [tools directory](./tools). 
 
 ### Import the Module into an Existing Project
 
@@ -72,7 +72,7 @@ The amount of data collected is detemined by which functions are called. If some
 | --------- | --------------- |
 | version | The version of the FaaS Inspector Framework. |
 | lang | The language of the function. |
-| runtime | The total runtime from when the Inspector is initialized until Inspector.finish() |
+| runtime | The server-side runtime from when the function is initialized until Inspector.finish() is called. |
 
 ### inspectContainer()
 
@@ -80,7 +80,7 @@ The amount of data collected is detemined by which functions are called. If some
 | --------- | --------------- |
 | uuid | A unique identifier assigned to a container if one does not already exist. |
 | newcontainer | Whether a container is new (no assigned uuid) or if it has been used before. |
-| vmuptime | The time when the system started in Unix time.|
+| vmuptime | Time when the host booted in seconds since January 1, 1970 (Unix epoch). |
 
 ### inspectCPU()
 

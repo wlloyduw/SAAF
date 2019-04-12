@@ -8,22 +8,13 @@
  */
 module.exports = function(request) {
         
-    //Run FaaS Inspector and collect information about container, CPU, and platform.
+    //Import the module and collect data
     const inspector = new (require('./Inspector'))();
     inspector.inspectContainer();
     inspector.inspectCPU();
-    inspector.inspectPlatform();
-    inspector.inspectLinux();
-        
-    //Get a command from input and execute the command.
-    let command = request.command;
-    if (command == null) command = "env";
-    const { execSync } = require('child_process');
-    let child = execSync(command, { encoding : 'utf8' });
-    let results = "STDOUT: " + child;
-    
-    //Append attributes to FaaS Inspector and finish inspecting.
-    inspector.attributes['command'] = command;
-    inspector.attributes['results'] = results;
+    inspector.addTimeStamp("frameworkRuntime");
+
+    //Add custom message and finish the function
+    inspector.addAttribute("message", "Hello " + request.name + "!");
     return inspector.finish();
 };
