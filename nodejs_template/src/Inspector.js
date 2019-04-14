@@ -100,21 +100,15 @@ class Inspector {
         let environment = execSync('env', { encoding : 'utf8' });
         if (environment.indexOf("AWS_LAMBDA") > -1) {
             this.attributes['platform'] = "AWS Lambda";
-            return 0;
-        }
-        if (environment.indexOf("X_GOOGLE") > -1) {
+        } else if (environment.indexOf("X_GOOGLE") > -1) {
             this.attributes['platform'] = "Google Cloud Functions";
-            return 0;
-        }
-        if (environment.indexOf("functions.cloud.ibm") > -1) {
+        } else if (environment.indexOf("functions.cloud.ibm") > -1) {
             this.attributes['platform'] = "IBM Cloud Functions";
-            return 0;
-        }
-        if (environment.indexOf("microsoft.com/azure-functions") > -1) {
+        } else if (environment.indexOf("microsoft.com/azure-functions") > -1) {
             this.attributes['platform'] = "Azure Functions";
-            return 0;
+        } else {
+            this.attributes['platform'] = "Unknown Platform";
         }
-        this.attributes['platform'] = "Unknown Platform";
 
     }
     
@@ -133,7 +127,7 @@ class Inspector {
     /**
      * Add a custom attribute to the output.
      *
-     * @param key A string ot use as the key value.
+     * @param key A string to use as the key value.
      * @param value The value to associate with that key.
      */
     addAttribute(key, value) {
@@ -156,7 +150,7 @@ class Inspector {
      * Finalize FaaS inspector. Calculator the total runtime and return the JSON object
      * containing all attributes collected.
      *
-     * @returns Attributes collected by FaaS Inspector.
+     * @return Attributes collected by FaaS Inspector.
      */
     finish() {
         let endTime = process.hrtime(this.startTime);

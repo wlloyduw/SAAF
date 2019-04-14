@@ -1,139 +1,37 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package lambda;
 
-import com.amazonaws.services.lambda.runtime.ClientContext;
-import com.amazonaws.services.lambda.runtime.CognitoIdentity;
-import com.amazonaws.services.lambda.runtime.Context; 
+import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
-import com.amazonaws.services.lambda.runtime.LambdaLogger;
-import faasinspector.register;
-import java.nio.charset.Charset;
+import faasinspector.Inspector;
+import java.util.HashMap;
+
 /**
  * uwt.lambda_test::handleRequest
- * @author wlloyd
+ *
+ * @author Wes Lloyd
+ * @author Robert Cordingly
  */
-public class Hello implements RequestHandler<Request, Response>
-{
-    static String CONTAINER_ID = "/tmp/container-id";
-    static Charset CHARSET = Charset.forName("US-ASCII");
-    
-    
-    // Lambda Function Handler
-    public Response handleRequest(Request request, Context context) {
-        // Register function to start timing
-        register reg = new register();
+public class Hello implements RequestHandler<Request, HashMap<String, Object>> {
 
-        // Create logger
-        LambdaLogger logger = context.getLogger();
+    /**
+     * Lambda Function Handler
+     * 
+     * @param request Request POJO with defined variables from Request.java
+     * @param context 
+     * @return HashMap that Lambda will automatically convert into JSON.
+     */
+    public HashMap<String, Object> handleRequest(Request request, Context context) {
         
-        // Register logger 
-        reg.setLogger(logger);
-
-        //stamp container with uuid
-        Response r = reg.StampContainer();
+        //Collect data
+        Inspector inspector = new Inspector();
+        inspector.inspectCPU();
+        inspector.inspectContainer();
+        inspector.inspectLinux();
+        inspector.inspectPlatform();
+        inspector.addTimeStamp("frameworkRuntime");
         
-        // *********************************************************************
-        // Implement Lambda Function Here
-        // *********************************************************************
-        String hello = "Hello " + request.getName();
-
-        //Print log information to the Lambda log as needed
-        //logger.log("log message...");
-        
-        // Set return result in Response class, class is marshalled into JSON
-        r.setValue(hello);
-        reg.setRuntime();
-        return r;
-    }
-    
-    // int main enables testing function from cmd line
-    public static void main (String[] args)
-    {
-        Context c = new Context() {
-            @Override
-            public String getAwsRequestId() {
-                return "";
-            }
-
-            @Override
-            public String getLogGroupName() {
-                return "";
-            }
-
-            @Override
-            public String getLogStreamName() {
-                return "";
-            }
-
-            @Override
-            public String getFunctionName() {
-                return "";
-            }
-
-            @Override
-            public String getFunctionVersion() {
-                return "";
-            }
-
-            @Override
-            public String getInvokedFunctionArn() {
-                return "";
-            }
-
-            @Override
-            public CognitoIdentity getIdentity() {
-                return null;
-            }
-
-            @Override
-            public ClientContext getClientContext() {
-                return null;
-            }
-
-            @Override
-            public int getRemainingTimeInMillis() {
-                return 0;
-            }
-
-            @Override
-            public int getMemoryLimitInMB() {
-                return 0;
-            }
-
-            @Override
-            public LambdaLogger getLogger() {
-                return new LambdaLogger() {
-                    @Override
-                    public void log(String string) {
-                        System.out.println("LOG:" + string);
-                    }
-                };
-            }
-        };
-        
-        // Create an instance of the class
-        Hello lt = new Hello();
-        
-        // Create a request object
-        Request req = new Request();
-        
-        // Grab the name from the cmdline from arg 0
-        String name = (args.length > 0 ? args[0] : "");
-        
-        // Load the name into the request object
-        req.setName(name);
-
-        // Report name to stdout
-        System.out.println("cmd-line param name=" + req.getName());
-        
-        // Run the function
-        Response resp = lt.handleRequest(req, c);
-        
-        // Print out function result
-        System.out.println("function result:" + resp.toString());
+        //Add custom message and finish the function
+        inspector.addAttribute("message", "Hello " + request.getName() + "!");
+        return inspector.finish();
     }
 }
