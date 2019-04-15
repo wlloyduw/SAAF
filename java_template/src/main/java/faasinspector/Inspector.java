@@ -124,13 +124,13 @@ public class Inspector {
         text = getFileAsString("/proc/cpuinfo");
         start = text.indexOf("name") + 7;
         end = start + text.substring(start).indexOf(":");
-        String cpuType = text.substring(start, end).trim();
+        String cpuType = text.substring(start, end - 9).trim();
         attributes.put("cpuType", cpuType);
 
         //Get CPU Model
         start = text.indexOf("model") + 9;
         end = start + text.substring(start).indexOf(":");
-        String cpuModel = text.substring(start, end).trim();
+        String cpuModel = text.substring(start, end - 11).trim();
         attributes.put("cpuModel", cpuModel);
 
         //Get CPU Metrics
@@ -161,7 +161,7 @@ public class Inspector {
      * platform: The FaaS platform hosting this function.
      */
     public void inspectPlatform() {
-        String environment = runCommand("env");
+        String environment = runCommand(new String[] {"env"});
         if (environment.contains("AWS_LAMBDA")) {
             attributes.put("platform", "AWS Lambda");
         } else if (environment.contains("X_GOOGLE")) {
@@ -181,7 +181,7 @@ public class Inspector {
      * linuxVersion: The version of the linux kernel.
      */
     public void inspectLinux() {
-        String linuxVersion = runCommand("uname -v");
+        String linuxVersion = runCommand(new String[] {"uname", "-v"}).trim();
         attributes.put("linuxVersion", linuxVersion);
     }
 
@@ -219,6 +219,12 @@ public class Inspector {
         return attributes;
     }
 
+    /**
+     * Read a file and return it as a String.
+     * 
+     * @param filename The file name/path to read.
+     * @return The entire content of the file as a string.
+     */
     private String getFileAsString(String filename) {
         File f = new File(filename);
         Path p = Paths.get(filename);
@@ -237,7 +243,13 @@ public class Inspector {
         return sb.toString();
     }
 
-    private String runCommand(String command) {
+    /**
+     * Execute a bash command and get the output.
+     * 
+     * @param command An array of strings with each part of the command.
+     * @return Standard out of the command.
+     */
+    private String runCommand(String[] command) {
         ProcessBuilder processBuilder = new ProcessBuilder();
         processBuilder.command(command);
         try {
