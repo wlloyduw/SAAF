@@ -368,10 +368,6 @@ stdevhost=`printf '%.*f\n' 3 $stdevhost`
 # CPU Types info
 echo "cputype,uses,totaltime,avgruntime_per_cpu,avgssruntime_per_cpu,avglatency_per_cpu"
 total=0
-if [[ ! -z $vmreport && $vmreport -eq 1 ]]
-then
-  rm -f .origvm 
-fi
 
 # Loop through CPU Types and make summary data
 for ((i=0;i < ${#cpuTypes[@]};i++)) {
