@@ -24,11 +24,7 @@ public class Hello implements RequestHandler<Request, HashMap<String, Object>> {
         
         //Collect data
         Inspector inspector = new Inspector();
-        inspector.inspectCPU();
-        inspector.inspectContainer();
-        inspector.inspectLinux();
-        inspector.inspectPlatform();
-        inspector.addTimeStamp("frameworkRuntime");
+        inspector.inspectAll();
         
         //Add custom message and finish the function
         inspector.addAttribute("message", "Hello " + request.getName() + "!");
