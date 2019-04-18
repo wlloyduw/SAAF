@@ -124,6 +124,16 @@ class Inspector:
         self.__attributes['linuxVersion'] = linuxVersion
         
     #
+    # Run all data collection methods and record framework runtime.
+    #
+    def inspectAll(self):
+        self.inspectCPU()
+        self.inspectContainer()
+        self.inspectLinux()
+        self.inspectPlatform()
+        self.addTimeStamp("frameworkRuntime")
+        
+    #
     # Add a custom attribute to the output.
     #
     # @param key A string ot use as the key value.

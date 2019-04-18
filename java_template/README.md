@@ -60,7 +60,7 @@ public HashMap<String, Object> handleRequest(Request request, Context context) {
 
 # Attributes Collected by Each Function
 
-The amount of data collected is detemined by which functions are called. If some attributes are not needed, then some functions many not need to be called.
+The amount of data collected is detemined by which functions are called. If some attributes are not needed, then some functions many not need to be called. If you would like to collect every attribute, the inspectAll() method will run all methods.
 
 ### Core Attributes
 
@@ -91,7 +91,7 @@ The amount of data collected is detemined by which functions are called. If some
 | cpuIowait | Time spent waiting for I/O to complete. |
 | cpuIrq | Time spent servicing interrupts. |
 | cpuSoftIrq | Time spent servicing software interrupts. |
-| vmcpusteal | Time spent waiting for real CPU while hypervisor is using another virtual CPU. |
+| vmcpusteal | Cycles spent waiting for real CPU while hypervisor is using another virtual CPU. |
 
 ### inspectPlatform()
 

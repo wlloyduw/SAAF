@@ -186,6 +186,17 @@ public class Inspector {
     }
 
     /**
+     * Run all data collection methods and record framework runtime.
+     */
+    public void inspectAll() {
+        this.inspectCPU();
+        this.inspectContainer();
+        this.inspectLinux();
+        this.inspectPlatform();
+        this.addTimeStamp("frameworkRuntime");
+    }
+    
+    /**
      * Add a custom attribute to the output.
      *
      * @param key A string to use as the key value.
