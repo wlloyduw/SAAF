@@ -98,7 +98,7 @@ callservice() {
     latency=`echo $elapsedtime - $ssruntime | bc -l`
     sleeptimems=`echo $sleeptime/$onesecond | bc -l`
     echo "$i,$threadid,$uuid,$cputype,$cpusteal,$vuptime,$pid,$cpuusr,$cpukrn,$elapsedtime,$ssruntime,$latency,$sleeptimems,$newcont"
-    echo "$uuid,$elapsedtime,$ssruntime,$latency,$vuptime,$newcont,$cputype" >> .uniqcont
+    echo "$uuid,$elapsedtime,$ssruntime,$latency,$vuptime,$newcont,$cputype,$cpusteal" >> .uniqcont
     if (( $sleeptime > 0 ))
     then
       sleep $sleeptimems
@@ -150,9 +150,11 @@ do
     host=`echo $line | cut -d',' -f 5`
     isnewcont=`echo $line | cut -d',' -f 6`
     cputype=`echo $line | cut -d',' -f 7` 
+    cpusteal=`echo $line | cut -d',' -f 8` 
     alltimes=`expr $alltimes + $time`
     allsstimes=`expr $allsstimes + $sstime`
     alllatency=`expr $alllatency + $latency`
+    allcpusteal=`expr $allcpusteal + $cpusteal`
     #echo "Uuid read from file - $uuid"
     # if uuid is already in array
     found=0
@@ -170,6 +172,7 @@ do
             ctimes[$i]=`expr ${ctimes[$i]} + $time`
             csstimes[$i]=`expr ${csstimes[$i]} + $sstime`
             clatency[$i]=`expr ${clatency[$i]} + $latency`
+            ccpusteal[$i]=`expr ${ccpusteal[$i]} + $cpusteal`
             found=1
         fi
     }
@@ -183,6 +186,7 @@ do
         ctimes+=($time)
         csstimes+=($sstime)
         clatency+=($latency)
+        ccpusteal+=($cpusteal)
     fi
 
     # Populate array of unique hosts
@@ -193,6 +197,7 @@ do
             htimes[$i]=`expr ${htimes[$i]} + $time`
             hsstimes[$i]=`expr ${hsstimes[$i]} + $sstime`
             hlatency[$i]=`expr ${hlatency[$i]} + $latency`
+            hcpusteal[$i]=`expr ${hcpusteal[$i]} + $cpusteal`
             hfound=1
         fi
     }
@@ -203,6 +208,7 @@ do
         htimes+=($time)
         hsstimes+=($sstime)
         hlatency+=($latency)
+        hcpusteal+=($cpusteal)
         #hcontainers+=($uuid)
     fi
 
@@ -215,6 +221,7 @@ do
             cputimes[$i]=`expr ${cputimes[$i]} + $time`
             cpusstimes[$i]=`expr ${cpusstimes[$i]} + $sstime`
             cpulatency[$i]=`expr ${cpulatency[$i]} + $latency`
+            cpucpusteal[$i]=`expr ${cpusteal[$i]} + $cpusteal`
             cpufound=1
         fi
 
@@ -225,6 +232,7 @@ do
         cputimes+=($time)
         cpusstimes+=($sstime)
         cpulatency+=($latency)
+        cpucpusteal+=($cpusteal)
     fi
 
 
@@ -276,6 +284,8 @@ avgsstime=`echo $allsstimes / $totalruns | bc -l`
 avgsstime=`printf '%.*f\n' 0 $avgsstime`
 avglatency=`echo $alllatency / $totalruns | bc -l`
 avglatency=`printf '%.*f\n' 0 $avglatency`
+avgcpusteal=`echo $allcpusteal / $totalruns | bc -l`
+avgcpusteal=`printf '%.*f\n' 0 $avgcpusteal`
 allsstimes_sec=`echo $allsstimes / 1000 | bc -l`
 totalcost=`echo "$allsstimes_sec * $price_gbsec * $memory_gb" | bc -l`
 totalcost=`printf '%.*f\n' 4 $totalcost`
@@ -306,7 +316,7 @@ stdev=`printf '%.*f\n' 3 $stdev`
 # hosts info
 currtime=$(date +%s)
 echo "Current time of test=$currtime"
-echo "host,host_cpu,host_up_time,uses,containers,totaltime,avgruntime_host,avgssruntime_host,avglatency_host,uses_minus_avguses_sq"
+echo "host,host_cpu,host_up_time,uses,containers,totaltime,avgruntime_host,avgssruntime_host,avglatency_host,uses_minus_avguses_sq,avgcpusteal"
 total=0
 if [[ ! -z $vmreport && $vmreport -eq 1 ]]
 then
@@ -319,6 +329,8 @@ for ((i=0;i < ${#hosts[@]};i++)) {
   avg=`printf '%.*f\n' 0 $avg`
   ssavg=`echo ${hsstimes[$i]} / ${huses[$i]} | bc -l`
   ssavg=`printf '%.*f\n' 0 $ssavg`
+  avgcpusteal=`echo ${hcpusteal[$i]} / ${huses[$i]} | bc -l`
+  avgcpusteal=`printf '%.*f\n' 0 $avgcpusteal`
   latencyavg=`echo ${hlatency[$i]} / ${huses[$i]} | bc -l`
   latencyavg=`printf '%.*f\n' 0 $latencyavg`
   stdiff=`echo ${huses[$i]} - $runsperhost | bc -l` 
@@ -332,7 +344,7 @@ for ((i=0;i < ${#hosts[@]};i++)) {
           (( ccount ++ ))
       fi
   } 
-  echo "${hosts[$i]},${hcputype[$i]},$uptime,${huses[$i]},$ccount,${htimes[$i]},$avg,$ssavg,$latencyavg,$stdiffsq"
+  echo "${hosts[$i]},${hcputype[$i]},$uptime,${huses[$i]},$ccount,${htimes[$i]},$avg,$ssavg,$latencyavg,$stdiffsq,$avgcpusteal"
 
   ##  Determine count of recycled hosts...
   ## 
