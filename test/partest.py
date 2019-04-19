@@ -1,46 +1,48 @@
-import thread
+#!/usr/bin/python3
+
 import time
+import _thread as thread
 import sys
-import os
-import subprocess
-import shlex
+import requests
+import ast
+import json
 
 function = 'multiCalcService'
-json = '{\"threads\":2,\"calcs\":5000,\"loops\":100,\"sleep\":0}'
+url = 'https://ydmsdru8hb.execute-api.us-east-1.amazonaws.com/default/multiCalcService'
+payload = {'threads':2,'calcs':5000,'loops':100,'sleep':0}
+headers = {'content-type':'application/json'}
 
-command = 'aws lambda invoke --invocation-type RequestResponse --function-name ' + function + ' --region us-east-1 --payload ' + json
+#
+# Start of the program.
+#
+
+threads = int(sys.argv[1])
+runs_per_thread = int(int(sys.argv[2]) / threads)
+runResults = []
 
 # Define a function for the thread
 def make_call( thread_id, runs):
-	for i in range(0, runs):
-		
-		p = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True)
-		 
-		## Talk with date command i.e. read data from stdout and stderr. Store this info in tuple ##
-		## Interact with process: Send data to stdin. Read data from stdout and stderr, until end-of-file is reached.  ##
-		## Wait for process to terminate. The optional input argument should be a string to be sent to the child process, ##
-		## or None, if no data should be sent to the child.
-		(output, err) = p.communicate()
-		 
-		## Wait for date to terminate. Get return returncode ##
-		p_status = p.wait()
-		print "Command output : ", output
-		print "Command exit status/return code : ", p_status
+	for i in range(0, runs):		
+		response = requests.get(url, data=json.dumps(payload), headers=headers)
+		dictionary = ast.literal_eval(response.text)
+		dictionary['threadID'] = thread_id
+		dictionary['run'] = i
+		runResults.append(dictionary)
+		print(dictionary)
+		print("Request finished")
 
-		print(p)
-
-threads = int(sys.argv[1])
-runs_per_thread = int(sys.argv[2]) / threads
-
-# Create two threads as follows
+#
+# Create a bunch of threads and run make_call.
+#
 try:
+	threadList = []
 	for i in range(0, threads):
-		thread.start_new_thread(make_call, (i, threads))
-	
-	#thread.start_new_thread( make_call, ("Thread-1", 2, ) )
-	#thread.start_new_thread( make_call, ("Thread-2", 4, ) )
+		threadList.append(thread.start_new_thread(make_call, (i, runs_per_thread)))
 except:
-	print "Error: unable to start thread"
-
-while 1:
+	print("Error: unable to start thread")
+	
+while(1):
 	pass
+	
+	
+print("All threads complete!")
