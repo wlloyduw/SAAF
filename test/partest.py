@@ -10,8 +10,8 @@ import json
 import datetime
 from decimal import Decimal
 
-url = 'https://2q0ng575ue.execute-api.us-east-1.amazonaws.com/calcservice_dev/'
-payload = {'threads':2,'calcs':500,'loops':10,'sleep':0}
+url_list = ['https://2q0ng575ue.execute-api.us-east-1.amazonaws.com/calcservice_dev/']
+payload = {'threads':2,'calcs':500,'loops':10000,'sleep':0}
 headers = {'content-type':'application/json'}
 
 #
@@ -31,13 +31,14 @@ print("Setting up test: runsperthread=" + str(runs_per_thread) + " threads=" + s
 
 # Define a function for the thread
 def make_call( thread_id, runs):
-	for i in range(0, runs):		
-		response = requests.post(url, data=json.dumps(payload), headers=headers)
-		dictionary = ast.literal_eval(response.text)
-		dictionary['2_thread_id'] = thread_id
-		dictionary['1_run_id'] = i
-		if 'version' in dictionary:
-			run_results.append(dictionary)
+	for i in range(0, runs):	
+		for j in range(len(url_list)):
+			response = requests.post(url_list[j], data=json.dumps(payload), headers=headers)
+			dictionary = ast.literal_eval(response.text)
+			dictionary['2_thread_id'] = thread_id
+			dictionary['1_run_id'] = i
+			if 'version' in dictionary:
+				run_results.append(dictionary)
 		
 #
 # Create a bunch of threads and run make_call.
@@ -107,10 +108,10 @@ for i in range(len(master_key_list)):
 		run_attributes = list(run_dict.keys())
 		run_attributes.sort()
 		
-		number_attributes = [];
+		number_attributes = []
 		
 		for i in range(len(run_attributes)):
-			attribute = run_attributes[i];
+			attribute = run_attributes[i]
 			value = run_dict[attribute]
 			try:
 				Decimal(value)
