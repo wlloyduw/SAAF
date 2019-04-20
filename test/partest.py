@@ -35,7 +35,8 @@ def make_call( thread_id, runs):
 		dictionary = ast.literal_eval(response.text)
 		dictionary['2_thread_id'] = thread_id
 		dictionary['1_run_id'] = i
-		run_results.append(dictionary)
+		if 'version' in dictionary:
+			run_results.append(dictionary)
 		
 #
 # Create a bunch of threads and run make_call.
@@ -78,7 +79,7 @@ for i in range(len(run_results)):
 # Build new dictionaries for each category.
 # key_map defines the dictionary to put runs with unique keys into.
 #
-key_map = {'uuid': {}, 'cpuType': {}, 'vmuptime': {}, 'platform': {}, 'lang': {}}
+key_map = {'uuid': {}, 'cpuType': {}, 'vmuptime': {}, 'newcontainer': {}, 'platform': {}, 'lang': {}, 'version': {}}
 master_key_list = list(key_map.keys())
 for i in range(len(run_results)):
 	run = run_results[i]
