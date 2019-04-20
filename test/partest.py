@@ -2,6 +2,7 @@
 
 import time
 import _thread as thread
+from threading import Thread
 import sys
 import requests
 import ast
@@ -10,7 +11,7 @@ import datetime
 from decimal import Decimal
 
 url = 'https://2q0ng575ue.execute-api.us-east-1.amazonaws.com/calcservice_dev/'
-payload = {'threads':2,'calcs':5000,'loops':100,'sleep':0}
+payload = {'threads':2,'calcs':500,'loops':10,'sleep':0}
 headers = {'content-type':'application/json'}
 
 #
@@ -44,15 +45,13 @@ def make_call( thread_id, runs):
 try:
 	threadList = []
 	for i in range(0, threads):
-		threadList.append(thread.start_new_thread(make_call, (i, runs_per_thread)))
+		thread = Thread(target = make_call, args = (i, runs_per_thread))
+		thread.start()
+		threadList.append(thread)
+	for i in range(0, threads):
+		threadList[i].join()
 except:
 	print("Error: unable to start thread")
-	
-#
-# Wait for threads to finish.
-#
-while(len(run_results) != total_runs):
-	pass
 
 #
 # Print results of each run.
@@ -74,6 +73,7 @@ for i in range(len(run_results)):
 		line += str(run[key_list[i]]) + ","
 	line = line[:-1]
 	print(line)
+print("Successful Runs: " + str(len(run_results)))
 
 #
 # Build new dictionaries for each category.
@@ -140,3 +140,7 @@ for i in range(len(master_key_list)):
 			
 			line = line[:-1]
 			print(line)
+		print("Runs with unique attribute " + str(key_value) + ": " + str(len(sub_key_list)))
+
+
+
