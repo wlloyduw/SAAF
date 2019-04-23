@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 import time
-import _thread as thread
+#import _thread as thread
 from threading import Thread
 import sys
 import requests

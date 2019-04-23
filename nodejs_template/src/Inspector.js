@@ -146,6 +146,16 @@ class Inspector {
     }
     
     /**
+     * Gets a custom attribute from the attribute list.
+     * 
+     * @param key The key of the attribute.
+     * @return The object itself. Cast into appropriate data type.
+     */
+    getAttribute(key) {
+        return this.attributes[key];
+    }
+    
+    /**
      * Add custom time stamps to the output. The key value determines the name
      * of the attribute and the value will be the time from Inspector initialization
      * to this function call. 

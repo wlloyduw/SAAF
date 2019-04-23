@@ -143,6 +143,15 @@ class Inspector:
         self.__attributes[key] = value
         
     #
+    # Gets a custom attribute from the attribute list.
+    #
+    # @param key The key of the attribute.
+    # @return The object associated with the key.
+    #
+    def getAttribute(self, key):
+        return self.__attributes[key]
+        
+    #
     # Add custom time stamps to the output. The key value determines the name
     # of the attribute and the value will be the time from Inspector initialization
     # to this function call. 

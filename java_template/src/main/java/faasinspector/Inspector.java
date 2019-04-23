@@ -205,6 +205,16 @@ public class Inspector {
     public void addAttribute(String key, Object value) {
         attributes.put(key, value);
     }
+    
+    /**
+     * Gets a custom attribute from the attribute list.
+     * 
+     * @param key The key of the attribute.
+     * @return The object itself. Cast into appropriate data type.
+     */
+    public Object getAttribute(String key) {
+        return attributes.get(key);
+    }
 
     /**
      * Add custom time stamps to the output. The key value determines the name
