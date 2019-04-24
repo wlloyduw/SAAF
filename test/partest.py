@@ -10,13 +10,19 @@ import json
 import datetime
 from decimal import Decimal
 
+#
+# Input variables.
+#
+
 url_list = ['https://2q0ng575ue.execute-api.us-east-1.amazonaws.com/calcservice_dev/', 'https://4utqpw7zhb.execute-api.us-east-1.amazonaws.com/DEPLOY']
-url_list = ['https://2q0ng575ue.execute-api.us-east-1.amazonaws.com/calcservice_dev/']
-payload = {'threads':2,'calcs':500,'loops':500,'sleep':0}
+payload = {'threads': 2,'calcs': 500,'loops': 500,'sleep': 0}
 headers = {'content-type':'application/json'}
+categories = ['uuid', 'cpuType', 'vmuptime', 'newcontainer', 'platform', 'lang', 'endpoint']
+list_category = ['vmuptime']
+show_progress = False;
 
 #
-# Start of the program.
+# Parse command line arguments.
 #
 
 threads = int(sys.argv[1])
@@ -39,12 +45,14 @@ def make_call( thread_id, runs, url):
 		
 		if 'version' in dictionary:
 			run_results.append(dictionary)
-			print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
-			print("Run Complete: (" + str(i + 1) + "/" + str(runs) + "):\n")
-			print(dictionary)
+			if show_progress:
+				print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
+				print("Run Complete: (" + str(i + 1) + "/" + str(runs) + "):\n")
+				print(dictionary)
 		else:
-			print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
-			print("Run Failed: (" + str(i + 1) + "/" + str(runs) + "):")
+			if show_progress:
+				print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
+				print("Run Failed: (" + str(i + 1) + "/" + str(runs) + "):")
 		
 #
 # Create a bunch of threads and run make_call.
@@ -58,15 +66,18 @@ try:
 			threadList.append(thread)
 	for i in range(len(threadList)):
 		threadList[i].join()
-		print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
-		print("Threads complete: (" + str(i + 1) + "/" + str(threads) + ").")
+		if show_progress:
+			print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
+			print("Threads complete: (" + str(i + 1) + "/" + str(threads) + ").")
 except:
 	pass
 	
 #
 # Print starter information
 #
-print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
+if show_progress: 
+	print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
+
 print(datetime.datetime.now())
 print("Setting up test: runsperthread=" + str(runs_per_thread) + " threads=" + str(threads) + " totalruns=" + str(total_runs), " payload=" + str(payload))
 
@@ -96,7 +107,10 @@ print("Successful Runs: " + str(len(run_results)))
 # Build new dictionaries for each category.
 # key_map defines the dictionary to put runs with unique keys into.
 #
-key_map = {'uuid': {}, 'cpuType': {}, 'vmuptime': {}, 'newcontainer': {}, 'platform': {}, 'lang': {}, 'version': {}, 'endpoint': {}}
+key_map = {}
+for i in range(len(categories)):
+	key_map[categories[i]] = {}
+
 master_key_list = list(key_map.keys())
 for i in range(len(run_results)):
 	run = run_results[i]
@@ -127,13 +141,17 @@ for i in range(len(master_key_list)):
 		
 		for i in range(len(run_attributes)):
 			attribute = run_attributes[i]
-			value = run_dict[attribute]
-			try:
-				Decimal(value)
-				csv_header += "avg_" + str(attribute) + ","
+			if attribute in list_category:
+				csv_header += str(attribute) + "_list,"
 				number_attributes.append(attribute)
-			except:
-				pass
+			else:
+				try:
+					value = run_dict[attribute]
+					Decimal(value)
+					csv_header += "avg_" + str(attribute) + ","
+					number_attributes.append(attribute)
+				except:
+					pass
 		
 		csv_header = csv_header[:-1]
 		print(csv_header)
@@ -142,12 +160,21 @@ for i in range(len(master_key_list)):
 			run_list = key_map[key_value][sub_key_list[i]]
 			line = str(sub_key_list[i]) + "," + str(len(run_list)) + ","
 			for j in range(len(number_attributes)):
-				total_value = 0
 				attribute = number_attributes[j]
-				for k in range(len(run_list)):
-					run_dict = run_list[k]
-					total_value += Decimal(run_dict[attribute])
-				line += str(round((total_value / len(run_list)), 2)) + ","
+				if attribute in list_category:
+					attribute_list = []
+					for k in range(len(run_list)):
+						run_dict = run_list[k]
+						if run_dict[attribute] not in attribute_list:
+							attribute_list.append(run_dict[attribute])
+					attribute_list.sort()
+					line += str(attribute_list).replace(",", ";") + ","
+				else:
+					total_value = 0
+					for k in range(len(run_list)):
+						run_dict = run_list[k]
+						total_value += Decimal(run_dict[attribute])
+					line += str(round((total_value / len(run_list)), 2)) + ","
 			line = line[:-1]
 			print(line)
 		print("Runs with unique attribute " + str(key_value) + ": " + str(len(sub_key_list)))
