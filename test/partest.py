@@ -17,14 +17,14 @@ from decimal import Decimal
 url_list = ['https://2q0ng575ue.execute-api.us-east-1.amazonaws.com/calcservice_dev/', 'https://4utqpw7zhb.execute-api.us-east-1.amazonaws.com/DEPLOY']
 payload = {'threads': 2,'calcs': 500,'loops': 500,'sleep': 0}
 headers = {'content-type':'application/json'}
+
 categories = ['uuid', 'cpuType', 'vmuptime', 'newcontainer', 'platform', 'lang', 'endpoint']
-list_category = ['vmuptime']
+list_category = ['vmuptime', 'cpuType', 'endpoint']
 show_progress = False;
 
 #
 # Parse command line arguments.
 #
-
 threads = int(sys.argv[1])
 total_runs = int(sys.argv[2])
 runs_per_thread = int(total_runs / threads)
