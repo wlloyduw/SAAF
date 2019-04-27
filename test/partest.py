@@ -13,13 +13,18 @@ from decimal import Decimal
 #
 # Input variables.
 #
+#url_list = ['https://2q0ng575ue.execute-api.us-east-1.amazonaws.com/calcservice_dev/', 'https://4utqpw7zhb.execute-api.us-east-1.amazonaws.com/DEPLOY']
+#url_list = ['https://2q0ng575ue.execute-api.us-east-1.amazonaws.com/calcservice_dev/']
 
-url_list = ['https://2q0ng575ue.execute-api.us-east-1.amazonaws.com/calcservice_dev/', 'https://4utqpw7zhb.execute-api.us-east-1.amazonaws.com/DEPLOY']
-payload = {'threads': 2,'calcs': 500,'loops': 500,'sleep': 0}
+url_list = ['https://zm8jzc7ip9.execute-api.us-east-1.amazonaws.com/test_gateway_deploy', 'https://uwt-workspace.azurewebsites.net/api/test?code=EVY0YavlKHErHt1HJ1EVTKJXa06KhFLcMGvVhVhtlUnFAdfu4Iea0A==', 'https://us-central1-api-project-692688302945.cloudfunctions.net/test', 'https://us-south.functions.cloud.ibm.com/api/v1/web/robertcordingly%40gmail.com_dev/default/test.json']
+			
+#payload = {'threads': 2,'calcs': 500,'loops': 500,'sleep': 0}
+
+payload = {'name': 'PythonTest'}
 headers = {'content-type':'application/json'}
 
-categories = ['uuid', 'cpuType', 'vmuptime', 'newcontainer', 'platform', 'lang', 'endpoint']
-list_category = ['vmuptime', 'cpuType', 'endpoint']
+categories = ['uuid', 'cpuType', 'vmuptime', 'newcontainer', 'platform', 'lang', 'endpoint', 'hostname']
+list_category = ['vmuptime', 'cpuType', 'endpoint', 'hostname', 'platform']
 show_progress = False;
 
 #
@@ -39,6 +44,8 @@ def make_call( thread_id, runs, url):
 		dictionary = ast.literal_eval(response.text)
 		dictionary['2_thread_id'] = thread_id
 		dictionary['1_run_id'] = i
+		
+		dictionary['cpuType'] = dictionary['cpuType'] + " - Model " + dictionary['cpuModel']
 		
 		if (len(url_list)) > 1 and 'platform' not in dictionary:
 			dictionary['endpoint'] = url

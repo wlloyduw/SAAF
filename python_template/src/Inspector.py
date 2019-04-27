@@ -116,12 +116,18 @@ class Inspector:
     # Collect information about the linux kernel.
     #
     # linuxVersion:    The version of the linux kernel.
+    # hostname:        The host name of the system.
     #
     def inspectLinux(self):
         child = os.popen('uname -v')
         linuxVersion = child.read()
         linuxVersion = re.sub('[\n]','', linuxVersion)
         self.__attributes['linuxVersion'] = linuxVersion
+        
+        child = os.popen('hostname')
+        hostname = child.read()
+        hostname = re.sub('[\n]','', hostname)
+        self.__attributes['hostname'] = hostname
         
     #
     # Run all data collection methods and record framework runtime.

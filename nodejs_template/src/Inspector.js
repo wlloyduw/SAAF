@@ -109,19 +109,23 @@ class Inspector {
         } else {
             this.attributes['platform'] = "Unknown Platform";
         }
-
     }
     
     /**
      * Collect information about the linux kernel.
      *
      * linuxVersion:    The version of the linux kernel.
+     * hostname:        The host name of the system.
      */
     inspectLinux() {
         const { execSync } = require('child_process');
         let child = execSync('uname -v', { encoding : 'utf8' });
         let linuxVersion = child.replace('\n', '');
         this.attributes['linuxVersion'] = linuxVersion;
+        
+        let call = execSync('hostname', { encoding : 'utf8' });
+        let hostname = call.replace('\n', '');
+        this.attributes['hostname'] = hostname;
     }
     
     /**

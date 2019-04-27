@@ -10,8 +10,7 @@ module.exports = function(request) {
         
     //Import the module and collect data
     const inspector = new (require('./Inspector'))();
-    inspector.inspectContainer();
-    inspector.inspectCPU();
+    inspector.inspectAll();
     inspector.addTimeStamp("frameworkRuntime");
 
     //Add custom message and finish the function

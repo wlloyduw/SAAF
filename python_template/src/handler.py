@@ -13,10 +13,7 @@ import time
 def yourFunction(request):
     # Import the module and collect data
     inspector = Inspector()
-    inspector.inspectContainer()
-    inspector.inspectCPU()
-    inspector.inspectPlatform()
-    inspector.inspectLinux()
+    inspector.inspectAll()
     inspector.addTimeStamp("frameworkRuntime")
 
     # Add custom message and finish the function

@@ -104,5 +104,6 @@ The amount of data collected is detemined by which functions are called. If some
 | **Field** | **Description** |
 | --------- | --------------- |
 | linuxVersion | The version of the linux kernel. |
+| hostname | The host name of the current host system. |
 
 &nbsp;
