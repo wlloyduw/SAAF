@@ -45,7 +45,8 @@ def make_call( thread_id, runs, url):
 		dictionary['2_thread_id'] = thread_id
 		dictionary['1_run_id'] = i
 		
-		dictionary['cpuType'] = dictionary['cpuType'] + " - Model " + dictionary['cpuModel']
+		if 'cpuType' in dictionary:
+			dictionary['cpuType'] = dictionary['cpuType'] + " - Model " + str(dictionary['cpuModel'])
 		
 		if (len(url_list)) > 1 and 'platform' not in dictionary:
 			dictionary['endpoint'] = url
