@@ -322,6 +322,14 @@ public class Inspector {
         return "ERROR";
     }
 
+    /**
+     * Convert an Object into a Map using getBeanInfo.
+     * 
+     * @param bean The object to collect methods from.
+     * @return A HashMap representation of the object.
+     * 
+     * @author https://bit.ly/2ZGg4uW
+     */
     private static Map<String, Object> beanProperties(Object bean) {
         try {
             return Arrays.asList(
