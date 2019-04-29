@@ -1,17 +1,26 @@
 package faasinspector;
 
+import java.beans.IntrospectionException;
+import java.beans.Introspector;
+import java.beans.PropertyDescriptor;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * FaaS Inspector
@@ -160,7 +169,7 @@ public class Inspector {
      * platform: The FaaS platform hosting this function.
      */
     public void inspectPlatform() {
-        String environment = runCommand(new String[] {"env"});
+        String environment = runCommand(new String[]{"env"});
         if (environment.contains("AWS_LAMBDA")) {
             attributes.put("platform", "AWS Lambda");
         } else if (environment.contains("X_GOOGLE")) {
@@ -177,14 +186,14 @@ public class Inspector {
     /**
      * Collect information about the linux kernel.
      *
-     * linuxVersion: The version of the linux kernel.
-     * hostname:     The host name of the system.
+     * linuxVersion: The version of the linux kernel. hostname: The host name of
+     * the system.
      */
     public void inspectLinux() {
-        String linuxVersion = runCommand(new String[] {"uname", "-v"}).trim();
+        String linuxVersion = runCommand(new String[]{"uname", "-v"}).trim();
         attributes.put("linuxVersion", linuxVersion);
-        
-        String hostname = runCommand(new String[] {"hostname"}).trim();
+
+        String hostname = runCommand(new String[]{"hostname"}).trim();
         attributes.put("hostname", hostname);
     }
 
@@ -198,7 +207,7 @@ public class Inspector {
         this.inspectPlatform();
         this.addTimeStamp("frameworkRuntime");
     }
-    
+
     /**
      * Add a custom attribute to the output.
      *
@@ -208,10 +217,10 @@ public class Inspector {
     public void addAttribute(String key, Object value) {
         attributes.put(key, value);
     }
-    
+
     /**
      * Gets a custom attribute from the attribute list.
-     * 
+     *
      * @param key The key of the attribute.
      * @return The object itself. Cast into appropriate data type.
      */
@@ -232,6 +241,19 @@ public class Inspector {
     }
 
     /**
+     * Add all attributes of a response object to FaaS Inspector.
+     *
+     * @param response The response object to consume.
+     */
+    public void consumeResponse(Response response) {
+        Map<String, Object> responseMap = beanProperties(response);
+        responseMap.keySet().forEach((s) -> {
+            attributes.put(s, responseMap.get(s));
+        });
+
+    }
+
+    /**
      * Finalize FaaS inspector. Calculator the total runtime and return the JSON
      * object containing all attributes collected.
      *
@@ -245,11 +267,11 @@ public class Inspector {
 
     /**
      * Read a file and return it as a String.
-     * 
+     *
      * @param filename The file name/path to read.
      * @return The entire content of the file as a string.
      */
-    private String getFileAsString(String filename) {
+    private static String getFileAsString(String filename) {
         File f = new File(filename);
         Path p = Paths.get(filename);
         String text;
@@ -260,7 +282,7 @@ public class Inspector {
                     sb.append(text);
                 }
             } catch (IOException ioe) {
-                sb.append("Error reading file=" );
+                sb.append("Error reading file=");
                 sb.append(filename);
             }
         }
@@ -269,11 +291,11 @@ public class Inspector {
 
     /**
      * Execute a bash command and get the output.
-     * 
+     *
      * @param command An array of strings with each part of the command.
      * @return Standard out of the command.
      */
-    private String runCommand(String[] command) {
+    private static String runCommand(String[] command) {
         ProcessBuilder processBuilder = new ProcessBuilder();
         processBuilder.command(command);
         try {
@@ -298,5 +320,33 @@ public class Inspector {
             return "IO Exception " + e.toString();
         }
         return "ERROR";
+    }
+
+    private static Map<String, Object> beanProperties(Object bean) {
+        try {
+            return Arrays.asList(
+                    Introspector.getBeanInfo(bean.getClass(), Object.class)
+                            .getPropertyDescriptors()
+            )
+                    .stream()
+                    // filter out properties with setters only
+                    .filter(pd -> Objects.nonNull(pd.getReadMethod()))
+                    .collect(Collectors.toMap(
+                            // bean property name
+                            PropertyDescriptor::getName,
+                            pd -> { // invoke method to get value
+                                try {
+                                    return pd.getReadMethod().invoke(bean);
+                                } catch (IllegalAccessException
+                                | IllegalArgumentException
+                                | InvocationTargetException e) {
+                                    // replace this with better error handling
+                                    return null;
+                                }
+                            }));
+        } catch (IntrospectionException e) {
+            // and this, too
+            return Collections.emptyMap();
+        }
     }
 }
