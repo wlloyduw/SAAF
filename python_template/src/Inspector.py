@@ -91,6 +91,30 @@ class Inspector:
             self.__attributes[name] = int(CPUMetrics[i + 1]) 
         
     #
+    # Compare information gained from inspectCPU to the current CPU metrics.
+    #
+    # Note: This function should be called at the end of your function and 
+    # must be called AFTER inspectCPU.
+    #
+    # cpuUsrDelta:      Time spent normally executing in user mode.
+    # cpuNiceDelta:     Time spent executing niced processes in user mode.
+    # cpuKrnDelta:      Time spent executing processes in kernel mode.
+    # cpuIdleDelta:     Time spent idle.
+    # cpuIowaitDelta:   Time spent waiting for I/O to complete.
+    # cpuIrqDelta:      Time spent servicing interrupts.
+    # cpuSoftIrqDelta:  Time spent servicing software interrupts.
+    # vmcpustealDelta:  Time spent waiting for real CPU while hypervisor is using another virtual CPU.
+    #
+    def inspectCPUDelta(self):
+        child = os.popen('cat /proc/stat | grep "^cpu" | head -1')
+        CPUMetrics = child.read()
+        CPUMetrics = CPUMetrics.split()
+        
+        metricNames = ['cpuUsr', 'cpuNice', 'cpuKrn', 'cpuIdle', 'cpuIowait', 'cpuIrq', 'cpuSoftIrq', 'vmcpusteal']
+        for i, name in enumerate(metricNames):
+            self.__attributes[name + "Delta"] = int(CPUMetrics[i + 1]) - self.__attributes[name]
+        
+    #
     # Collect information about the current FaaS platform.
     #
     # platform:    The FaaS platform hosting this function.

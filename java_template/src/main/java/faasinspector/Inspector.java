@@ -49,10 +49,9 @@ public class Inspector {
     /**
      * Collect information about the runtime container.
      *
-     * uuid: A unique identifier assigned to a container if one does not already
-     * exist. newcontainer: Whether a container is new (no assigned uuid) or if
-     * it has been used before. vmuptime: The time when the system started in
-     * Unix time.
+     * uuid:         A unique identifier assigned to a container if one does not already exist. 
+     * newcontainer: Whether a container is new (no assigned uuid) or if it has been used before. 
+     * vmuptime:     The time when the system started in Unix time.
      */
     public void inspectContainer() {
 
@@ -113,14 +112,16 @@ public class Inspector {
     /**
      * Collect information about the CPU assigned to this function.
      *
-     * cpuType: The model name of the CPU. cpuModel: The model number of the
-     * CPU. cpuUsr: Time spent normally executing in user mode. cpuNice: Time
-     * spent executing niced processes in user mode. cpuKrn: Time spent
-     * executing processes in kernel mode. cpuIdle: Time spent idle. cpuIowait:
-     * Time spent waiting for I/O to complete. cpuIrq: Time spent servicing
-     * interrupts. cpuSoftIrq: Time spent servicing software interrupts.
-     * vmcpusteal: Time spent waiting for real CPU while hypervisor is using
-     * another virtual CPU.
+     * cpuType:    The model name of the CPU. 
+     * cpuModel:   The model number of the CPU. 
+     * cpuUsr:     Time spent normally executing in user mode. 
+     * cpuNice:    Time spent executing niced processes in user mode. 
+     * cpuKrn:     Time spent executing processes in kernel mode. 
+     * cpuIdle:    Time spent idle. 
+     * cpuIowait:  Time spent waiting for I/O to complete. 
+     * cpuIrq:     Time spent servicing interrupts. 
+     * cpuSoftIrq: Time spent servicing software interrupts.
+     * vmcpusteal: Time spent waiting for real CPU while hypervisor is using another virtual CPU.
      */
     public void inspectCPU() {
 
@@ -162,6 +163,48 @@ public class Inspector {
             }
         }
     }
+    
+    /**
+     * Compare information gained from inspectCPU to the current CPU metrics.
+     *
+     * cpuTypeDelta:    The model name of the CPU. 
+     * cpuModelDelta:   The model number of the CPU. 
+     * cpuUsrDelta:     Time spent normally executing in user mode. 
+     * cpuNiceDelta:    Time spent executing niced processes in user mode. 
+     * cpuKrnDelta:     Time spent executing processes in kernel mode. 
+     * cpuIdleDelta:    Time spent idle. 
+     * cpuIowaitDelta:  Time spent waiting for I/O to complete. 
+     * cpuIrqDelta:     Time spent servicing interrupts. 
+     * cpuSoftIrqDelta: Time spent servicing software interrupts.
+     * vmcpustealDelta: Time spent waiting for real CPU while hypervisor is using another virtual CPU.
+     */
+    public void inspectCPUDelta() {
+
+        String text;
+        int start;
+        int end;
+
+        //Get CPU Metrics
+        String filename = "/proc/stat";
+        File f = new File(filename);
+        Path p = Paths.get(filename);
+        if (f.exists()) {
+            try (BufferedReader br = Files.newBufferedReader(p)) {
+                text = br.readLine();
+                String params[] = text.split(" ");
+
+                String[] metricNames = {"cpuUsr", "cpuNice", "cpuKrn", "cpuIdle",
+                    "cpuIowait", "cpuIrq", "cpuSoftIrq", "vmcpusteal"};
+
+                for (int i = 0; i < metricNames.length; i++) {
+                    attributes.put(metricNames[i] + "Delta", Long.parseLong(params[i + 2]) - (Long)attributes.get(metricNames[i]));
+                }
+                br.close();
+            } catch (IOException ioe) {
+                //sb.append("Error reading file=" + filename);
+            }
+        }
+    }
 
     /**
      * Collect information about the current FaaS platform.
@@ -186,8 +229,7 @@ public class Inspector {
     /**
      * Collect information about the linux kernel.
      *
-     * linuxVersion: The version of the linux kernel. hostname: The host name of
-     * the system.
+     * linuxVersion: The version of the linux kernel. hostname: The host name of the system.
      */
     public void inspectLinux() {
         String linuxVersion = runCommand(new String[]{"uname", "-v"}).trim();

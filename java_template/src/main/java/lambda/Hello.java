@@ -28,6 +28,8 @@ public class Hello implements RequestHandler<Request, HashMap<String, Object>> {
         
         //Add custom message and finish the function
         inspector.addAttribute("message", "Hello " + request.getName() + "!");
+        
+        inspector.inspectCPUDelta();
         return inspector.finish();
     }
 }

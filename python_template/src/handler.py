@@ -18,4 +18,6 @@ def yourFunction(request):
 
     # Add custom message and finish the function
     inspector.addAttribute("message", "Hello " + request['name'] + "!")
+    
+    inspector.inspectCPUDelta()
     return inspector.finish()

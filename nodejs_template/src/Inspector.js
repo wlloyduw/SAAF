@@ -89,6 +89,35 @@ class Inspector {
             this.attributes[metricsNames[i]] = parseInt(CPUMetrics[i]);
         }
     }
+    
+    /**
+     * Compare information gained from inspectCPU to the current CPU metrics.
+     *
+     * Note: This function should be called at the end of your function and 
+     * must be called AFTER inspectCPU.
+     *
+     * cpuUsrDelta:      Time spent normally executing in user mode.
+     * cpuNiceDelta:     Time spent executing niced processes in user mode.
+     * cpuKrnDelta:      Time spent executing processes in kernel mode.
+     * cpuIdleDelta:     Time spent idle.
+     * cpuIowaitDelta:   Time spent waiting for I/O to complete.
+     * cpuIrqDelta:      Time spent servicing interrupts.
+     * cpuSoftIrqDelta:  Time spent servicing software interrupts.
+     * vmcpustealDelta:  Time spent waiting for real CPU while hypervisor is using another virtual CPU.
+     */
+    inspectCPUDelta() {
+        const { execSync } = require('child_process');
+        let child = execSync('cat /proc/stat | grep "^cpu" | head -1', { encoding : 'utf8' });
+        let CPUMetrics = child.replace('\n', '');
+        CPUMetrics = CPUMetrics.replace('cpu  ', '');
+        CPUMetrics = CPUMetrics.split(" ");
+
+        let metricsNames = ['cpuUsr', 'cpuNice', 'cpuKrn', 'cpuIdle',
+                            'cpuIowait', 'cpuIrq', 'cpuSoftIrq', 'vmcpusteal'];
+        for (let i = 0; i < metricsNames.length; i++) {
+            this.attributes[metricsNames[i] + "Delta"] = parseInt(CPUMetrics[i]) - this.attributes[metricsNames[i]]
+        }
+    }
 
     /**
      * Collect information about the current FaaS platform.

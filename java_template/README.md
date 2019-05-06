@@ -93,6 +93,19 @@ The amount of data collected is detemined by which functions are called. If some
 | cpuSoftIrq | Time spent servicing software interrupts. |
 | vmcpusteal | Cycles spent waiting for real CPU while hypervisor is using another virtual CPU. |
 
+### inspectCPUDelta()
+
+| **Field** | **Description** |
+| --------- | --------------- |
+| cpuUsrDelta | Change in cpuUsr compared to when inspectCPU was called. |
+| cpuNiceDelta | Change in cpuNice compared to when inspectCPU was called. |
+| cpuKrnDelta | Change in cpuKrn compared to when inspectCPU was called. |
+| cpuIdleDelta | Change in cpuIdle compared to when inspectCPU was called. |
+| cpuIowaitDelta | Change in cpuIowait compared to when inspectCPU was called. |
+| cpuIrqDelta | Change in cpuIrq compared to when inspectCPU was called. |
+| cpuSoftIrqDelta | Change in cpuSoftIrq compared to when inspectCPU was called. |
+| vmcpustealDelta | Change in vmcpusteal compared to when inspectCPU was called. |
+
 ### inspectPlatform()
 
 | **Field** | **Description** |
