@@ -20,6 +20,7 @@ public class fiResponse
     private String cpuType;
     private String uuid;
     private String error;
+    private String hostname;
     long vmuptime;
     long runtime;
     int newcontainer;
@@ -87,6 +88,17 @@ public class fiResponse
     {
         this.cpuType = cputype;
     }
+
+    public String getHostname()
+    {
+        return this.hostname;
+    }
+    
+    public void setHostname(String hostname)
+    {
+        this.hostname = hostname;
+    }
+    
     
     @Override
     public String toString()

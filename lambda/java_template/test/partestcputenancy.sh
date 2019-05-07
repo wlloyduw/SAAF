@@ -341,6 +341,44 @@ for ((i=0;i < ${#hosts[@]};i++)) {
       fi
   } 
   echo "${hosts[$i]},${hcputype[$i]},$uptime,${huses[$i]},$ccount,${htimes[$i]},$avg,$ssavg,$latencyavg,$stdiffsq"
+  cpuusestype=`echo ${hcputype[$i]} | cut -d'"' -f 2`
+  cpuusestype=`echo $cpuusestype-${huses[$i]}`
+  #echo $cpuuses
+  #cpuuses=`echo ${hcputype[$i]}-${huses[$i]} | cut -d'"' -f 2
+
+  ##  GROUP BY CPU-USES
+  # Populate array of unique CPU-USES types
+  cpuusesfound=0
+  for ((j=0;j < ${#cpuusesTypes[@]};j++)) {
+    #echo "IN ARRAY CHECK:'${cpuusesTypes[$j]}' == '${cpuusestype}'"
+    if [ "${cpuusesTypes[$j]}" == "${cpuusestype}" ]; then
+        #echo "DUPE"
+        (( cpuusesUses[$j]++ ))
+        cpuusesTimes[$j]=`expr ${cpuusesTimes[$j]} + ${htimes[$i]}`
+	#echo "'${cpuusesTimes[$j]}' + '${htimes[$i]}'"
+        cpuusesSstimes[$j]=`expr ${cpuusesSstimes[$j]} + ${hsstimes[$i]}`
+	#echo "'${cpuusesSstimes[$j]}' + '${hsstimes[$i]}'"
+        cpuusesLatency[$j]=`expr ${cpuusesLatency[$j]} + ${hlatency[$i]}`
+	#echo "'${cpuusesLatency[$j]}' + '${hlatency[$i]}'"
+        cpuusesfound=1
+        #echo "expr err?"
+    fi
+  }
+
+  # if not found, add to array
+  if [ $cpuusesfound != 1 ]; then
+      #echo "NEW"
+      cpuusesTypes+=($cpuusestype)
+      cpuusesUses+=(1)
+      cpuusesTimes+=(${htimes[$i]})
+      cpuusesSstimes+=(${hsstimes[$i]})
+      cpuusesLatency+=(${hlatency[$i]})
+      cpuusesTenancy+=(${huses[$i]})
+      #echo "ADDING"
+      #echo "'${htimes[$i]}'"
+      #echo "'${hsstimes[$i]}'"	
+      #echo "'${hlatency[$i]}'"
+  fi
 
   ##  Determine count of recycled hosts...
   ## 
@@ -399,8 +437,36 @@ for ((i=0;i < ${#cpuTypes[@]};i++)) {
   cpulatency=`printf '%.*f\n' 0 $cpulatency`
   echo "${cpuTypes[$i]},${cpuuses[$i]},${cputimes[$i]},$cpuavg,$cpussavg,$cpulatency"
 }
-	
 
+
+
+#########################################################################################################################################################
+# Generate CSV output - group by CPU-uses Types
+#########################################################################################################################################################
+
+# CPU Types info
+echo "cpu-uses-type,tenancy,occurrences,totaltime,avgruntime_per_cpu-uses,avgssruntime_per_cpu-uses,avglatency_per_cpu-uses"
+total=0
+#echo "CHECK IF DELETE ORIGVM"
+#if [[ ! -z $vmreport && $vmreport -eq 1 ]]
+#then
+#  echo "DELETING ORIGVM !!!"
+#  rm -f .origvm 
+#fi
+
+# Loop through CPU Types and make summary data
+for ((i=0;i < ${#cpuusesTypes[@]};i++)) {
+  cpuavg=`echo ${cpuusesTimes[$i]} / ${cpuusesUses[$i]} | bc -l`
+  cpuavg=`echo ${cpuavg} / ${cpuusesTenancy[$i]} | bc -l`
+  cpuavg=`printf '%.*f\n' 0 $cpuavg`
+  cpussavg=`echo ${cpuusesSstimes[$i]} / ${cpuusesUses[$i]} | bc -l`
+  cpussavg=`echo ${cpussavg} / ${cpuusesTenancy[$i]} | bc -l`
+  cpussavg=`printf '%.*f\n' 0 $cpussavg`
+  cpulatency=`echo ${cpuusesLatency[$i]} / ${cpuusesUses[$i]} | bc -l`
+  cpulatency=`echo ${cpulatency} / ${cpuusesTenancy[$i]} | bc -l`
+  cpulatency=`printf '%.*f\n' 0 $cpulatency`
+  echo "${cpuusesTypes[$i]},${cpuusesTenancy[$i]},${cpuusesUses[$i]},${cpuusesTimes[$i]},$cpuavg,$cpussavg,$cpulatency"
+}
 
 #########################################################################################################################################################
 # Generate CSV output - report summary, final data

@@ -40,7 +40,7 @@ public class Hello implements RequestHandler<Request, Response>
         // Implement Lambda Function Here
         // *********************************************************************
         String hello = "Hello " + request.getName();
-
+        
         //Print log information to the Lambda log as needed
         //logger.log("log message...");
         
