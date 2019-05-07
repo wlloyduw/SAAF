@@ -124,17 +124,25 @@ class Inspector:
         environment = child.read()
         if "AWS_LAMBDA" in environment:
             self.__attributes['platform'] = "AWS Lambda"
-            return 0
-        if "X_GOOGLE" in environment:
+            
+            containerID = os.popen('echo $AWS_LAMBDA_LOG_STREAM_NAME').read().replace('\n', '')
+            self.__attributes['containerID'] = containerID
+            
+            vmID = os.popen('cat /proc/self/cgroup | grep 2:cpu').read().replace('\n', '')
+            self.__attributes['vmID'] = vmID[20: 26]
+            
+        elif "X_GOOGLE" in environment:
             self.__attributes['platform'] = "Google Cloud Functions"
-            return 0
-        if "functions.cloud.ibm" in environment:
+        elif "functions.cloud.ibm" in environment:
             self.__attributes['platform'] = "IBM Cloud Functions"
-            return 0
-        if "microsoft.com/azure-functions" in environment:
+        elif "microsoft.com/azure-functions" in environment:
             self.__attributes['platform'] = "Azure Functions"
-            return 0
-        self.__attributes['platform'] = "Unknown Platform"
+            
+            containerID = os.popen('echo $CONTAINER_NAME').read().replace('\n', '')
+            self.__attributes['containerID'] = containerID
+            
+        else:
+            self.__attributes['platform'] = "Unknown Platform"
         
     #
     # Collect information about the linux kernel.

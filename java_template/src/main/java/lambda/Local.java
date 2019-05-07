@@ -9,6 +9,7 @@ import com.amazonaws.services.lambda.runtime.ClientContext;
 import com.amazonaws.services.lambda.runtime.CognitoIdentity;
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.LambdaLogger;
+import java.util.HashMap;
 
 /**
  *
@@ -96,8 +97,9 @@ public class Local {
         System.out.println("cmd-line param name=" + req.getName());
 
         // Run the function
-        //Response resp = lt.handleRequest(req, c);
+        HashMap<String, Object> resp = lt.handleRequest(req, c);
+        
         // Print out function result
-        //System.out.println("function result:" + resp.toString());
+        System.out.println("function result:" + resp.toString());
     }
 }

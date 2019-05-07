@@ -209,18 +209,42 @@ public class Inspector {
     /**
      * Collect information about the current FaaS platform.
      *
-     * platform: The FaaS platform hosting this function.
+     * platform:    The FaaS platform hosting this function.
+     * containerID: A unique identifier for containers of a platform.
+     * vmID:        A unique identifier for virtual machines of a platform.
      */
     public void inspectPlatform() {
         String environment = runCommand(new String[]{"env"});
         if (environment.contains("AWS_LAMBDA")) {
             attributes.put("platform", "AWS Lambda");
+            
+            String searchTerm = "AWS_LAMBDA_LOG_STREAM_NAME=";
+            int logIndex = environment.indexOf(searchTerm);
+            int startIndex = logIndex + searchTerm.length();
+            int endIndex = startIndex;
+            while (environment.charAt(endIndex) != '\n') endIndex++;
+            
+            attributes.put("containerID", environment.substring(startIndex, endIndex).replace("\n", ""));
+                    
+            String vmID = runCommand(new String[]{"cat", "/proc/self/cgroup"});
+            int index = vmID.indexOf("sandbox-root");
+            attributes.put("vmID", vmID.substring(index + 13, index + 19));
+            
         } else if (environment.contains("X_GOOGLE")) {
             attributes.put("platform", "Google Cloud Functions");
         } else if (environment.contains("functions.cloud.ibm")) {
             attributes.put("platform", "IBM Cloud Functions");
         } else if (environment.contains("microsoft.com/azure-functions")) {
             attributes.put("platform", "Azure Functions");
+            
+            String searchTerm = "CONTAINER_NAME=";
+            int logIndex = environment.indexOf(searchTerm);
+            int startIndex = logIndex + searchTerm.length();
+            int endIndex = startIndex;
+            while (environment.charAt(endIndex) != '\n') endIndex++;
+            
+            attributes.put("containerID", environment.substring(startIndex, endIndex).replace("\n", ""));
+            
         } else {
             attributes.put("platform", "Unknown Platform");
         }

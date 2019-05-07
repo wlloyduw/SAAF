@@ -123,18 +123,32 @@ class Inspector {
      * Collect information about the current FaaS platform.
      *
      * platform:    The FaaS platform hosting this function.
+     * containerID: A unique identifier for containers of a platform.
+     * vmID:        A unique identifier for virtual machines of a platform.
      */
     inspectPlatform() {
         const { execSync } = require('child_process');
         let environment = execSync('env', { encoding : 'utf8' });
         if (environment.indexOf("AWS_LAMBDA") > -1) {
             this.attributes['platform'] = "AWS Lambda";
+            
+            let containerID = execSync('echo $AWS_LAMBDA_LOG_STREAM_NAME', { encoding : 'utf8' });
+            this.attributes['containerID'] = containerID.replace("\n", "");
+            
+            let vmID = execSync('cat /proc/self/cgroup | grep 2:cpu', { encoding : 'utf8' });
+            vmID = vmID.replace("\n", "").substring(20, 26);
+            this.attributes['vmID'] = vmID;
+            
         } else if (environment.indexOf("X_GOOGLE") > -1) {
             this.attributes['platform'] = "Google Cloud Functions";
         } else if (environment.indexOf("functions.cloud.ibm") > -1) {
             this.attributes['platform'] = "IBM Cloud Functions";
         } else if (environment.indexOf("microsoft.com/azure-functions") > -1) {
             this.attributes['platform'] = "Azure Functions";
+            
+            let containerID = execSync('echo $CONTAINER_NAME', { encoding : 'utf8' });
+            this.attributes['containerID'] = containerID.replace("\n", "");
+            
         } else {
             this.attributes['platform'] = "Unknown Platform";
         }

@@ -22,6 +22,9 @@ public class Hello {
         //Add custom message and finish the function
         inspector.addAttribute("message", "Hello " + args.getAsJsonPrimitive("name").getAsString() + "!");
         
+        //Calculate CPU deltas.
+        inspector.inspectCPUDelta();
+        
         //Convert Inspector Hashmap to JsonObject
         JsonObject output = new JsonObject();
         HashMap<String, Object> results = inspector.finish();
