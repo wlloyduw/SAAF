@@ -32,11 +32,7 @@ callservice() {
   #host=10.0.0.124
   #port=8080
   onesecond=1000
-  #filename="parurl"
-  #while read -r line
-  #do
-  #  parurl=$line
-  #done < "$filename"
+
 
   function=`cat ./config.json | jq '.functionName' | tr -d '"'`
 
