@@ -8,9 +8,10 @@ import time
 # Each platform handler will call and pass parameters to this function.
 # 
 # @param request A JSON object provided by the platform handler.
+# @param context A platform specific object used to communicate with the cloud platform.
 # @returns A JSON object to use as a response.
 #
-def yourFunction(request):
+def yourFunction(request, context):
     # Import the module and collect data
     inspector = Inspector()
     inspector.inspectAll()

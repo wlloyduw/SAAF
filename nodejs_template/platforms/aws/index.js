@@ -8,6 +8,6 @@
  *
  * @param event JSON provided by AWS.
  */
-exports.handler = async (event) => {
-	return (require('./function'))(event);
+exports.handler = async (event, context, callback) => {
+	return (require('./function'))(event, context);
 };

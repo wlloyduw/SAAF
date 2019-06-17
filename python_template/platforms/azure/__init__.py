@@ -15,7 +15,7 @@ import azure.functions as func
 def main(req: func.HttpRequest) -> func.HttpResponse:
     logging.info('Python HTTP trigger function processed a request.')
 
-    result = handler.yourFunction(req.params)
+    result = handler.yourFunction(req.params, None)
     return func.HttpResponse(result)
 
 #    name = req.params.get('name')

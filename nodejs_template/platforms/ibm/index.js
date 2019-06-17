@@ -9,7 +9,7 @@
  * @returns {{message: string}}
  */
 function main(params) {
-	return (require('./function'))(params);
+	return (require('./function'))(params, null);
 }
 
 exports.main = main;

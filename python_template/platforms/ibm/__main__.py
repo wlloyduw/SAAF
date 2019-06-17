@@ -12,4 +12,4 @@ import sys
 # @param request
 #
 def main(dict):
-	return handler.yourFunction(dict)
+	return handler.yourFunction(dict, None)

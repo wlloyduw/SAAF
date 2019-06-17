@@ -27,7 +27,6 @@
 # Get the function name from the config.json file.
 function=`cat ./config.json | jq '.functionName' | tr -d '"'`
 functionApp=`cat ./config.json | jq '.azureFunctionApp' | tr -d '"'`
-cd ..
 
 echo
 echo Deploying $function....
@@ -46,13 +45,22 @@ then
 	echo
 	echo "----- Deploying onto AWS Lambda -----"
 	echo
-	cd src
-	cp ../platforms/aws/index.js index.js
-	zip -X -r ./index.zip *
+	
+	# Destroy and prepare build folder.
+	rm -rf build
+	mkdir build
+	mkdir build/node_modules
+	
+	# Copy files to build folder and create zip.
+	cp -R ../src/* ./build
+	cp -R ../platforms/aws/* ./build
+	cp -R ../tools/node_modules/* ./build/node_modules
+	zip -X -r ./build/index.zip ./build/*
+	
+	# Submit to AWS Lambda
+	cd ./build
 	aws lambda update-function-code --function-name $function --zip-file fileb://index.zip
 	aws lambda update-function-configuration --function-name $function --memory-size $memory --runtime nodejs8.10
-	rm index.zip
-	rm index.js
 	cd ..
 fi
 
@@ -62,12 +70,21 @@ then
 	echo
 	echo "----- Deploying onto IBM Cloud Functions -----"
 	echo
-	cd src
-	cp ../platforms/ibm/index.js index.js
-	zip -X -r ./index.zip *
+	
+	# Destroy and prepare build folder.
+	rm -rf build
+	mkdir build
+	mkdir build/node_modules
+	
+	# Copy files to build folder and create zip.
+	cp -R ../src/* ./build
+	cp -R ../platforms/ibm/* ./build
+	cp -R ../tools/node_modules/* ./build/node_modules
+	zip -X -r ./build/index.zip ./build/*
+	
+	# Submit to IBM Cloud Functions
+	cd ./build
 	ibmcloud fn action update $function --kind nodejs:8 --memory $memory index.zip
-	rm index.js
-	rm index.zip
 	cd ..
 fi
 
@@ -77,25 +94,24 @@ then
 	echo
 	echo "----- Deploying onto Azure Functions -----"
 	echo
-	cd src
-	mkdir $function
-	mv  -v ./* ./$function/
-	mkdir node_modules
-	mv ./$function/package.json package.json
-	mv -v ../tools/node_modules/* ./node_modules/
-	cp ../platforms/azure/function.json ./$function/function.json
-	cp ../platforms/azure/host.json host.json
-	cp ../platforms/azure/local.settings.json local.settings.json
-	cp ../platforms/azure/index.js ./$function/index.js
+	
+	# Destroy and prepare build folder.
+	rm -rf build
+	mkdir build
+	mkdir build/node_modules
+	mkdir build/$function
+	
+	# Copy and position files in the build folder.
+	cp -R ../src/* ./build/$function
+	mv ./build/$function/package.json ./build/package.json
+	cp -R ../platforms/azure/* ./build
+	mv ./build/index.js ./build/$function/index.js
+	mv ./build/function.json ./build/$function/function.json
+	cp -R ../tools/node_modules/* ./build/node_modules
+	
+	# Submit to Azure Functions
+	cd ./build
 	func azure functionapp publish $functionApp --force
-	rm host.json
-	rm local.settings.json
-	rm ./$function/function.json
-	rm ./$function/index.js
-	mv  -v ./$function/* ./
-	mv -v ./node_modules/* ../tools/node_modules/
-	rmdir node_modules
-	rmdir $function
 	cd ..
 fi
 
@@ -105,11 +121,19 @@ then
 	echo
 	echo "----- Deploying onto Google Cloud Functions -----"
 	echo
-	cd src
-	cp ../platforms/google/index.js index.js
+	
+	# Destroy and prepare build folder.
+	rm -rf build
+	mkdir build
+	mkdir build/node_modules
+	
+	# Copy files to build folder.
+	cp -R ../src/* ./build
+	cp -R ../platforms/google/* ./build
+	cp -R ../tools/node_modules/* ./build/node_modules
+	
+	# Submit to Google Cloud Functions
+	cd ./build
 	gcloud functions deploy $function --source=. --runtime nodejs8 --trigger-http --memory $memory
-	rm index.js
 	cd ..
 fi
-
-cd tools

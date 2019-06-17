@@ -12,4 +12,4 @@ import json
 #
 def hello_world(request):
 	request_json = request.get_json()
-	return json.dumps(handler.yourFunction(request_json))
+	return json.dumps(handler.yourFunction(request_json, None))
