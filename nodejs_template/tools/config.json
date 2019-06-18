@@ -1,6 +1,7 @@
 {
-	"functionName":     "test",
+	"functionName":     "instantDeploy",
 	"memorySetting":    512,
 
+	"lambdaRoleARN": "",
 	"azureFunctionApp": "UWT-Workspace"
 }
