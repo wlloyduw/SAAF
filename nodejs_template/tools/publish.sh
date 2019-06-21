@@ -5,7 +5,8 @@
 #
 # Each platform's default function is defined in the platforms folder. These are copied into the source folder as index.js
 # and deployed onto each platform accordingly. Developers should write their function in the function.js file. 
-# All source files should be in the src folder and dependencies defined in package.json.
+# All source files should be in the src folder and dependencies defined in package.json. 
+# Node Modules must be installed in tools/node_modules. This folder will be deployed with your function.
 #
 # This script requires each platform's CLI to be installed and properly configured to update functions.
 # AWS CLI: apt install awscli 
@@ -13,16 +14,10 @@
 # IBM Cloud CLI: https://www.ibm.com/cloud/cli
 # Azure CLI: https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest
 #
-# To use this script, create files to provide your function name. Function must have the same name on ALL platforms.
-# file: parfunction   The name of the function.
-#
 # Choose which platforms to deploy to using command line arguments:
 # ./publish.sh AWS GCF IBM AZURE MEMORY
 # Example to deploy to AWS and Azure: ./publish.sh 1 0 0 1 1024
 #
-# WARNING for Azure: Azure Functions DOES NOT automatically download dependencies in the package.json file like IBM or Google. 
-# You must manually install them to the ./tools directory and this script will automatically copy the node_modules folder and deploy it with your Azure function.
-
 
 # Get the function name from the config.json file.
 function=`cat ./config.json | jq '.functionName' | tr -d '"'`
@@ -136,6 +131,6 @@ then
 	
 	# Submit to Google Cloud Functions
 	cd ./build
-	gcloud functions deploy $function --source=. --runtime nodejs8 --trigger-http --memory $memory
+	gcloud functions deploy $function --source=. --runtime nodejs8 --entry-point helloWorld --trigger-http --memory $memory
 	cd ..
 fi
