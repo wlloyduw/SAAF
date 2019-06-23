@@ -18,8 +18,10 @@
 # ./publish.sh AWS GCF IBM AZURE MEMORY
 # Example to deploy to AWS and Azure: ./publish.sh 1 0 0 1 1024
 #
-
 # Get the function name from the config.json file.
+
+cd "$(dirname "$0")"
+
 function=`cat ./config.json | jq '.functionName' | tr -d '"'`
 functionApp=`cat ./config.json | jq '.azureFunctionApp' | tr -d '"'`
 lambdaRole=`cat ./config.json | jq '.lambdaRoleARN' | tr -d '"'`

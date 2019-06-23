@@ -76,7 +76,7 @@ class Inspector:
         CPUModelName = CPUModelName.replace('model name: ', '')
         self.__attributes['cpuType'] = CPUModelName
         
-        child = os.popen('grep \'model\' /proc/cpuinfo | head -1')
+        child = os.popen('grep \'model\t:\' /proc/cpuinfo | head -1')
         CPUModel = child.read()
         CPUModel = re.sub('[\n\t]','', CPUModel)
         CPUModel = CPUModelName.replace('model\t: ', '')
