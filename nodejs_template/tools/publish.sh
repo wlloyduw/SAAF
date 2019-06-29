@@ -57,7 +57,7 @@ then
 	# Zip and submit to AWS Lambda.
 	cd ./build
 	zip -X -r ./index.zip *
-	aws lambda create-function --function-name $function --runtime nodejs8.10 --role $lambdaRole --handler index.js --zip-file fileb://index.zip
+	aws lambda create-function --function-name $function --runtime nodejs8.10 --role $lambdaRole --timeout 900 --handler index.js --zip-file fileb://index.zip
 	aws lambda update-function-code --function-name $function --zip-file fileb://index.zip
 	aws lambda update-function-configuration --function-name $function --memory-size $memory --runtime nodejs8.10
 	cd ..

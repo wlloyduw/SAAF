@@ -1,4 +1,5 @@
 #!/bin/bash
+
 # AWS Lambda parallel client testing script
 # requires curl, the gnu parallel package, the bash calculator, jq for json processing, and the awscli
 #
@@ -20,7 +21,7 @@ csstimes=()
 clatency=()
 price_gbsec=.00001667
 memory_mb=3008
-memory_gb=`echo $memory_mb / 1000 | bc -l`
+memory_gb=$(echo $memory_mb / 1000 | bc -l)
 
 #########################################################################################################################################################
 #  callservice method - uses separate threads to call AWS Lambda in parallel
@@ -34,16 +35,16 @@ callservice() {
   onesecond=1000
 
 
-  function=`cat ./config.json | jq '.functionName' | tr -d '"'`
+  function=$(cat ./config.json | jq '.functionName' | tr -d '"')
 
-  if [ $threadid -eq 1 ]
+  if [ "$threadid" -eq 1 ]
   then
     echo "run_id,thread_id,uuid,cputype,cpusteal,vmuptime,pid,cpuusr,cpukrn,elapsed_time,server_runtime,latency,sleep_time_ms,new_container"
   fi
-  for (( i=1 ; i <= $totalruns; i++ ))
+  for (( i=1 ; i <= totalruns; i++ ))
   do
     # JSON object to pass to Lambda Function
-    json=`cat config.json | jq -c '.payload'`
+    json=$(cat config.json | jq -c '.payload')
 
     time1=( $(($(date +%s%N)/1000000)) )
 
@@ -55,7 +56,7 @@ callservice() {
     ####################################
     # Uncomment for AWS Lambda CLI function invocation with $function variable
     ####################################
-    output=`aws lambda invoke --invocation-type RequestResponse --function-name $function --region us-east-1 --payload $json /dev/stdout | head -n 1 | head -c -2 ; echo`
+    output=$(aws lambda invoke --invocation-type RequestResponse --function-name "$function" --region us-east-1 --payload "$json" /dev/stdout | head -n 1 | head -c -2 ; echo)
     
     ####################################
     # Uncomment for Google Cloud CLI function invocation with $function variable
@@ -97,7 +98,7 @@ callservice() {
     echo "$uuid,$elapsedtime,$ssruntime,$latency,$vuptime,$newcont,$cputype,$cpusteal" >> .uniqcont
     if (( $sleeptime > 0 ))
     then
-      sleep $sleeptimems
+      sleep "$sleeptimems"
     fi
   done
 }

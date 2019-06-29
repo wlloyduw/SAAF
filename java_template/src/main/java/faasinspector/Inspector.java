@@ -181,8 +181,6 @@ public class Inspector {
     public void inspectCPUDelta() {
 
         String text;
-        int start;
-        int end;
 
         //Get CPU Metrics
         String filename = "/proc/stat";

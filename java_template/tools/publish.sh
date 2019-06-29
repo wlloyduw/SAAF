@@ -50,7 +50,7 @@ then
 	# Submit jar to AWS Lambda.
 	cd ..
 	cd target
-	aws lambda create-function --function-name $function --runtime java8 --role $lambdaRole --handler lambda.Hello::handleRequest --zip-file fileb://lambda_test-1.0-SNAPSHOT.jar
+	aws lambda create-function --function-name $function --runtime java8 --role $lambdaRole --timeout 900 --handler lambda.Hello::handleRequest --zip-file fileb://lambda_test-1.0-SNAPSHOT.jar
 	aws lambda update-function-code --function-name $function --zip-file fileb://lambda_test-1.0-SNAPSHOT.jar
 	aws lambda update-function-configuration --function-name $function --memory-size $memory --runtime java8
 	cd ..

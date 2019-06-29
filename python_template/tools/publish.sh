@@ -55,7 +55,7 @@ then
 	# Zip and submit to AWS Lambda.
 	cd ./build
 	zip -X -r ./index.zip *
-	aws lambda create-function --function-name $function --runtime python3.7 --role $lambdaRole --handler lambda_function.py --zip-file fileb://index.zip
+	aws lambda create-function --function-name $function --runtime python3.7 --role $lambdaRole --timeout 900 --handler lambda_function.py --zip-file fileb://index.zip
 	aws lambda update-function-code --function-name $function --zip-file fileb://index.zip
 	aws lambda update-function-configuration --function-name $function --memory-size $memory --runtime python3.7
 	cd ..
