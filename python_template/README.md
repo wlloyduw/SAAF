@@ -115,14 +115,13 @@ The amount of data collected is detemined by which functions are called. If some
 | **Field** | **Description** |
 | --------- | --------------- |
 | platform | The FaaS platform hosting this function. |
+| containerID | A platform specific container identifier. Supported on AWS Lambda and Azure Functions. |
+| vmID | A platform specific virtual machine identifier. Supported on AWS Lambda. |
 
 ### inspectLinux()
 
 | **Field** | **Description** |
 | --------- | --------------- |
 | linuxVersion | The version of the linux kernel. |
-| hostname | The host name of the current host system. |
-| containerID | A platform specific container identifier. Supported on AWS Lambda and Azure Functions. |
-| vmID | A platform specific virtual machine identifier. Supported on AWS Lambda. |
 
 &nbsp;

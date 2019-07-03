@@ -1,6 +1,6 @@
 {
 	"functionName":     "pythonTest",
-	"memorySetting":    512,
 	
+	"lambdaRoleARN": "arn:aws:iam::616835888336:role/lambda_basic_execution",
 	"azureFunctionApp": "UWT-Workspace-Python"
 }

@@ -251,14 +251,11 @@ public class Inspector {
     /**
      * Collect information about the linux kernel.
      *
-     * linuxVersion: The version of the linux kernel. hostname: The host name of the system.
+     * linuxVersion: The version of the linux kernel.
      */
     public void inspectLinux() {
         String linuxVersion = runCommand(new String[]{"uname", "-v"}).trim();
         attributes.put("linuxVersion", linuxVersion);
-
-        String hostname = runCommand(new String[]{"hostname"}).trim();
-        attributes.put("hostname", hostname);
     }
 
     /**

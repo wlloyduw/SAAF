@@ -98,7 +98,7 @@ then
 	cp -R ../platforms/google/* ./build
 
 	cd ./build
-	gcloud functions deploy $function --source=. --runtime python37 --trigger-http --memory $memory
+	gcloud functions deploy $function --source=. --entry-point hello_world --runtime python37 --timeout 540 --trigger-http --memory $memory
 	cd ..
 fi
 

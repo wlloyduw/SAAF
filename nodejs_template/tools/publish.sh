@@ -133,6 +133,6 @@ then
 	
 	# Submit to Google Cloud Functions
 	cd ./build
-	gcloud functions deploy $function --source=. --runtime nodejs8 --entry-point helloWorld --trigger-http --memory $memory
+	gcloud functions deploy $function --source=. --runtime nodejs8 --entry-point helloWorld --timeout 540 --trigger-http --memory $memory
 	cd ..
 fi
