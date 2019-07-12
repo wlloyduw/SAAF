@@ -2,7 +2,7 @@
 
 # Mutli-platform Publisher. Used to publish FaaS Inspector Java functions onto AWS Lambda
 #
-# Each platform's default function is defined in the platforms folder. These are copied into the source folder as index.js
+# Each platform's default function is defined in the platforms folder. These are copied into the source folder
 # and deployed onto each platform accordingly. Developers should write their function in the function.js file. 
 # All source files should be in the src folder and dependencies defined in package.json. 
 # Node Modules must be installed in tools/node_modules. This folder will be deployed with your function.
@@ -63,7 +63,19 @@ then
 	echo
 	echo "----- Deploying onto IBM Cloud Functions -----"
 	echo
-	echo "Java FaaS Inspector does not support IBM Cloud Functions..."
+	
+	echo "Building jar with Maven..."
+	mvn clean -f "../pom.xml"
+	mvn verify -f "../pom.xml"
+	
+	# Submit jar to AWS Lambda.
+	cd ..
+	cd target
+	ibmcloud fn action create $function --kind java --memory $memory --main ibm.Hello::main lambda_test-1.0-SNAPSHOT.jar -v
+	ibmcloud fn action update $function --kind java --memory $memory --main ibm.Hello::main lambda_test-1.0-SNAPSHOT.jar
+	cd ..
+	cd tools
+
 fi
 
 # Deploy onto Azure Functions

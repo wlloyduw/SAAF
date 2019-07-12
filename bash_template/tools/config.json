@@ -1,0 +1,5 @@
+{
+	"functionName":     "testBASH",
+
+	"lambdaRoleARN": "arn:aws:iam::616835888336:role/lambda_basic_execution"
+}
