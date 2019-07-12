@@ -29,9 +29,8 @@ public class Hello {
         JsonObject output = new JsonObject();
         HashMap<String, Object> results = inspector.finish();
         results.keySet().forEach((s) -> {
-            output.addProperty(s, (String) results.get(s));
+            output.addProperty(s, String.valueOf(results.get(s)));
         });
         return output;
     }
-    
 }

@@ -71,8 +71,7 @@ then
 	# Submit jar to AWS Lambda.
 	cd ..
 	cd target
-	ibmcloud fn action create $function --kind java --memory $memory --main ibm.Hello::main lambda_test-1.0-SNAPSHOT.jar -v
-	ibmcloud fn action update $function --kind java --memory $memory --main ibm.Hello::main lambda_test-1.0-SNAPSHOT.jar
+	ibmcloud fn action update $function --kind java --memory $memory --main ibm.Hello lambda_test-1.0-SNAPSHOT.jar
 	cd ..
 	cd tools
 
