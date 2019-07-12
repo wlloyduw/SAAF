@@ -38,9 +38,9 @@ For more detailed descriptions of each variable, please see the documentation fo
 
 ## Supported Platforms and Languages:
 
-| **Platform** | **Node.js** | **Python** | **Java** |
-| --- | :---: | :---: | :---: |
-| AWS Lambda | ✔️ | ✔️ | ✔️ |
-| Google Cloud Functions | ✔️ | ✔️ | ❌ |
-| IBM Cloud Functions | ✔️ | ✔️ | ❌ |
-| Azure Functions (Linux) | ✔️ | ✔️ | ❌ |
+| **Platform** | **Node.js** | **Python** | **Java** | **Bash** |
+| --- | :---: | :---: | :---: | :---: |
+| AWS Lambda | ✔️ | ✔️ | ✔️ | ⏳ |
+| Google Cloud Functions | ✔️ | ✔️ | ⏳ | ❌ |
+| IBM Cloud Functions | ✔️ | ✔️ | ⏳ | ❌ |
+| Azure Functions (Linux) | ✔️ | ✔️ | ❌ | ❌ |
