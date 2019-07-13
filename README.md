@@ -40,7 +40,7 @@ For more detailed descriptions of each variable, please see the documentation fo
 
 | **Platform** | **Node.js** | **Python** | **Java** | **Bash** |
 | --- | :---: | :---: | :---: | :---: |
-| AWS Lambda | ✔️ | ✔️ | ✔️ | ⏳ |
+| AWS Lambda | ✔️ | ✔️ | ✔️ | ✔️ |
 | Google Cloud Functions | ✔️ | ✔️ | ⏳ | ❌ |
-| IBM Cloud Functions | ✔️ | ✔️ | ⏳ | ❌ |
+| IBM Cloud Functions | ✔️ | ✔️ | ✔️ | ❌ |
 | Azure Functions (Linux) | ✔️ | ✔️ | ❌ | ❌ |

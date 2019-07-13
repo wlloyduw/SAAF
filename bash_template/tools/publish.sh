@@ -45,7 +45,7 @@ then
     cp -R ../src/* ./build
 
     echo Assigning premissions...
-    sudo chmod 755 ./build/function.sh ./build/bootstrap 
+    sudo chmod 755 -R ./build/*
 
 	# Submit custom runtime to AWS Lambda.
 
