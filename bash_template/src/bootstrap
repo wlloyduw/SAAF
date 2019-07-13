@@ -19,13 +19,13 @@ do
   # Version variables.
   version=0.1
   lang="bash"
-  startTime=( $(($(date +%s%N)/1000000)) )
+  startTime=$(($(date +%s%N)/1000000))
 
   # Generate UUID, check if container exists, stamp container.
   uuid=0
   newContainer=0
   if [ ! -f /tmp/container-id ]; then
-      #uuid=$(./dependencies/uuid)
+      uuid=$(env | grep AWS_LAMBDA_LOG_STREAM_NAME= | cut -c 28-)
       echo "$uuid" >> /tmp/container-id
       newContainer=1
   else
@@ -53,7 +53,8 @@ do
   vmID=$(cat /proc/self/cgroup | grep '2:cpu' | head -1 | cut -c 21- | head -c 6)
 
   # Get framework runtime.
-  frameworkRuntime=$(($(($(date +%s%N)/1000000))-startTime))
+  frameworkEnd=$(($(date +%s%N)/1000000))
+  frameworkRuntime=$((frameworkEnd-startTime))
 
   #
   # USER CODE HERE
@@ -63,11 +64,16 @@ do
   EVENT_DATA=$(curl -sS -LD "$HEADERS" -X GET "http://${AWS_LAMBDA_RUNTIME_API}/2018-06-01/runtime/invocation/next")
   REQUEST_ID=$(grep -Fi Lambda-Runtime-Aws-Request-Id "$HEADERS" | tr -d '[:space:]' | cut -d: -f2)
 
+  # Get time to recieve event data.
+  eventTime=$(($(date +%s%N)/1000000))
+  timeToGetEventData=$((eventTime-frameworkEnd))
+
   # Execute the handler function from the script
   RESPONSE=$($(echo "$_HANDLER" | cut -d. -f2) "$EVENT_DATA")
 
   # Finalize runtime and calculate deltas.
-  runtime=$(($(($(date +%s%N)/1000000))-startTime))
+  endTime=$(($(date +%s%N)/1000000))
+  runtime=$((endTime-startTime))
   IFS=' ' read -r -a CPUMetrics <<< "$(cat /proc/stat | grep "^cpu" | head -1)"
   cpuUsrDelta=$((CPUMetrics[1]-cpuUsr))
   cpuNiceDelta=$((CPUMetrics[2]-cpuNice))
@@ -106,10 +112,12 @@ do
               --arg cpuType "$cpuType" \
               --arg runtime "$runtime" \
               --arg frameworkRuntime "$frameworkRuntime" \
+              --arg timeToGetEventData "$timeToGetEventData" \
               --arg vmID "$vmID" \
+              --arg response "$RESPONSE" \
               '{version: $version,
               lang: $lang,
-              uuid: $uuid,
+              containerID: $uuid,
               newcontainer: $newcontainer,
               vmuptime: $vmuptime,
               contextSwitches: $contextSwitches,
@@ -133,9 +141,11 @@ do
               cpuType: $cpuType,
               runtime: $runtime,
               frameworkRuntime: $frameworkRuntime,
+              timeToGetEventData: $timeToGetEventData,
               vmID: $vmID,
+              response: $response,
               }' )
 
   # Send the response
-  curl -X POST "http://${AWS_LAMBDA_RUNTIME_API}/2018-06-01/runtime/invocation/$REQUEST_ID/response"  -d "$jsonString"
+  curl -X POST "http://${AWS_LAMBDA_RUNTIME_API}/2018-06-01/runtime/invocation/$REQUEST_ID/response" -H "Content-Type: application/json" -d "$jsonString"
 done
