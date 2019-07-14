@@ -22,8 +22,9 @@
 cd "$(dirname "$0")"
 
 function=`cat ./config.json | jq '.functionName' | tr -d '"'`
-functionApp=`cat ./config.json | jq '.azureFunctionApp' | tr -d '"'`
 lambdaRole=`cat ./config.json | jq '.lambdaRoleARN' | tr -d '"'`
+lambdaSubnets=`cat ./config.json | jq '.lambdaSubnets' | tr -d '"'`
+lambdaSecurityGroups=`cat ./config.json | jq '.lambdaSecurityGroups' | tr -d '"'`
 
 echo
 echo Deploying $function....
@@ -52,7 +53,8 @@ then
 	cd target
 	aws lambda create-function --function-name $function --runtime java8 --role $lambdaRole --timeout 900 --handler lambda.Hello::handleRequest --zip-file fileb://lambda_test-1.0-SNAPSHOT.jar
 	aws lambda update-function-code --function-name $function --zip-file fileb://lambda_test-1.0-SNAPSHOT.jar
-	aws lambda update-function-configuration --function-name $function --memory-size $memory --runtime java8
+	aws lambda update-function-configuration --function-name $function --memory-size $memory --runtime java8 \
+	--vpc-config SubnetIds=[$lambdaSubnets],SecurityGroupIds=[$lambdaSecurityGroups]
 	cd ..
 	cd tools
 fi

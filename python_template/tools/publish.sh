@@ -23,8 +23,12 @@ cd "$(dirname "$0")"
 
 # Get the function name from the config.json file.
 function=`cat ./config.json | jq '.functionName' | tr -d '"'`
-functionApp=`cat ./config.json | jq '.azureFunctionApp' | tr -d '"'`
+
 lambdaRole=`cat ./config.json | jq '.lambdaRoleARN' | tr -d '"'`
+lambdaSubnets=`cat ./config.json | jq '.lambdaSubnets' | tr -d '"'`
+lambdaSecurityGroups=`cat ./config.json | jq '.lambdaSecurityGroups' | tr -d '"'`
+
+functionApp=`cat ./config.json | jq '.azureFunctionApp' | tr -d '"'`
 
 echo
 echo Deploying $function...
@@ -57,7 +61,8 @@ then
 	zip -X -r ./index.zip *
 	aws lambda create-function --function-name $function --runtime python3.7 --role $lambdaRole --timeout 900 --handler lambda_function.py --zip-file fileb://index.zip
 	aws lambda update-function-code --function-name $function --zip-file fileb://index.zip
-	aws lambda update-function-configuration --function-name $function --memory-size $memory --runtime python3.7
+	aws lambda update-function-configuration --function-name $function --memory-size $memory --runtime python3.7 \
+	--vpc-config SubnetIds=[$lambdaSubnets],SecurityGroupIds=[$lambdaSecurityGroups]
 	cd ..
 fi
 

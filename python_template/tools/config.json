@@ -2,5 +2,8 @@
 	"functionName":     "pythonTest",
 	
 	"lambdaRoleARN": "arn:aws:iam::616835888336:role/lambda_basic_execution",
+	"lambdaSubnets": "subnet-c41f88ea",
+	"lambdaSecurityGroups": "sg-7852de36",
+	
 	"azureFunctionApp": "UWT-Workspace-Python"
 }

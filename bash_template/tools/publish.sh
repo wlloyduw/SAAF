@@ -18,6 +18,8 @@ cd "$(dirname "$0")"
 
 function=`cat ./config.json | jq '.functionName' | tr -d '"'`
 lambdaRole=`cat ./config.json | jq '.lambdaRoleARN' | tr -d '"'`
+lambdaSubnets=`cat ./config.json | jq '.lambdaSubnets' | tr -d '"'`
+lambdaSecurityGroups=`cat ./config.json | jq '.lambdaSecurityGroups' | tr -d '"'`
 
 echo
 echo Deploying $function....
@@ -54,7 +56,9 @@ then
 
 	aws lambda create-function --function-name $function --runtime provided --role $lambdaRole --timeout 900 --handler function.handler --zip-file fileb://function.zip
 	aws lambda update-function-code --function-name $function --zip-file fileb://function.zip
-	aws lambda update-function-configuration --function-name $function --memory-size $memory --runtime provided
+	aws lambda update-function-configuration --function-name $function --memory-size $memory --runtime provided \
+	--vpc-config SubnetIds=[$lambdaSubnets],SecurityGroupIds=[$lambdaSecurityGroups]
+
 	cd ..
 fi
 

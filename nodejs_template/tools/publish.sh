@@ -23,8 +23,12 @@
 cd "$(dirname "$0")"
 
 function=`cat ./config.json | jq '.functionName' | tr -d '"'`
-functionApp=`cat ./config.json | jq '.azureFunctionApp' | tr -d '"'`
+
 lambdaRole=`cat ./config.json | jq '.lambdaRoleARN' | tr -d '"'`
+lambdaSubnets=`cat ./config.json | jq '.lambdaSubnets' | tr -d '"'`
+lambdaSecurityGroups=`cat ./config.json | jq '.lambdaSecurityGroups' | tr -d '"'`
+
+functionApp=`cat ./config.json | jq '.azureFunctionApp' | tr -d '"'`
 
 echo
 echo Deploying $function....
@@ -59,7 +63,8 @@ then
 	zip -X -r ./index.zip *
 	aws lambda create-function --function-name $function --runtime nodejs8.10 --role $lambdaRole --timeout 900 --handler index.js --zip-file fileb://index.zip
 	aws lambda update-function-code --function-name $function --zip-file fileb://index.zip
-	aws lambda update-function-configuration --function-name $function --memory-size $memory --runtime nodejs8.10
+	aws lambda update-function-configuration --function-name $function --memory-size $memory --runtime nodejs8.10 \
+	--vpc-config SubnetIds=[$lambdaSubnets],SecurityGroupIds=[$lambdaSecurityGroups]
 	cd ..
 fi
 
