@@ -44,8 +44,8 @@ then
     # Create folder with bootstrap and function...
     cp -R ../src/* ./build
 
-    echo Assigning premissions...
-    sudo chmod 755 -R ./build/*
+    echo Assigning permissions...
+    sudo chmod -R 755 ./build/*
 
 	# Submit custom runtime to AWS Lambda.
 
