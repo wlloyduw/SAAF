@@ -10,6 +10,14 @@ while true
 do
 
   #
+  # GET REQUEST
+  # 
+  HEADERS="$(mktemp)"
+  # Get an event
+  EVENT_DATA=$(curl -sS -LD "$HEADERS" -X GET "http://${AWS_LAMBDA_RUNTIME_API}/2018-06-01/runtime/invocation/next")
+  REQUEST_ID=$(grep -Fi Lambda-Runtime-Aws-Request-Id "$HEADERS" | tr -d '[:space:]' | cut -d: -f2)
+
+  #
   # FaaS Inspector Bash Version
   #
   # @author Wes Lloyd
@@ -55,18 +63,6 @@ do
   # Get framework runtime.
   frameworkEnd=$(($(date +%s%N)/1000000))
   frameworkRuntime=$((frameworkEnd-startTime))
-
-  #
-  # USER CODE HERE
-  # 
-  HEADERS="$(mktemp)"
-  # Get an event
-  EVENT_DATA=$(curl -sS -LD "$HEADERS" -X GET "http://${AWS_LAMBDA_RUNTIME_API}/2018-06-01/runtime/invocation/next")
-  REQUEST_ID=$(grep -Fi Lambda-Runtime-Aws-Request-Id "$HEADERS" | tr -d '[:space:]' | cut -d: -f2)
-
-  # Get time to recieve event data.
-  eventTime=$(($(date +%s%N)/1000000))
-  timeToGetEventData=$((eventTime-frameworkEnd))
 
   # Execute the handler function from the script
   RESPONSE=$($(echo "$_HANDLER" | cut -d. -f2) "$EVENT_DATA")
@@ -116,7 +112,6 @@ do
               --arg cpuType "$cpuType" \
               --arg runtime "$runtime" \
               --arg frameworkRuntime "$frameworkRuntime" \
-              --arg timeToGetEventData "$timeToGetEventData" \
               --arg vmID "$vmID" \
               --arg response "$RESPONSE" \
               '{version: $version,
@@ -146,7 +141,6 @@ do
               cpuType: $cpuType,
               runtime: $runtime,
               frameworkRuntime: $frameworkRuntime,
-              timeToGetEventData: $timeToGetEventData,
               vmID: $vmID,
               response: $response,
               }' )
