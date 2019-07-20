@@ -2,8 +2,8 @@ package lambda;
 
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
-import faasinspector.Inspector;
-import faasinspector.Response;
+import saaf.Inspector;
+import saaf.Response;
 import java.util.HashMap;
 
 /**

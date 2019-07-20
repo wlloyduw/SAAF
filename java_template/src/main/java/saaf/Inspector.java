@@ -1,4 +1,4 @@
-package faasinspector;
+package saaf;
 
 import java.beans.IntrospectionException;
 import java.beans.Introspector;

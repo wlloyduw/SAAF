@@ -1,6 +1,6 @@
-# Faas Inspector Deployment Tools
+# SAAF Deployment Tools
 
-One goal of FaaS Inspector is to support multiple FaaS platforms. Currently AWS Lambda, Google Cloud Functions, IBM Cloud Functions/OpenWhisk, and Azure Function are the supported platforms. A few scripts have been developed to aid in development, deployment, and testing of each platform.
+One goal of SAAF is to support multiple FaaS platforms. Currently AWS Lambda, Google Cloud Functions, IBM Cloud Functions/OpenWhisk, and Azure Function are the supported platforms. A few scripts have been developed to aid in development, deployment, and testing of each platform.
 
 ### Project Structure
 The project structure is meant to simplify deploying onto each of the supported platforms.
@@ -20,7 +20,7 @@ The project structure is meant to simplify deploying onto each of the supported 
 
 The src folder contains all of the code for your function. 
 
-  * [**Inspector.py**](../src/Inspector.py) is the FaaS Inspector itself and is completely independent of any files or folders in this project. If you do not plan to use this file sctructure, Inspector.py can be used and moved to any Python project.
+  * [**Inspector.py**](../src/Inspector.py) is the SAAF itself and is completely independent of any files or folders in this project. If you do not plan to use this file sctructure, Inspector.py can be used and moved to any Python project.
   
   * [**handler.py**](../src/handler.py) file is the handler that each cloud provider will execute. 
     
