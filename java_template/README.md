@@ -1,17 +1,17 @@
-# Faas Inspector
+# SAAF - Serverless Application Analytics Framework (SAAF)
 
-FaaS Inspector is a programming framework that allows for tracing FaaS function server infrastructure for code deployments. This framework includes functions to enable tracing code containers and hosts (VMs) created by FaaS platform providers for hosting FaaS functions. This information can help verify the state of infrastructure (COLD vs. WARM) to understand performance results, and help preserve infrastructure for better FaaS performance.
+SAAF is a programming framework that allows for tracing FaaS function server infrastructure for code deployments. This framework includes functions to enable tracing code containers and hosts (VMs) created by FaaS platform providers for hosting FaaS functions. This information can help verify the state of infrastructure (COLD vs. WARM) to understand performance results, and help preserve infrastructure for better FaaS performance.
 
 ### Getting Started
 
-To use the core FaaS Inspector framework, download the [Inspector.java](./src/main/java/faasinspector/Inspector.java) script into an existing Java project and simply import the module as shown below.
+To use the core SAAF framework, download the [Inspector.java](./src/main/java/saaf/Inspector.java) script into an existing Java project and simply import the module as shown below.
 
-FaaS Inspector also includes tools to deploy and develop new functions for each supported platform automatically. To make use of these tools, download the entire repository and follow the directions in the [tools directory](./tools). 
+SAAF also includes tools to deploy and develop new functions for each supported platform automatically. To make use of these tools, download the entire repository and follow the directions in the [tools directory](./tools). 
 
 ### Import the Module into an Existing Project
 
 ```java
-import faasinspector.Inspector;
+import saaf.Inspector;
 ```
 Initializing the Inspector should be the first line of your function as it begins recording the runtime.
 
@@ -66,7 +66,7 @@ The amount of data collected is detemined by which functions are called. If some
 
 | **Field** | **Description** |
 | --------- | --------------- |
-| version | The version of the FaaS Inspector Framework. |
+| version | The version of the SAAF Framework. |
 | lang | The language of the function. |
 | runtime | The server-side runtime from when the function is initialized until Inspector.finish() is called. |
 

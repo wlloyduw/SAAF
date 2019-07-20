@@ -4,32 +4,32 @@ SAAF is a programming framework that allows for tracing FaaS function server inf
 
 ### Getting Started
 
-To use the core SAAF framework, download the [Inspector.js](./src/Inspector.js) script into an existing Node.js project and simply import the module as shown below.
+To use the core SAAF framework, download the [bootstrap](./src/bootstrap) script into an existing Lambda custom runtime.
 
 SAAF also includes tools to deploy and develop new functions for each supported platform automatically. To make use of these tools, download the entire repository and follow the directions in the [tools directory](./tools). 
 
 ### Import the Module into an Existing Project
 
-```node.js
-const inspector = new (require('./Inspector'))();
+```java
+import faasinspector.Inspector;
 ```
-This should be the first line of your function as it begins recording the runtime.
+Initializing the Inspector should be the first line of your function as it begins recording the runtime.
 
 ### Example Hello World Function
 
-```node.js
-module.exports = function(request) {
+```java
+public HashMap<String, Object> handleRequest(Request request, Context context) {
   
-  //Import the module and collect data
-  const inspector = new (require('./Inspector'))();
-  inspector.inspectContainer();
+  //Collect data
+  Inspector inspector = new Inspector();
   inspector.inspectCPU();
+  inspector.inspectContainer();
   inspector.addTimeStamp("frameworkRuntime");
-
+  
   //Add custom message and finish the function
-  inspector.addAttribute("message", "Hello " + request.name + "!");
+  inspector.addAttribute("message", "Hello " + request.getName() + "!");
   return inspector.finish();
-};
+}
 ```
 
 #### Example JSON Output
@@ -37,7 +37,7 @@ module.exports = function(request) {
 ```json
 {
   "version": 0.2,
-  "lang": "node.js",
+  "lang": "java",
   "cpuType": "Intel(R) Xeon(R) Processor @ 2.50GHz",
   "cpuModel": 63,
   "vmuptime": 1551727835,
