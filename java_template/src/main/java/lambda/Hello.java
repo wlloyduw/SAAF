@@ -26,7 +26,6 @@ public class Hello implements RequestHandler<Request, HashMap<String, Object>> {
         //Collect inital data.
         Inspector inspector = new Inspector();
         inspector.inspectAll();
-        inspector.addTimeStamp("frameworkRuntime");
         
         //Add custom message to FaaS Inspector.
         inspector.addAttribute("message", "Hello " + request.getName() 

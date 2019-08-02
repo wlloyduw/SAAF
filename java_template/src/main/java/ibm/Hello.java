@@ -18,7 +18,6 @@ public class Hello {
         //Collect data
         Inspector inspector = new Inspector();
         inspector.inspectAll();
-        inspector.addTimeStamp("frameworkRuntime");
         
         //Add custom message and finish the function
         inspector.addAttribute("message", "Hello " + args.getAsJsonPrimitive("name").getAsString() + "!");
