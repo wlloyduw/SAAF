@@ -92,6 +92,7 @@ The amount of data collected is detemined by which functions are called. If some
 | cpuIrq | Time spent servicing interrupts. |
 | cpuSoftIrq | Time spent servicing software interrupts. |
 | vmcpusteal | Cycles spent waiting for real CPU while hypervisor is using another virtual CPU. |
+| contextSwitches | The number of times the CPU has switched context since boot. |
 
 ### inspectCPUDelta()
 
@@ -105,6 +106,23 @@ The amount of data collected is detemined by which functions are called. If some
 | cpuIrqDelta | Change in cpuIrq compared to when inspectCPU was called. |
 | cpuSoftIrqDelta | Change in cpuSoftIrq compared to when inspectCPU was called. |
 | vmcpustealDelta | Change in vmcpusteal compared to when inspectCPU was called. |
+| contextSwitchesDelta | The number of times the CPU has switched context since inspectCPU. |
+
+### inspectMemory()
+
+| **Field** | **Description** |
+| --------- | --------------- |
+| totalMemory | The total memory, in kB, allocated to the VM. |
+| freeMemory | The current amount of free memory in kB. |
+| pageFaults | The total number of page faults since boot. |
+| majorPageFaults | The total number of major page faults since boot. |
+
+### inspectMemoryDelta()
+
+| **Field** | **Description** |
+| --------- | --------------- |
+| pageFaultsDelta | The total number of page faults since inspectMemory. |
+| majorPageFaultsDelta | The total number of major page faults since inspectMemory. |
 
 ### inspectPlatform()
 

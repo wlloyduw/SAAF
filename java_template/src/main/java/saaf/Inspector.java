@@ -23,7 +23,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
- * FaaS Inspector
+ * SAAF
  *
  * @author Wes Lloyd
  * @author Robert Cordingly
@@ -34,15 +34,17 @@ public class Inspector {
     private final long startTime;
 
     /**
-     * Initialize FaaS Inspector.
+     * Initialize Inspector.
      *
      * attributes: Used to store information collected by each function.
+     * version: Inspector version.
+     * lang: Function language (java).
      */
     public Inspector() {
         startTime = System.currentTimeMillis();
         attributes = new HashMap<>();
 
-        attributes.put("version", 0.2);
+        attributes.put("version", 0.3);
         attributes.put("lang", "java");
     }
 
@@ -122,6 +124,7 @@ public class Inspector {
      * cpuIrq:     Time spent servicing interrupts. 
      * cpuSoftIrq: Time spent servicing software interrupts.
      * vmcpusteal: Time spent waiting for real CPU while hypervisor is using another virtual CPU.
+     * contextSwitches: Number of context switches.
      */
     public void inspectCPU() {
 
@@ -157,6 +160,14 @@ public class Inspector {
                 for (int i = 0; i < metricNames.length; i++) {
                     attributes.put(metricNames[i], Long.parseLong(params[i + 2]));
                 }
+
+                while ((text = br.readLine()) != null && text.length() != 0) {
+                    if (text.contains("ctxt")) {
+                        String prms[] = text.split(" ");
+                        attributes.put("contextSwitches", Long.parseLong(prms[1]));
+                    }
+                }
+
                 br.close();
             } catch (IOException ioe) {
                 //sb.append("Error reading file=" + filename);
@@ -167,8 +178,6 @@ public class Inspector {
     /**
      * Compare information gained from inspectCPU to the current CPU metrics.
      *
-     * cpuTypeDelta:    The model name of the CPU. 
-     * cpuModelDelta:   The model number of the CPU. 
      * cpuUsrDelta:     Time spent normally executing in user mode. 
      * cpuNiceDelta:    Time spent executing niced processes in user mode. 
      * cpuKrnDelta:     Time spent executing processes in kernel mode. 
@@ -177,6 +186,7 @@ public class Inspector {
      * cpuIrqDelta:     Time spent servicing interrupts. 
      * cpuSoftIrqDelta: Time spent servicing software interrupts.
      * vmcpustealDelta: Time spent waiting for real CPU while hypervisor is using another virtual CPU.
+     * contextSwitchesDelta: Number of context switches.
      */
     public void inspectCPUDelta() {
 
@@ -197,6 +207,86 @@ public class Inspector {
                 for (int i = 0; i < metricNames.length; i++) {
                     attributes.put(metricNames[i] + "Delta", Long.parseLong(params[i + 2]) - (Long)attributes.get(metricNames[i]));
                 }
+
+                while ((text = br.readLine()) != null && text.length() != 0) {
+                    if (text.contains("ctxt")) {
+                        String prms[] = text.split(" ");
+                        attributes.put("contextSwitchesDelta", Long.parseLong(prms[1]) - (Long)attributes.get("contextSwitches"));
+                    }
+                }
+
+                br.close();
+            } catch (IOException ioe) {
+                //sb.append("Error reading file=" + filename);
+            }
+        }
+    }
+
+    /**
+     * Inspects /proc/meminfo and /proc/vmstat. Add memory specific attributes:
+     * 
+     * totalMemory:     Total memory allocated to the VM in kB.
+     * freeMemory:      Current free memory in kB when inspectMemory is called.
+     * pageFaults:      Total number of page faults experienced by the vm since boot.
+     * majorPageFaults: Total number of major page faults experienced since boot.
+     * 
+     */
+    public void inspectMemory() {
+        String memInfo = getFileAsString("/proc/meminfo");
+        String[] lines = memInfo.split("\n");
+        attributes.put("totalMemory", lines[0].replace("MemTotal:", "").replace("\t", "").replace(" kB", "").replace(" ", ""));
+        attributes.put("freeMemory", lines[1].replace("MemFree:", "").replace("\t", "").replace(" kB", "").replace(" ", ""));
+
+        String text;
+
+        //Get CPU Metrics
+        String filename = "/proc/vmstat";
+        File f = new File(filename);
+        Path p = Paths.get(filename);
+        if (f.exists()) {
+            try (BufferedReader br = Files.newBufferedReader(p)) {
+                while ((text = br.readLine()) != null && text.length() != 0) {
+                    if (text.contains("pgfault")) {
+                        String prms[] = text.split(" ");
+                        attributes.put("pageFaults", Long.parseLong(prms[1]));
+                    } else if (text.contains("pgmajfault")) {
+                        String prms[] = text.split(" ");
+                        attributes.put("majorPageFaults", Long.parseLong(prms[1]));
+                    }
+                }
+
+                br.close();
+            } catch (IOException ioe) {
+                //sb.append("Error reading file=" + filename);
+            }
+        }
+    }
+
+    /**
+     * Inspects /proc/vmstat to see how specific memory stats have changed.
+     * 
+     * pageFaultsDelta:     The number of page faults experienced since inspectMemory was called.
+     * majorPageFaultsDelta: The number of major pafe faults since inspectMemory was called.
+     */
+    public void inspectMemoryDelta() {
+        String text;
+
+        //Get CPU Metrics
+        String filename = "/proc/vmstat";
+        File f = new File(filename);
+        Path p = Paths.get(filename);
+        if (f.exists()) {
+            try (BufferedReader br = Files.newBufferedReader(p)) {
+                while ((text = br.readLine()) != null && text.length() != 0) {
+                    if (text.contains("pgfault")) {
+                        String prms[] = text.split(" ");
+                        attributes.put("pageFaultsDelta", Long.parseLong(prms[1]) - (Long)attributes.get("pageFaults"));
+                    } else if (text.contains("pgmajfault")) {
+                        String prms[] = text.split(" ");
+                        attributes.put("majorPageFaultsDelta", Long.parseLong(prms[1]) - (Long)attributes.get("majorPageFaults"));
+                    }
+                }
+
                 br.close();
             } catch (IOException ioe) {
                 //sb.append("Error reading file=" + filename);
@@ -263,10 +353,24 @@ public class Inspector {
      */
     public void inspectAll() {
         this.inspectCPU();
+        this.inspectMemory();
         this.inspectContainer();
         this.inspectLinux();
         this.inspectPlatform();
         this.addTimeStamp("frameworkRuntime");
+    }
+
+    /**
+     * Run all delta collection methods add userRuntime attribute to further isolate
+     * use code runtime from time spent collecting data.
+     */
+    public void inspectAllDeltas() {
+        Long currentTime = System.currentTimeMillis();
+        Long codeRuntime = (currentTime - startTime) - (Long)attributes.get("frameworkRuntime");
+        attributes.put("userRuntime", codeRuntime);
+
+        this.inspectCPUDelta();
+        this.inspectMemoryDelta();
     }
 
     /**
@@ -311,7 +415,6 @@ public class Inspector {
         responseMap.keySet().forEach((s) -> {
             attributes.put(s, responseMap.get(s));
         });
-
     }
 
     /**
@@ -341,6 +444,7 @@ public class Inspector {
             try (BufferedReader br = Files.newBufferedReader(p)) {
                 while ((text = br.readLine()) != null) {
                     sb.append(text);
+                    sb.append("\n");
                 }
             } catch (IOException ioe) {
                 sb.append("Error reading file=");
@@ -361,9 +465,7 @@ public class Inspector {
         processBuilder.command(command);
         try {
             Process process = processBuilder.start();
-
             StringBuilder output = new StringBuilder();
-
             BufferedReader reader = new BufferedReader(
                     new InputStreamReader(process.getInputStream()));
 
@@ -394,25 +496,24 @@ public class Inspector {
     private static Map<String, Object> beanProperties(Object bean) {
         try {
             return Arrays.asList(
-                    Introspector.getBeanInfo(bean.getClass(), Object.class)
-                            .getPropertyDescriptors()
-            )
-                    .stream()
-                    // filter out properties with setters only
-                    .filter(pd -> Objects.nonNull(pd.getReadMethod()))
-                    .collect(Collectors.toMap(
-                            // bean property name
-                            PropertyDescriptor::getName,
-                            pd -> { // invoke method to get value
-                                try {
-                                    return pd.getReadMethod().invoke(bean);
-                                } catch (IllegalAccessException
-                                | IllegalArgumentException
-                                | InvocationTargetException e) {
-                                    // replace this with better error handling
-                                    return null;
-                                }
-                            }));
+                Introspector.getBeanInfo(bean.getClass(), Object.class)
+                    .getPropertyDescriptors()
+                ).stream()
+                // filter out properties with setters only
+                .filter(pd -> Objects.nonNull(pd.getReadMethod()))
+                .collect(Collectors.toMap(
+                        // bean property name
+                        PropertyDescriptor::getName,
+                        pd -> { // invoke method to get value
+                            try {
+                                return pd.getReadMethod().invoke(bean);
+                            } catch (IllegalAccessException
+                            | IllegalArgumentException
+                            | InvocationTargetException e) {
+                                // replace this with better error handling
+                                return null;
+                            }
+                        }));
         } catch (IntrospectionException e) {
             // and this, too
             return Collections.emptyMap();
