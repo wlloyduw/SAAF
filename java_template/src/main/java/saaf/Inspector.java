@@ -44,7 +44,7 @@ public class Inspector {
         startTime = System.currentTimeMillis();
         attributes = new HashMap<>();
 
-        attributes.put("version", 0.3);
+        attributes.put("version", 0.31);
         attributes.put("lang", "java");
     }
 
@@ -116,6 +116,7 @@ public class Inspector {
      *
      * cpuType:    The model name of the CPU. 
      * cpuModel:   The model number of the CPU. 
+     * cpuCores:   The total number of cpu cores.
      * cpuUsr:     Time spent normally executing in user mode. 
      * cpuNice:    Time spent executing niced processes in user mode. 
      * cpuKrn:     Time spent executing processes in kernel mode. 
@@ -144,6 +145,12 @@ public class Inspector {
         end = start + text.substring(start).indexOf(":");
         String cpuModel = text.substring(start, end - 11).trim();
         attributes.put("cpuModel", cpuModel);
+
+        //Get CPU Core Count
+        start = text.indexOf("cpu cores") + 12;
+        end = start + text.substring(start).indexOf(":");
+        String cpuCores = text.substring(start, end - 9).trim();
+        attributes.put("cpuCores", cpuCores);
 
         //Get CPU Metrics
         String filename = "/proc/stat";
@@ -322,6 +329,9 @@ public class Inspector {
             attributes.put("platform", "Google Cloud Functions");
         } else if (environment.contains("functions.cloud.ibm")) {
             attributes.put("platform", "IBM Cloud Functions");
+
+            attributes.put("vmID", runCommand(new String[]{"cat", "/sys/hypervisor/uuid"}).trim());
+
         } else if (environment.contains("microsoft.com/azure-functions")) {
             attributes.put("platform", "Azure Functions");
             
@@ -352,11 +362,11 @@ public class Inspector {
      * Run all data collection methods and record framework runtime.
      */
     public void inspectAll() {
-        this.inspectCPU();
-        this.inspectMemory();
         this.inspectContainer();
-        this.inspectLinux();
         this.inspectPlatform();
+        this.inspectLinux();
+        this.inspectMemory();
+        this.inspectCPU();
         this.addTimeStamp("frameworkRuntime");
     }
 
