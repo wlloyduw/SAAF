@@ -23,7 +23,7 @@ public class Hello {
         inspector.addAttribute("message", "Hello " + args.getAsJsonPrimitive("name").getAsString() + "!");
         
         //Calculate CPU deltas.
-        inspector.inspectCPUDelta();
+        inspector.inspectAllDeltas();
         
         //Convert Inspector Hashmap to JsonObject
         JsonObject output = new JsonObject();

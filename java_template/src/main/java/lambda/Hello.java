@@ -39,7 +39,7 @@ public class Hello implements RequestHandler<Request, HashMap<String, Object>> {
         inspector.consumeResponse(response);
         
         //Collect final information such as total runtime and cpu deltas.
-        inspector.inspectCPUDelta();
+        inspector.inspectAllDeltas();
         return inspector.finish();
     }
 }

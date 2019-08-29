@@ -4,3 +4,4 @@ java_template/.classpath
 java_template/.project
 .vscode/tags
 bash_template/tools/build
+*.class
