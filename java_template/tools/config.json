@@ -1,5 +1,5 @@
 {
-	"functionName":     "testJAVA",
+	"functionName":     "testJAVA1",
 
 	"lambdaRoleARN": "arn:aws:iam::616835888336:role/lambda_basic_execution",
 	"lambdaSubnets": "subnet-c41f88ea",
