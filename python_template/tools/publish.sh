@@ -28,8 +28,6 @@ lambdaRole=`cat ./config.json | jq '.lambdaRoleARN' | tr -d '"'`
 lambdaSubnets=`cat ./config.json | jq '.lambdaSubnets' | tr -d '"'`
 lambdaSecurityGroups=`cat ./config.json | jq '.lambdaSecurityGroups' | tr -d '"'`
 
-functionApp=`cat ./config.json | jq '.azureFunctionApp' | tr -d '"'`
-
 echo
 echo Deploying $function...
 echo
@@ -59,7 +57,7 @@ then
 	# Zip and submit to AWS Lambda.
 	cd ./build
 	zip -X -r ./index.zip *
-	aws lambda create-function --function-name $function --runtime python3.7 --role $lambdaRole --timeout 900 --handler lambda_function.py --zip-file fileb://index.zip
+	aws lambda create-function --function-name $function --runtime python3.7 --role $lambdaRole --timeout 900 --handler lambda_function.lambda_handler --zip-file fileb://index.zip
 	aws lambda update-function-code --function-name $function --zip-file fileb://index.zip
 	aws lambda update-function-configuration --function-name $function --memory-size $memory --runtime python3.7 \
 	--vpc-config SubnetIds=[$lambdaSubnets],SecurityGroupIds=[$lambdaSecurityGroups]
@@ -112,6 +110,7 @@ if [[ ! -z $4 && $4 -eq 1 ]]
 then
 	echo
 	echo "----- Deploying onto Azure Functions -----"
+	echo "         This will take a while..."
 	echo
 
 	# Destroy and prepare build folder.
@@ -128,9 +127,18 @@ then
 	mv ./build/__init__.py ./build/$function/__init__.py
 
 	cd ./build
-	python3.6 -m venv .env
+	echo Deleting old resources...
+	az group delete --name $function
+
+	echo Creating new resources...
+	az group create --name $function --location eastus
+	az storage account create --name $function --location eastus --resource-group $function --sku Standard_LRS
+	az functionapp create --resource-group $function --consumption-plan-location eastus --name $function --runtime python --os-type Linux --output json --storage-account $function
+
+	echo Deploying function...
+	python3 -m venv .env
 	source .env/bin/activate
-	func azure functionapp publish $functionApp --force
+	func azure functionapp publish $function --force
 	deactivate
 	cd ..
 fi

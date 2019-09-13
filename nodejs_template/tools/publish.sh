@@ -28,8 +28,6 @@ lambdaRole=`cat ./config.json | jq '.lambdaRoleARN' | tr -d '"'`
 lambdaSubnets=`cat ./config.json | jq '.lambdaSubnets' | tr -d '"'`
 lambdaSecurityGroups=`cat ./config.json | jq '.lambdaSecurityGroups' | tr -d '"'`
 
-functionApp=`cat ./config.json | jq '.azureFunctionApp' | tr -d '"'`
-
 echo
 echo Deploying $function....
 echo
