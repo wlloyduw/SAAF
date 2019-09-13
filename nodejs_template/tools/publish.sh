@@ -61,9 +61,9 @@ then
 	# Zip and submit to AWS Lambda.
 	cd ./build
 	zip -X -r ./index.zip *
-	aws lambda create-function --function-name $function --runtime nodejs8.10 --role $lambdaRole --timeout 900 --handler index.js --zip-file fileb://index.zip
+	aws lambda create-function --function-name $function --runtime nodejs10.x --role $lambdaRole --timeout 900 --handler index.handler --zip-file fileb://index.zip
 	aws lambda update-function-code --function-name $function --zip-file fileb://index.zip
-	aws lambda update-function-configuration --function-name $function --memory-size $memory --runtime nodejs8.10 \
+	aws lambda update-function-configuration --function-name $function --memory-size $memory --runtime nodejs10.x \
 	--vpc-config SubnetIds=[$lambdaSubnets],SecurityGroupIds=[$lambdaSecurityGroups]
 	cd ..
 fi
@@ -97,6 +97,7 @@ if [[ ! -z $4 && $4 -eq 1 ]]
 then
 	echo
 	echo "----- Deploying onto Azure Functions -----"
+	echo "         This will take a while..."
 	echo
 	
 	# Destroy and prepare build folder.
@@ -115,7 +116,16 @@ then
 	
 	# Submit to Azure Functions
 	cd ./build
-	func azure functionapp publish $functionApp --force
+	echo Deleting old resources...
+	az group delete --name $function
+
+	echo Creating new resources...
+	az group create --name $function --location eastus
+	az storage account create --name $function --location eastus --resource-group $function --sku Standard_LRS
+	az functionapp create --resource-group $function --consumption-plan-location eastus --name $function --runtime node --os-type Linux --output json --storage-account $function
+
+	echo Deploying function...
+	func azure functionapp publish $function --force
 	cd ..
 fi
 
