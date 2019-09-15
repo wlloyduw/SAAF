@@ -64,6 +64,11 @@ then
 	aws lambda update-function-configuration --function-name $function --memory-size $memory --runtime nodejs10.x \
 	--vpc-config SubnetIds=[$lambdaSubnets],SecurityGroupIds=[$lambdaSecurityGroups]
 	cd ..
+
+	echo Testing function on AWS Lambda...
+	aws lambda invoke --invocation-type RequestResponse --cli-read-timeout 900 --function-name $function --region us-east-1 /dev/stdout
+
+
 fi
 
 # Deploy onto IBM Cloud Functions
@@ -88,6 +93,9 @@ then
 	zip -X -r ./index.zip *
 	ibmcloud fn action update $function --kind nodejs:8 --memory $memory index.zip
 	cd ..
+
+	echo Testing function on IBM Cloud Functions...
+	ibmcloud fn action invoke --result $function
 fi
 
 # Deploy onto Azure Functions
@@ -145,4 +153,7 @@ then
 	cd ./build
 	gcloud functions deploy $function --source=. --runtime nodejs8 --entry-point helloWorld --timeout 540 --trigger-http --memory $memory
 	cd ..
+
+	echo Testing function on Google Cloud Functions...
+	gcloud functions call $function
 fi

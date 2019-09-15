@@ -62,6 +62,9 @@ then
 	aws lambda update-function-configuration --function-name $function --memory-size $memory --runtime python3.7 \
 	--vpc-config SubnetIds=[$lambdaSubnets],SecurityGroupIds=[$lambdaSecurityGroups]
 	cd ..
+
+	echo Testing function on AWS Lambda...
+	aws lambda invoke --invocation-type RequestResponse --cli-read-timeout 900 --function-name $function --region us-east-1 /dev/stdout
 fi
 
 # Deploy onto IBM Cloud Functions
@@ -83,6 +86,9 @@ then
 	zip -X -r ./index.zip *
 	ibmcloud fn action update $function --kind python:3 --memory $memory index.zip
 	cd ..
+
+	echo Testing function on IBM Cloud Functions...
+	ibmcloud fn action invoke --result $function
 fi
 
 # Deploy onto Google Cloud Functions
@@ -103,6 +109,9 @@ then
 	cd ./build
 	gcloud functions deploy $function --source=. --entry-point hello_world --runtime python37 --timeout 540 --trigger-http --memory $memory
 	cd ..
+
+	echo Testing function on Google Cloud Functions...
+	gcloud functions call $function
 fi
 
 # Deploy onto Azure Functions
