@@ -110,7 +110,6 @@ if [[ ! -z $4 && $4 -eq 1 ]]
 then
 	echo
 	echo "----- Deploying onto Azure Functions -----"
-	echo "         This will take a while..."
 	echo
 
 	# Destroy and prepare build folder.
@@ -127,10 +126,8 @@ then
 	mv ./build/__init__.py ./build/$function/__init__.py
 
 	cd ./build
-	echo Deleting old resources...
-	az group delete --name $function
 
-	echo Creating new resources...
+	echo Creating resources...
 	az group create --name $function --location eastus
 	az storage account create --name $function --location eastus --resource-group $function --sku Standard_LRS
 	az functionapp create --resource-group $function --consumption-plan-location eastus --name $function --runtime python --os-type Linux --output json --storage-account $function
