@@ -5,3 +5,4 @@ java_template/.project
 .vscode/tags
 bash_template/tools/build
 *.class
+__pycache__

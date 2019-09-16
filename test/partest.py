@@ -1,193 +1,176 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 
-import time
-#import _thread as thread
-from threading import Thread
-import sys
-import requests
+#
+# Call a FaaS function many time in parallel or sequentially. Based upon the original partest.sh script.
+#
+# @author Wes Lloyd
+# @author Robert Cordingly
+#
+
 import ast
-import json
+import boto3
+import botocore
 import datetime
+import json
+import os
+import random
+import requests
+import subprocess
+import sys
+import time
 from decimal import Decimal
+from threading import Thread
 
-#
-# Input variables.
-#
-#url_list = ['https://2q0ng575ue.execute-api.us-east-1.amazonaws.com/calcservice_dev/', 'https://4utqpw7zhb.execute-api.us-east-1.amazonaws.com/DEPLOY']
-#url_list = ['https://2q0ng575ue.execute-api.us-east-1.amazonaws.com/calcservice_dev/']
-#url_list = ['https://zm8jzc7ip9.execute-api.us-east-1.amazonaws.com/test_gateway_deploy', 'https://uwt-workspace.azurewebsites.net/api/test?code=EVY0YavlKHErHt1HJ1EVTKJXa06KhFLcMGvVhVhtlUnFAdfu4Iea0A==', 'https://us-central1-api-project-692688302945.cloudfunctions.net/test', 'https://us-south.functions.cloud.ibm.com/api/v1/web/robertcordingly%40gmail.com_dev/default/test.json']
-			
+def parTest(functionList, experiment):
+    output = ""
 
-#payload = {'threads': 2,'calcs': 500,'loops': 500,'sleep': 0}
+    exp = json.load(open(experiment))
 
-payload = {'name': 'PythonTest'}
-headers = {'content-type':'application/json'}
+    threads = exp['threads']
+    total_runs = exp['runs']
+    runs_per_thread = int(total_runs / threads)
+    payload = exp['payloads']
+    useCLI = exp['callWithCLI']
 
-categories = ['uuid', 'cpuType', 'vmuptime', 'newcontainer', 'platform', 'lang', 'endpoint', 'hostname']
-list_category = ['vmuptime', 'cpuType', 'endpoint', 'hostname', 'platform']
-show_progress = False;
+    random.seed(exp['randomSeed'])
 
-#
-# Parse command line arguments.
-#
-threads = int(sys.argv[1])
-total_runs = int(sys.argv[2])
-runs_per_thread = int(total_runs / threads)
-run_results = []
+    #botocore.config.Config(connect_timeout = 120, read_timeout = 120, max_pool_connections = threads, retries = {'max_attempts': 0})
 
-#
-# Define a function to be called by each thread.
-#
-def make_call( thread_id, runs, url):
-	for i in range(0, runs):	
-		response = requests.post(url, data=json.dumps(payload), headers=headers)
-		dictionary = ast.literal_eval(response.text)
-		dictionary['2_thread_id'] = thread_id
-		dictionary['1_run_id'] = i
-		
-		if 'cpuType' in dictionary:
-			dictionary['cpuType'] = dictionary['cpuType'] + " - Model " + str(dictionary['cpuModel'])
-			if 'platform' in dictionary:
-				dictionary['cpuType'] = dictionary['cpuType'] + " - " + dictionary['platform']
-		
-		if (len(url_list)) > 1 and 'platform' not in dictionary:
-			dictionary['endpoint'] = url
-		
-		if 'version' in dictionary:
-			run_results.append(dictionary)
-			if show_progress:
-				print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
-				print("Run Complete: (" + str(i + 1) + "/" + str(runs) + "):\n")
-				print(dictionary)
-		else:
-			if show_progress:
-				print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
-				print("Run Failed: (" + str(i + 1) + "/" + str(runs) + "):")
-		
-#
-# Create a bunch of threads and run make_call.
-#
-try:
-	threadList = []
-	for i in range(0, threads):
-		for j in range(len(url_list)):
-			thread = Thread(target = make_call, args = (i, runs_per_thread, url_list[j]))
-			thread.start()
-			threadList.append(thread)
-	for i in range(len(threadList)):
-		threadList[i].join()
-		if show_progress:
-			print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
-			print("Threads complete: (" + str(i + 1) + "/" + str(threads) + ").")
-except:
-	pass
-	
-#
-# Print starter information
-#
-if show_progress: 
-	print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
+    function_calls = []
+    for i in range(0, len(functionList)):
+        func = json.load(open(functionList[i]))
+        if useCLI:
+            function_calls.append({
+                'platform': func['platform'],
+                'endpoint': func['function']
+            })
+        else:
+            function_calls.append({
+                'platform': "HTTP",
+                'endpoint': func['endpoint']
+            })
 
-print(datetime.datetime.now())
-print("Setting up test: runsperthread=" + str(runs_per_thread) + " threads=" + str(threads) + " totalruns=" + str(total_runs), " payload=" + str(payload))
+    run_results = []
 
-#
-# Print results of each run.
-#
-csv_header = ""
-key_list = list(run_results[0].keys())
-key_list.sort()
-for i in range(len(key_list)):
-	csv_header += key_list[i] + ","
-csv_header = csv_header[:-1]
-print("")
-print("Raw results of each run:")
-print(csv_header)
+    #
+    # Define a function to be called by each thread.
+    #
+    def make_call(thread_id, runs, function_call, myPayloads):
+        for i in range(0, runs):
 
-for i in range(len(run_results)):
-	line = ""
-	run = run_results[i]
-	for i in range(len(key_list)):
-		line += str(run[key_list[i]]) + ","
-	line = line[:-1]
-	print(line)
-print("Successful Runs: " + str(len(run_results)))
+            callPayload = myPayloads[i]
+            print("Call Payload: " + str(callPayload))
 
-#
-# Build new dictionaries for each category.
-# key_map defines the dictionary to put runs with unique keys into.
-#
-key_map = {}
-for i in range(len(categories)):
-	key_map[categories[i]] = {}
+            startTime = 0
+            response = None
 
-master_key_list = list(key_map.keys())
-for i in range(len(run_results)):
-	run = run_results[i]
-	for i in range(len(master_key_list)):
-		target_key = master_key_list[i]
-		if target_key in list(run.keys()):
-			if run[target_key] not in list(key_map[target_key].keys()):
-				key_map[target_key][run[target_key]] = [run]
-			else:
-				key_map[target_key][run[target_key]].append(run)
-						
-#
-# Loop through every dictionary created previously.
-# Find values that can be parsed into doubles and calculate the average of them.
-#
-for i in range(len(master_key_list)):
-	key_value = master_key_list[i]
-	sub_key_list = list(key_map[key_value].keys())
-	if len(sub_key_list) != 0:
-		print("")
-		print("Results for runs with attribute " + str(key_value) + ":")
+            # Format payload for CLIs.
+            jsonString = str(json.dumps(callPayload))
+            jsonDict = ast.literal_eval(jsonString)
 
-		csv_header = str(key_value) + ",uses,"
-		run_dict = key_map[key_value][sub_key_list[0]][0]
-		run_attributes = list(run_dict.keys())
-		run_attributes.sort()
-		number_attributes = []
-		
-		for i in range(len(run_attributes)):
-			attribute = run_attributes[i]
-			if attribute in list_category:
-				csv_header += str(attribute) + "_list,"
-				number_attributes.append(attribute)
-			else:
-				try:
-					value = run_dict[attribute]
-					Decimal(value)
-					csv_header += "avg_" + str(attribute) + ","
-					number_attributes.append(attribute)
-				except:
-					pass
-		
-		csv_header = csv_header[:-1]
-		print(csv_header)
-		
-		for i in range(len(sub_key_list)):
-			run_list = key_map[key_value][sub_key_list[i]]
-			line = str(sub_key_list[i]) + "," + str(len(run_list)) + ","
-			for j in range(len(number_attributes)):
-				attribute = number_attributes[j]
-				if attribute in list_category:
-					attribute_list = []
-					for k in range(len(run_list)):
-						run_dict = run_list[k]
-						if run_dict[attribute] not in attribute_list:
-							attribute_list.append(run_dict[attribute])
-					attribute_list.sort()
-					line += str(attribute_list).replace(",", ";") + ","
-				else:
-					total_value = 0
-					for k in range(len(run_list)):
-						run_dict = run_list[k]
-						total_value += Decimal(run_dict[attribute])
-					line += str(round((total_value / len(run_list)), 2)) + ","
-			line = line[:-1]
-			print(line)
-		print("Runs with unique attribute " + str(key_value) + ": " + str(len(sub_key_list)))
+            startTime = time.time()
+            platform = function_call['platform']
+            jsonResponse = ""
 
+            # Make call depending on platform. Why does everyone's CLI have to be different?
+            if (platform == 'HTTP' or platform == 'Azure'):
+                response = requests.post(function_call['endpoint'], data=json.dumps(
+                    callPayload), headers={'content-type': 'application/json'})
+                jsonResponse = response.text
+                print("Response: " + str(jsonResponse))
+            elif (platform == 'AWS Lambda'):
+                #client = boto3.client('lambda')
+                #response = client.invoke(FunctionName = str(function_call['endpoint']), InvocationType='RequestResponse', Payload = jsonString.encode())
+                #jsonResponse = response['Payload'].read().decode('ascii')
+                #print("Response: " + str(jsonResponse))
+                cmd = ['aws', 'lambda', 'invoke', '--invocation-type', 'RequestResponse', '--cli-read-timeout', '450', '--function-name', str(function_call['endpoint']), '--region', 'us-east-1', '--payload', jsonString, '/dev/stdout']
+                proc = subprocess.Popen( cmd, bufsize=-1, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                o, e = proc.communicate()
+                print("STDOUT: " + str(o.decode('ascii')) + "\nSTDERR: " + str(e.decode('ascii')))
+                jsonResponse = str(o.decode('ascii')).split('\n')[0][:-1]
+            elif (platform == 'Google'):
+                cmd = ['gcloud', 'functions', 'call', str(function_call['endpoint']), '--data', jsonString]
+                proc = subprocess.Popen(cmd, bufsize=-1, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                o, e = proc.communicate()
+                print("STDOUT: " + str(o.decode('ascii')) + "\nSTDERR: " + str(e.decode('ascii')))
+                jsonResponse = str(o.decode('ascii')).replace('\n', '')[34:-1]
+            elif (platform == 'IBM'):
+                cmd = ['ibmcloud', 'fn', 'action', 'invoke', '--result', str(function_call['endpoint'])]
+                for key in jsonDict:
+                    cmd.append('-p')
+                    cmd.append(str(key))
+                    cmd.append(str(jsonDict[key]))
+                proc = subprocess.Popen(cmd, bufsize=-1, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                o, e = proc.communicate()
+                print("STDOUT: " + str(o.decode('ascii')) + "\nSTDERR: " + str(e.decode('ascii')))
+                jsonResponse = str(o.decode('ascii'))
 
+            timeSinceStart = round((time.time() - startTime) * 100000) / 100
 
+            #
+            # Get resonse object and add some information such as network latency, endpoint, and scrape csv-breaking characters from output.
+            #
+            try:
+                dictionary = ast.literal_eval(jsonResponse)
+                dictionary['2_thread_id'] = thread_id
+                dictionary['1_run_id'] = i
+                dictionary['zAll'] = "Final Results:"
+                dictionary['roundTripTime'] = timeSinceStart
+                dictionary['payload'] = str(callPayload)
+
+                if 'runtime' in dictionary:
+                    dictionary['latency'] = round(timeSinceStart - int(dictionary['runtime']), 2)
+
+                if (len(function_calls)) > 1 and 'platform' not in dictionary:
+                    dictionary['endpoint'] = function_call['endpoint']
+
+                if 'version' in dictionary:
+                    run_results.append(dictionary)
+
+                key_list = list(dictionary.keys())
+                for j in range(len(key_list)):
+                    value = str(dictionary[key_list[j]])
+                    dictionary[key_list[j]] = str(dictionary[key_list[j]]).replace(
+                        ',', ';').replace('\t', '\\t').replace('\n', '\\n')
+
+                print("Run " + str(thread_id) + "." + str(i) + " successful.")
+            except Exception as e:
+                print("Run " + str(thread_id) + "." +
+                      str(i) + " failed: " + str(e))
+
+    #
+    # Create a bunch of threads and run make_call.
+    #
+    
+    payloadList = payload
+    while (len(payloadList) < total_runs):
+        payloadList += payload
+    random.shuffle(payloadList)
+    payloadIndex = 0
+
+    try:
+        threadList = []
+        for i in range(0, threads):
+            for j in range(len(function_calls)):
+
+                payloadsForThread = []
+                while (len(payloadsForThread) < runs_per_thread):
+                    payloadsForThread.append(payloadList[payloadIndex])
+                    payloadIndex += 1
+
+                thread = Thread(target=make_call, args=(i, runs_per_thread, function_calls[j], payloadsForThread))
+                thread.start()
+                threadList.append(thread)
+        for i in range(len(threadList)):
+            threadList[i].join()
+    except Exception as e:
+        print("Error making request: " + str(e))
+
+    #
+    # Print results of each run.
+    #
+    if len(run_results) == 0:
+        print ("ERROR - ALL REQUESTS FAILED")
+        return None
+    
+    return run_results
