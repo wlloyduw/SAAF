@@ -125,7 +125,7 @@ then
 	echo Creating resources...
 	az group create --name $function --location eastus
 	az storage account create --name $function --location eastus --resource-group $function --sku Standard_LRS
-	az resource create -g $function -n $function --resource-type "Microsoft.Insights/components" --properties '{\"Application_Type\":\"web\"}'
+	az resource create -g $function -n $function --resource-type "Microsoft.Insights/components" --properties "{\"Application_Type\":\"web\"}"
 	az functionapp create --resource-group $function --consumption-plan-location eastus --name $function --runtime node --os-type Linux --output json --storage-account $function
 
 	echo Deploying function...

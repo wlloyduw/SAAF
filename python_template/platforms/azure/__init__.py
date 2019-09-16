@@ -1,7 +1,7 @@
-import handler
 import json
 import logging
 import azure.functions as func
+from . import handler
 
 #
 # Azure Functions Default Function

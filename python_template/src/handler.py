@@ -18,7 +18,10 @@ def yourFunction(request, context):
     inspector.addTimeStamp("frameworkRuntime")
 
     # Add custom message and finish the function
-    inspector.addAttribute("message", "Hello " + request['name'] + "!")
+    if ('name' in request):
+        inspector.addAttribute("message", "Hello " + str(request['name']) + "!")
+    else:
+        inspector.addAttribute("message", "Hello World!")
     
     inspector.inspectCPUDelta()
     return inspector.finish()
