@@ -5,6 +5,7 @@ echo You will have the option to install and configure each supported FaaS platf
 echo Each installer has some steps to do. This script will pause and give you directions for what you are supposed to do.
 read -rsp $'Press any key to continue. Use CTRL+Z to quit at any time.\n' -n1 key
 
+echo
 read -p "Would you like to download SAAF to the current directory? [y/n]" -n 1 -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]
@@ -13,6 +14,8 @@ then
     git clone https://github.com/RCordingly/SAAF
 fi
 
+clear
+echo
 read -p "Would you like to install dependencies for SAAF and FaaS Runner? [y/n]" -n 1 -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]
@@ -24,6 +27,8 @@ then
     pip3 install requests boto3 botocore
 fi
 
+clear
+echo
 read -p "Would you like to install and setup AWS Lambda? [y/n]" -n 1 -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]
@@ -33,6 +38,7 @@ then
 
     clear
     echo Setting up AWS CLI! Get your access keys ready!
+    echo
     echo Set region to "us-east-1"
     echo Set output type to "json"
     read -rsp $'Press any key to continue...\n' -n1 key
@@ -42,6 +48,8 @@ then
     read -rsp $'Press any key to continue...\n' -n1 key
 fi
 
+clear
+echo
 read -p "Would you like to install and setup Google Cloud Functions? [y/n]" -n 1 -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]
@@ -55,10 +63,16 @@ then
 
     clear
     echo Setting up GCloud CLI!
-    echo This SDK is easier to install than AWS. A browser will open, sign in and allow premissions.
+    echo
+    echo This SDK is more difficult to install than AWS. A browser will open, sign in and allow premissions.
+    echo After signed in, return to the Terminal window.
+    echo
     echo If asked to choose a project, create a new project.
-    echo Name the project "uw-tacoma-project"
-    echo Google will ask to enable the cloudfunctions API, enter y. It will retry again, enter y again and next will say there was an error. THIS IS FINE it should have worked anyway.
+    echo Name the project to something like uw-tacoma{STUDENT ID}. Projects must have a unique names!
+    echo
+    echo Google will ask to enable the cloudfunctions API, enter y. It will fail. Enter y again and it will say there was an error again. 
+    echo This is fine, it should have worked.
+    echo
     read -rsp $'Press any key to continue...\n' -n1 key
     gcloud init
     gcloud functions list
@@ -66,6 +80,8 @@ then
     read -rsp $'Press any key to continue...\n' -n1 key
 fi
 
+clear
+echo
 read -p "Would you like to install and setup IBM Cloud Functions? [y/n]" -n 1 -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]
@@ -77,25 +93,22 @@ then
 
     clear
     echo Setting up IBM Cloud CLI!
+    echo
     echo IBM requires you to login through their CLI.
-    echo This script will ask you for your IBM email and password and will call "imbcloud login -a" to log in.
-    echo This script WILL NOT retry if you type something wrong! Make sure it is perfect.
+    echo After logging in, select the us-south region 5.
+    echo
     read -rsp $'Press any key to continue...\n' -n1 key
 
-    echo Please enter your IBM Cloud email address...
-    read ibmEmail
-
-    echo Please enter your password...
-    read ibmPassword
-
-    ibmcloud login -a $ibmEmail $ibmPassword
+    ibmcloud login
     ibmcloud plugin install cloud-functions
     ibmcloud target --cf
+    ibmcloud target -g Default
 
     echo Configuration complete! Functions can now be deployed to IBM Cloud Functions. Your account was configured to use the default Cloud Foundry namespace.
     read -rsp $'Press any key to continue...\n' -n1 key
 fi
 
+echo
 read -p "Would you like to install and setup Azure Functions? [y/n]" -n 1 -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]
@@ -109,12 +122,14 @@ then
     curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
 
     clear
-    echo Setting up Azure CLI. It is simple, a browser will open, login and you are done.
+    echo Setting up Azure CLI. 
+    echo
+    echo It is simple, a browser will open, login and you are done.
     read -rsp $'Press any key to continue...\n' -n1 key
     az login
+
+    echo Configuration complete! Functions can now be deployed to Azure.
+    read -rsp $'Press any key to continue...\n' -n1 key
 fi
-
-
-echo Congratulations! You have installed everything needed to use SaaF, FaaS Runner, and all of their helper scripts. 
 
 

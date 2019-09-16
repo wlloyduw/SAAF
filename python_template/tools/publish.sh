@@ -142,7 +142,7 @@ then
 	az resource create -g $function -n $function --resource-type "Microsoft.Insights/components" --properties "{\"Application_Type\":\"web\"}"
 	az functionapp create --resource-group $function --consumption-plan-location eastus --name $function --runtime python --os-type Linux --output json --storage-account $function --app-insights $function
 
-	echo Deploying function...
+	echo Deploying function... This may fail if the function app is brand new. In that event, please run this script again.
 	python3 -m venv .env
 	source .env/bin/activate
 	func azure functionapp publish $function --force
