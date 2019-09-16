@@ -1,3 +1,9 @@
+# This is just to support Azure.
+# If you are not deploying there this can be removed.
+import os
+import sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__))))
+
 import json
 import logging
 from Inspector import *

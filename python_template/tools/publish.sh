@@ -67,6 +67,29 @@ then
 	aws lambda invoke --invocation-type RequestResponse --cli-read-timeout 900 --function-name $function --region us-east-1 /dev/stdout
 fi
 
+# Deploy onto Google Cloud Functions
+if [[ ! -z $2 && $2 -eq 1 ]]
+then
+	echo
+	echo "----- Deploying onto Google Cloud Functions -----"
+	echo
+
+	# Destroy and prepare build folder.
+	rm -rf build
+	mkdir build
+
+	# Copy files to build folder.
+	cp -R ../src/* ./build
+	cp -R ../platforms/google/* ./build
+
+	cd ./build
+	gcloud functions deploy $function --source=. --entry-point hello_world --runtime python37 --timeout 540 --trigger-http --memory $memory
+	cd ..
+
+	echo Testing function on Google Cloud Functions...
+	gcloud functions call $function
+fi
+
 # Deploy onto IBM Cloud Functions
 if [[ ! -z $3 && $3 -eq 1 ]]
 then
@@ -89,29 +112,6 @@ then
 
 	echo Testing function on IBM Cloud Functions...
 	ibmcloud fn action invoke --result $function
-fi
-
-# Deploy onto Google Cloud Functions
-if [[ ! -z $2 && $2 -eq 1 ]]
-then
-	echo
-	echo "----- Deploying onto Google Cloud Functions -----"
-	echo
-
-	# Destroy and prepare build folder.
-	rm -rf build
-	mkdir build
-
-	# Copy files to build folder.
-	cp -R ../src/* ./build
-	cp -R ../platforms/google/* ./build
-
-	cd ./build
-	gcloud functions deploy $function --source=. --entry-point hello_world --runtime python37 --timeout 540 --trigger-http --memory $memory
-	cd ..
-
-	echo Testing function on Google Cloud Functions...
-	gcloud functions call $function
 fi
 
 # Deploy onto Azure Functions
@@ -140,7 +140,7 @@ then
 	az group create --name $function --location eastus
 	az storage account create --name $function --location eastus --resource-group $function --sku Standard_LRS
 	az resource create -g $function -n $function --resource-type "Microsoft.Insights/components" --properties "{\"Application_Type\":\"web\"}"
-	az functionapp create --resource-group $function --consumption-plan-location eastus --name $function --runtime python --os-type Linux --output json --storage-account $function
+	az functionapp create --resource-group $function --consumption-plan-location eastus --name $function --runtime python --os-type Linux --output json --storage-account $function --app-insights $function
 
 	echo Deploying function...
 	python3 -m venv .env

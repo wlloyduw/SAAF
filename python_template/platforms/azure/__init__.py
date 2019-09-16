@@ -1,3 +1,8 @@
+import os
+import sys
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__))))
+
 import json
 import logging
 import azure.functions as func
@@ -16,7 +21,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     logging.info('Python HTTP trigger function processed a request.')
 
     result = handler.yourFunction(req.params, None)
-    return func.HttpResponse(result)
+    return func.HttpResponse(str(result).replace("'", '"'), status_code=200)
 
 #    name = req.params.get('name')
 #    if not name:

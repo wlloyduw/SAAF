@@ -71,6 +71,32 @@ then
 
 fi
 
+# Deploy onto Google Cloud Functions
+if [[ ! -z $2 && $2 -eq 1 ]]
+then
+	echo
+	echo "----- Deploying onto Google Cloud Functions -----"
+	echo
+	
+	# Destroy and prepare build folder.
+	rm -rf build
+	mkdir build
+	mkdir build/node_modules
+	
+	# Copy files to build folder.
+	cp -R ../src/* ./build
+	cp -R ../platforms/google/* ./build
+	cp -R ../tools/node_modules/* ./build/node_modules
+	
+	# Submit to Google Cloud Functions
+	cd ./build
+	gcloud functions deploy $function --source=. --runtime nodejs8 --entry-point helloWorld --timeout 540 --trigger-http --memory $memory
+	cd ..
+
+	echo Testing function on Google Cloud Functions...
+	gcloud functions call $function
+fi
+
 # Deploy onto IBM Cloud Functions
 if [[ ! -z $3 && $3 -eq 1 ]]
 then
@@ -126,35 +152,12 @@ then
 	az group create --name $function --location eastus
 	az storage account create --name $function --location eastus --resource-group $function --sku Standard_LRS
 	az resource create -g $function -n $function --resource-type "Microsoft.Insights/components" --properties "{\"Application_Type\":\"web\"}"
-	az functionapp create --resource-group $function --consumption-plan-location eastus --name $function --runtime node --os-type Linux --output json --storage-account $function
+	az functionapp create --resource-group $function --consumption-plan-location eastus --name $function --runtime node --os-type Linux --output json --storage-account $function --app-insights $function
 
 	echo Deploying function...
 	func azure functionapp publish $function --force
 	cd ..
-fi
 
-# Deploy onto Google Cloud Functions
-if [[ ! -z $2 && $2 -eq 1 ]]
-then
-	echo
-	echo "----- Deploying onto Google Cloud Functions -----"
-	echo
-	
-	# Destroy and prepare build folder.
-	rm -rf build
-	mkdir build
-	mkdir build/node_modules
-	
-	# Copy files to build folder.
-	cp -R ../src/* ./build
-	cp -R ../platforms/google/* ./build
-	cp -R ../tools/node_modules/* ./build/node_modules
-	
-	# Submit to Google Cloud Functions
-	cd ./build
-	gcloud functions deploy $function --source=. --runtime nodejs8 --entry-point helloWorld --timeout 540 --trigger-http --memory $memory
-	cd ..
-
-	echo Testing function on Google Cloud Functions...
-	gcloud functions call $function
+	echo Testing function...
+	az functionapp show --name $function
 fi
