@@ -93,7 +93,7 @@ then
 	gcloud functions deploy $function --source=. --runtime nodejs8 --entry-point helloWorld --timeout 540 --trigger-http --memory $memory
 	cd ..
 
-	echo Testing function on Google Cloud Functions...
+	echo Testing function on Google Cloud Functions... This may fail. It may take a moment for functions to start working after they are deployed.
 	gcloud functions call $function
 fi
 
