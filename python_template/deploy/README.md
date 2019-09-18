@@ -9,7 +9,7 @@ The project structure is meant to simplify deploying onto each of the supported 
         📁 src
             handler.py
             Inspector.py
-        📁 tools
+        📁 deploy
             config.json
             publish.sh
         📁 platforms  
@@ -24,12 +24,20 @@ The src folder contains all of the code for your function.
   
   * [**handler.py**](../src/handler.py) file is the handler that each cloud provider will execute. 
     
-### 📁 tools Folder
+### 📁 deploy Folder
 
 This folder contains tools to help deploy serverless functions onto each supported platform. For more detailed documentation please see the comments at the beginning of each file. 
 
-  * [**config.json**](./config.json) contains all of the neccessary variables to deploy a function. This includes the name of the function, the Azure Function app name, and other information.
   * [**publish.sh**](./publish.sh) is a script used to deploy a function onto each platform. This requires each each cloud providers CLI to be installed and properly configured.
+
+  * [**config.json**](./config.json) contains all of the neccessary variables to deploy a function and is used by [publish.sh](./publish.sh).
+    * **functionName:** The name of your function. 
+        - On Azure, this will be used for all other resources such as Function App, Storage and Resource Groups. 
+            Must be lowercase alphanumeric, and unique.
+    * **lambdaRoleARN:** The ARN of the AWS Lambda role to use.
+    * **lambdaSubnets:** The VPC subnet to use. This is optional and can be left blank.
+    * **lambdaSecurityGroups:** The VPC security group to use. This is optional and can be left blank.
+    * **test:** After a function is deployed, this payload will be use to automatically test the function.
     
 ### 📁 platforms Folder
 

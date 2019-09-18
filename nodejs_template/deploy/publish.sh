@@ -6,7 +6,7 @@
 # Each platform's default function is defined in the platforms folder. These are copied into the source folder as index.js
 # and deployed onto each platform accordingly. Developers should write their function in the function.js file. 
 # All source files should be in the src folder and dependencies defined in package.json. 
-# Node Modules must be installed in tools/node_modules. This folder will be deployed with your function.
+# Node Modules must be installed in deploy/node_modules. This folder will be deployed with your function.
 #
 # This script requires each platform's CLI to be installed and properly configured to update functions.
 # AWS CLI: apt install awscli 
@@ -27,6 +27,9 @@ function=`cat ./config.json | jq '.functionName' | tr -d '"'`
 lambdaRole=`cat ./config.json | jq '.lambdaRoleARN' | tr -d '"'`
 lambdaSubnets=`cat ./config.json | jq '.lambdaSubnets' | tr -d '"'`
 lambdaSecurityGroups=`cat ./config.json | jq '.lambdaSecurityGroups' | tr -d '"'`
+
+json=`cat config.json | jq -c '.test'`
+ibmjson=`cat config.json | jq '.test' | tr -d '"' | tr -d '{' | tr -d '}' | tr -d ':'`
 
 echo
 echo Deploying $function....
@@ -54,7 +57,7 @@ then
 	# Copy files to build folder.
 	cp -R ../src/* ./build
 	cp -R ../platforms/aws/* ./build
-	cp -R ../tools/node_modules/* ./build/node_modules
+	cp -R ../deploy/node_modules/* ./build/node_modules
 	
 	# Zip and submit to AWS Lambda.
 	cd ./build
@@ -65,8 +68,9 @@ then
 	--vpc-config SubnetIds=[$lambdaSubnets],SecurityGroupIds=[$lambdaSecurityGroups]
 	cd ..
 
+	echo
 	echo Testing function on AWS Lambda...
-	aws lambda invoke --invocation-type RequestResponse --cli-read-timeout 900 --function-name $function --region us-east-1 /dev/stdout
+	aws lambda invoke --invocation-type RequestResponse --cli-read-timeout 900 --function-name $function --region us-east-1 --payload $json /dev/stdout
 
 
 fi
@@ -86,15 +90,16 @@ then
 	# Copy files to build folder.
 	cp -R ../src/* ./build
 	cp -R ../platforms/google/* ./build
-	cp -R ../tools/node_modules/* ./build/node_modules
+	cp -R ../deploy/node_modules/* ./build/node_modules
 	
 	# Submit to Google Cloud Functions
 	cd ./build
 	gcloud functions deploy $function --source=. --runtime nodejs8 --entry-point helloWorld --timeout 540 --trigger-http --memory $memory
 	cd ..
 
+	echo
 	echo Testing function on Google Cloud Functions... This may fail. It may take a moment for functions to start working after they are deployed.
-	gcloud functions call $function
+	gcloud functions call $function --data $json
 fi
 
 # Deploy onto IBM Cloud Functions
@@ -112,7 +117,7 @@ then
 	# Copy files to build folder.
 	cp -R ../src/* ./build
 	cp -R ../platforms/ibm/* ./build
-	cp -R ../tools/node_modules/* ./build/node_modules
+	cp -R ../deploy/node_modules/* ./build/node_modules
 	
 	# Zip and submit to IBM Cloud Functions.
 	cd ./build
@@ -120,8 +125,9 @@ then
 	ibmcloud fn action update $function --kind nodejs:8 --memory $memory index.zip
 	cd ..
 
+	echo
 	echo Testing function on IBM Cloud Functions...
-	ibmcloud fn action invoke --result $function
+	ibmcloud fn action invoke $function -p $ibmjson --result
 fi
 
 # Deploy onto Azure Functions
@@ -143,7 +149,7 @@ then
 	cp -R ../platforms/azure/* ./build
 	mv ./build/index.js ./build/$function/index.js
 	mv ./build/function.json ./build/$function/function.json
-	cp -R ../tools/node_modules/* ./build/node_modules
+	cp -R ../deploy/node_modules/* ./build/node_modules
 	
 	# Submit to Azure Functions
 	cd ./build
@@ -154,7 +160,14 @@ then
 	az resource create -g $function -n $function --resource-type "Microsoft.Insights/components" --properties "{\"Application_Type\":\"web\"}"
 	az functionapp create --resource-group $function --consumption-plan-location eastus --name $function --runtime node --os-type Linux --output json --storage-account $function --app-insights $function
 
+	echo
 	echo Deploying function... This may fail if the function app is brand new. In that event, please run this script again.
 	func azure functionapp publish $function --force
 	cd ..
+
+	echo
+	echo Testing function on Azure Functions...
+	endPoint=`func azure functionapp list-functions $function --show-keys | grep Invoke | head -n 1 | tr -d ' ' | cut -c11-`
+	curl -H "Content-Type: application/json" -X POST -d $json $endPoint
+	echo
 fi

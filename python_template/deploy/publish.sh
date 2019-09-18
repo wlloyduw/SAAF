@@ -28,6 +28,9 @@ lambdaRole=`cat ./config.json | jq '.lambdaRoleARN' | tr -d '"'`
 lambdaSubnets=`cat ./config.json | jq '.lambdaSubnets' | tr -d '"'`
 lambdaSecurityGroups=`cat ./config.json | jq '.lambdaSecurityGroups' | tr -d '"'`
 
+json=`cat config.json | jq -c '.test'`
+ibmjson=`cat config.json | jq '.test' | tr -d '"' | tr -d '{' | tr -d '}' | tr -d ':'`
+
 echo
 echo Deploying $function...
 echo
@@ -63,8 +66,9 @@ then
 	--vpc-config SubnetIds=[$lambdaSubnets],SecurityGroupIds=[$lambdaSecurityGroups]
 	cd ..
 
+	echo
 	echo Testing function on AWS Lambda...
-	aws lambda invoke --invocation-type RequestResponse --cli-read-timeout 900 --function-name $function --region us-east-1 /dev/stdout
+	aws lambda invoke --invocation-type RequestResponse --cli-read-timeout 900 --function-name $function --region us-east-1 --payload $json /dev/stdout
 fi
 
 # Deploy onto Google Cloud Functions
@@ -86,8 +90,9 @@ then
 	gcloud functions deploy $function --source=. --entry-point hello_world --runtime python37 --timeout 540 --trigger-http --memory $memory
 	cd ..
 
-	echo Testing function on Google Cloud Functions...
-	gcloud functions call $function
+	echo
+	echo Testing function on Google Cloud Functions... This may fail. It may take a moment for functions to start working after they are deployed.
+	gcloud functions call $function --data $json
 fi
 
 # Deploy onto IBM Cloud Functions
@@ -110,8 +115,9 @@ then
 	ibmcloud fn action update $function --kind python:3 --memory $memory index.zip
 	cd ..
 
+	echo
 	echo Testing function on IBM Cloud Functions...
-	ibmcloud fn action invoke --result $function
+	ibmcloud fn action invoke $function -p $ibmjson --result
 fi
 
 # Deploy onto Azure Functions
@@ -148,4 +154,10 @@ then
 	func azure functionapp publish $function --force
 	deactivate
 	cd ..
+
+	echo
+	echo Testing function on Azure Functions...
+	endPoint=`func azure functionapp list-functions $function --show-keys | grep Invoke | head -n 1 | tr -d ' ' | cut -c11-`
+	curl -H "Content-Type: application/json" -X POST -d $json $endPoint
+	echo
 fi

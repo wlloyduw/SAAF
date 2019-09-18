@@ -15,7 +15,11 @@ module.exports = function(request, context) {
     inspector.addTimeStamp("frameworkRuntime");
 
     //Add custom message and finish the function
-    inspector.addAttribute("message", "Hello " + request.name + "!");
+    if (typeof request.name !== 'undefined' && request.name !== null) {
+        inspector.addAttribute("message", "Hello " + request.name + "!");
+    } else {
+        inspector.addAttribute("message", "Hello World!");
+    }
     
     inspector.inspectCPUDelta()
     return inspector.finish();
