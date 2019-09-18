@@ -4,6 +4,15 @@ FaaS Runner is a tool used to create, execute, and automate experiments on FaaS 
 
 ### Function JSON:
 
+``` json
+{
+    "function": "helloWorld",
+    "platform": "AWS Lambda",
+    "source": "../nodejs_template",
+    "endpoint": ""
+}
+```
+
 An example function configuration can be found in [./functions/exampleFunction.json](./functions/exampleFunction.json). Function files provide the core parameters needed to execute and modify a function. Here is a breakdown of the attributes:
 
 * **function:** The name of your function. 
@@ -18,6 +27,44 @@ An example function configuration can be found in [./functions/exampleFunction.j
 * **endpoint:** If using HTTP or Azure, you must define your function's URL here.
 
 ### Experiment JSON:
+
+``` json
+{
+    "callWithCLI": true,
+    "memorySettings": [0],
+    "payloads": [
+        { "name": "Bob" },
+        { "name": "Joe" },
+        { "name": "Steve" }
+    ],
+
+    "runs": 50,
+    "threads": 50,
+    "iterations": 3,
+    "sleepTime": 5,
+    "randomSeed": 42,
+
+    "outputGroups": ["containerID", "cpuType", "vmID", "zAll"],
+    "outputRawOfGroup": ["cpuType"],
+    "showAsList": ["vmuptime", "cpuType", "vmID"],
+    "showAsSum": ["newcontainer"],
+
+    "ignoreFromAll": ["zAll", "lang", "version"],
+    "ignoreFromGroups": ["cpuModel", "cpuIdle", "cpuUsr"],
+    "ignoreByGroup": {
+		"containerID": ["containerID"],
+		"cpuType": ["cpuType"],
+		"vmID": ["vmID"]
+    },
+    
+    "invalidators": {},
+    "removeDuplicateContainers": false,
+
+    "openCSV": true,
+    "combineSheets": true,
+    "warmupBuffer": 1
+} 
+```
 
 Experiment files determine how your function with be executed, what setting to use, and how to display the results. Due to this, there are many more ways to customize your experiments. An example experiment configuration can be found in [./experiments/exampleExperiment.json](./experiments/exampleExperiment.json). Here are all of the attributes to define an experiment: 
 
