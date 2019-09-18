@@ -81,7 +81,7 @@ The attributes collect can be customized by changing which functions are called.
 
 &nbsp;
 
-# Deploying Functions:
+# Deploy Functions Anywhere:
 
 Each language comes with a publish.sh script that can be used to simplify the process of deploying functions and remove the need to visit each cloud provider's website. This script is located in the /deploy folder of each language template. SAAF's deployment tools allow a function to be written once and then automatically packaged, deployed, and tested on each platform. To use the publish script, simply follow the directions below:
 
@@ -115,5 +115,14 @@ Each language comes with a publish.sh script that can be used to simplify the pr
 
 &nbsp;
 
-# Running Experiments with FaaS Runner: 
+# Run Experiments with FaaS Runner: 
 
+FaaS Runner is a tool used to create, execute, and automate experiments on FaaS platforms using SAAF. FaaS Runner works by creating function and experiment JSON files that define how to run an experiment, what settings to use, and how to deplay the results. For more information about these JSON files, see the [FaaS Runner Documentation](./test/).
+
+``` bash 
+# Using FaaS Runner.
+./faas_runner.py -f {PATH TO FUNCTION JSON} -e {PATH TO EXPERIMENT JSON} -o {OPTIONAL: OUTPUT PATH}
+
+# Run the example:
+./faas_runner.py -f ./functions/exampleFunction.json -e ./experiments/exampleExperiment.json
+```

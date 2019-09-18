@@ -1,4 +1,4 @@
-# FaaS Runner
+# FaaS Runner - Run FaaS Experiments
 
 FaaS Runner is a tool used to create, execute, and automate experiments on FaaS platforms using SAAF. FaaS Runner works by defining function and experiment JSON files. This project structure allows for experiments to be reused between many different functions.
 
