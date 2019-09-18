@@ -68,19 +68,19 @@ The publish script is meant to simplify the process of deploying functions and r
   The script takes 5 parameters, the first four are booleans that determine what platforms to deploy to and the final is a memory setting to use on supported platforms.
 
 ### Example Usage:
-``` 
-Parameters
+``` bash 
+# Parameters
 ./publish.sh AWS GOOGLE IBM AZURE Memory
 
-Deploy to AWS and Azure with 512 MBs
+# Deploy to AWS and Azure with 512 MBs
 ./publish.sh 1 0 0 1 512
 
-Deploy to Google and IBM with 1GB.
+# Deploy to Google and IBM with 1GB.
 ./publish.sh 0 1 1 0 1024
 
-Deploy to all platforms with 128 MBs:
+# Deploy to all platforms with 128 MBs:
 ./publish.sh 1 1 1 1 128
 
-Deploy to AWS with 3GBs:
+# Deploy to AWS with 3GBs:
 ./publish.sh 1 0 0 0 3008
 ```
