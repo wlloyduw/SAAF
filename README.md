@@ -5,7 +5,7 @@ A generic Hello World function is provided for each language as a starting point
 
 SAAF also provides tools to automate the process of deploying functions to AWS Lambda, Google Cloud Functions, IBM Cloud Functions, and Azure Functions. Each language comes with a publish script built to allow functions to be written once and then automatically packaged, deployed, and tested on all supported platforms. This platform-neutral system allows functions to be easily written and compared accross different FaaS platforms, hardware configurations, and deployment options.
 
-### Table of Contents:
+### Other Articles:
 
 1. [Java Framework](./java_template/README.md)
 2. [Java Deployment Tools](./java_template/deploy/README.md)
