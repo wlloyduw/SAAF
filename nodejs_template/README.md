@@ -146,8 +146,4 @@ Get an attribute already stored in SAAF.
 
 Add a custom time stamp to SAAF. This will store the time in ms from when SAAF started to when this method was called.
 
-### consumeResponse(response)
-
-If using a POJO response object, use this method to pull the attributes from the object and add them to SAAF.
-
 &nbsp;

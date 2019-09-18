@@ -1,9 +1,11 @@
-# SAAF - Serverless Application Analytics Framework (SAAF)
+# SAAF - Serverless Application Analytics Framework
 
 This project provides coding templates to support tracing FaaS function server infrastructure for code deployments.
 A generic Hello World function is provided for each language as a starting point to write infrastructure traceable FaaS functions to enable tracing code containers and hosts (VMs) created by FaaS platform providers for hosting FaaS functions.  This information can help verify the state of infrastructure (COLD vs. WARM) to understand performance results, and help preserve infrastructure for better FaaS performance.
 
-## Table of Contents:
+SAAF also provides tools to automate the process of deploying functions to AWS Lambda, Google Cloud Functions, IBM Cloud Functions, and Azure Functions. Each language comes with a publish script built to allow functions to be written once and then automatically packaged, deployed, and tested on all supported platforms. This platform-neutral system allows functions to be easily written and compared accross different FaaS platforms, hardware configurations, and deployment options.
+
+### Table of Contents:
 
 1. [Java Framework](./java_template/README.md)
 2. [Java Deployment Tools](./java_template/deploy/README.md)
@@ -13,25 +15,45 @@ A generic Hello World function is provided for each language as a starting point
 6. [Node.js Deployment Tools](./nodejs_template/deploy/README.md)
 7. [BASH Framework](./bash_template/README.md)
 8. [BASH Deployment Tools](./bash_template/deploy/README.md)
+9. [FaaS Runner](./test/README.md)
+
+### Supported Platforms and Languages:
+
+| **Platform** | **Node.js** | **Python** | **Java** | **Bash** |
+| --- | :---: | :---: | :---: | :---: |
+| AWS Lambda | ✔️ | ✔️ | ✔️ | ✔️ |
+| Google Cloud Functions | ✔️ | ✔️ | ⏳ | ❌ |
+| IBM Cloud Functions | ✔️ | ✔️ | ✔️ | ❌ |
+| Azure Functions (Linux) | ✔️ | ✔️ | ❌ | ❌ |
+
+&nbsp;
+
+# Using SAAF in a Function:
+
+Using SAAF in a function is as simple importing the framework and adding a couple lines of code. Attributes collected by SAAF will be appended onto the JSON response. For asynchronous functions, this data could be stored into a database, such as AWS S3, and retrieved after the function is finished.
 
 **Example Function:**
+
 ```python
 from Inspector import *
 
 def myFunction(request):
   
-  # Import the module and collect data
+  # Initialize the Inspector and collect data.
   inspector = Inspector()
-  inspector.inspectContainer()
-  inspector.inspectCPU()
-  inspector.addTimeStamp("frameworkRuntime")
+  inspector.inspectAll()
 
-  # Add custom message and finish the function
+  # Add a "Hello World!" message.
   inspector.addAttribute("message", "Hello " + request['name'] + "!")
+
+  # Return attributes collected.
   return inspector.finish()
 ```
 
 **Example Output JSON:**
+
+The attributes collect can be customized by changing which functions are called. For more detailed descriptions of each variable and the functions that collect them, please see the framework documentation for each language.
+
 ```json
 {
 	"version": 0.2,
@@ -57,13 +79,41 @@ def myFunction(request):
 }
 ```
 
-For more detailed descriptions of each variable, please see the documentation for a specific language.
+&nbsp;
 
-## Supported Platforms and Languages:
+# Deploying Functions:
 
-| **Platform** | **Node.js** | **Python** | **Java** | **Bash** |
-| --- | :---: | :---: | :---: | :---: |
-| AWS Lambda | ✔️ | ✔️ | ✔️ | ✔️ |
-| Google Cloud Functions | ✔️ | ✔️ | ⏳ | ❌ |
-| IBM Cloud Functions | ✔️ | ✔️ | ✔️ | ❌ |
-| Azure Functions (Linux) | ✔️ | ✔️ | ❌ | ❌ |
+Each language comes with a publish.sh script that can be used to simplify the process of deploying functions and remove the need to visit each cloud provider's website. This script is located in the /deploy folder of each language template. SAAF's deployment tools allow a function to be written once and then automatically packaged, deployed, and tested on each platform. To use the publish script, simply follow the directions below:
+
+1. Install all nessessary dependencies and setup each cloud's provider's CLI.
+  This can be done using [quickInstall.sh](./quickInstall.sh)
+2. Configure config.json.
+  Fill in the name of your function, a AWS ARN (if deploying to AWS Lambda), and choose a payload to test your function with.
+3. Run the script. 
+  The script takes 5 parameters, the first four are booleans that determine what platforms to deploy to and the final is a memory setting to use on supported platforms.
+
+### Example Usage:
+``` bash 
+# Description of Parameters
+./publish.sh AWS GOOGLE IBM AZURE Memory
+
+# Deploy to AWS and Azure with 512 MBs
+./publish.sh 1 0 0 1 512
+
+# Deploy to Google and IBM with 1GB.
+./publish.sh 0 1 1 0 1024
+
+# Deploy to all platforms with 128 MBs:
+./publish.sh 1 1 1 1 128
+
+# Deploy to AWS with 3GBs:
+./publish.sh 1 0 0 0 3008
+```
+
+  For more information about each languages deployment tools, see the README.md in each of the template's deploy folder:
+[Java](./java_template/deploy/README.md), [Python](./python_template/deploy/README.md), [Node.js](./nodejs_template/deploy/README.md), [BASH](./bash_template/deploy/README.md)
+
+&nbsp;
+
+# Running Experiments with FaaS Runner: 
+
