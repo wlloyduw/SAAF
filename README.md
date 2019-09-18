@@ -7,15 +7,15 @@ SAAF also provides tools to automate the process of deploying functions to AWS L
 
 ### Other Articles:
 
-1. [Java Framework](./java_template/README.md)
-2. [Java Deployment Tools](./java_template/deploy/README.md)
-3. [Python Framework](./python_template/README.md)
-4. [Python Deployment Tools](./python_template/deploy/README.md)
-5. [Node.js Framework](./nodejs_template/README.md)
-6. [Node.js Deployment Tools](./nodejs_template/deploy/README.md)
-7. [BASH Framework](./bash_template/README.md)
-8. [BASH Deployment Tools](./bash_template/deploy/README.md)
-9. [FaaS Runner](./test/README.md)
+1. [Java Framework](./java_template/)
+2. [Java Deployment Tools](./java_template/deploy/)
+3. [Python Framework](./python_template/)
+4. [Python Deployment Tools](./python_template/deploy/)
+5. [Node.js Framework](./nodejs_template/)
+6. [Node.js Deployment Tools](./nodejs_template/deploy/)
+7. [BASH Framework](./bash_template/)
+8. [BASH Deployment Tools](./bash_template/deploy/)
+9. [FaaS Runner](./test/)
 
 ### Supported Platforms and Languages:
 
