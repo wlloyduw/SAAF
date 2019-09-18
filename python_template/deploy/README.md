@@ -1,4 +1,4 @@
-# SAAF Deployment Tools
+# SAAF Deployment Tools - Python
 
 One goal of SAAF is to support multiple FaaS platforms. Currently AWS Lambda, Google Cloud Functions, IBM Cloud Functions/OpenWhisk, and Azure Function are the supported platforms. A few scripts have been developed to aid in development, deployment, and testing of each platform.
 

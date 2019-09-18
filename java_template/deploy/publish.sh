@@ -5,7 +5,6 @@
 # Each platform's default function is defined in the platforms folder. These are copied into the source folder
 # and deployed onto each platform accordingly. Developers should write their function in the function.js file. 
 # All source files should be in the src folder and dependencies defined in package.json. 
-# Node Modules must be installed in tools/node_modules. This folder will be deployed with your function.
 #
 # This script requires each platform's CLI to be installed and properly configured to update functions.
 # AWS CLI: apt install awscli 
@@ -25,6 +24,9 @@ function=`cat ./config.json | jq '.functionName' | tr -d '"'`
 lambdaRole=`cat ./config.json | jq '.lambdaRoleARN' | tr -d '"'`
 lambdaSubnets=`cat ./config.json | jq '.lambdaSubnets' | tr -d '"'`
 lambdaSecurityGroups=`cat ./config.json | jq '.lambdaSecurityGroups' | tr -d '"'`
+
+json=`cat config.json | jq -c '.test'`
+ibmjson=`cat config.json | jq '.test' | tr -d '"' | tr -d '{' | tr -d '}' | tr -d ':'`
 
 echo
 echo Deploying $function....
@@ -56,7 +58,11 @@ then
 	aws lambda update-function-configuration --function-name $function --memory-size $memory --runtime java8 \
 	--vpc-config SubnetIds=[$lambdaSubnets],SecurityGroupIds=[$lambdaSecurityGroups]
 	cd ..
-	cd tools
+	cd deploy
+
+	echo
+	echo Testing function on AWS Lambda...
+	aws lambda invoke --invocation-type RequestResponse --cli-read-timeout 900 --function-name $function --region us-east-1 --payload $json /dev/stdout
 fi
 
 # Deploy onto IBM Cloud Functions
@@ -75,7 +81,11 @@ then
 	cd target
 	ibmcloud fn action update $function --kind java --memory $memory --main ibm.Hello lambda_test-1.0-SNAPSHOT.jar
 	cd ..
-	cd tools
+	cd deploy
+
+	echo
+	echo Testing function on IBM Cloud Functions...
+	ibmcloud fn action invoke $function -p $ibmjson --result
 
 fi
 

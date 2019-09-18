@@ -1,4 +1,4 @@
-# SAAF - Serverless Application Analytics Framework (SAAF)
+# SAAF - Serverless Application Analytics Framework - Node.js
 
 SAAF is a programming framework that allows for tracing FaaS function server infrastructure for code deployments. This framework includes functions to enable tracing code containers and hosts (VMs) created by FaaS platform providers for hosting FaaS functions. This information can help verify the state of infrastructure (COLD vs. WARM) to understand performance results, and help preserve infrastructure for better FaaS performance.
 
@@ -6,7 +6,7 @@ SAAF is a programming framework that allows for tracing FaaS function server inf
 
 To use the core SAAF framework, download the [Inspector.js](./src/Inspector.js) script into an existing Node.js project and simply import the module as shown below.
 
-SAAF also includes tools to deploy and develop new functions for each supported platform automatically. To make use of these tools, download the entire repository and follow the directions in the [tools directory](./tools). 
+SAAF also includes tools to deploy and develop new functions for each supported platform automatically. To make use of these tools, download the entire repository and follow the directions in the [deploy directory](./deploy). 
 
 ### Import the Module into an Existing Project
 
@@ -119,5 +119,35 @@ The amount of data collected is detemined by which functions are called. If some
 | **Field** | **Description** |
 | --------- | --------------- |
 | linuxVersion | The version of the linux kernel. |
+
+# Helper Functions
+
+### finish()
+
+This should be the last method called. It will return the final object containing all of the attributes collected.
+
+### inspectAll()
+
+Calls all inital inspect methods such as inspectPlatform, inspectCPU, ect. Should be called immediately after initalizing the Inspector.
+
+### inspectAllDeltas()
+
+Calls all methods that calculate deltas, such as inspectCPUDelta. This should be called at the end of your function, before calling the finish() method.
+
+### addAttribute(key, value)
+
+Add a custom attribute to the data return by SAAF. 
+
+### getAttribute(key)
+
+Get an attribute already stored in SAAF.
+
+### addTimeStamp(key)
+
+Add a custom time stamp to SAAF. This will store the time in ms from when SAAF started to when this method was called.
+
+### consumeResponse(response)
+
+If using a POJO response object, use this method to pull the attributes from the object and add them to SAAF.
 
 &nbsp;

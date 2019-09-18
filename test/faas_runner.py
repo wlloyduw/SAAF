@@ -29,7 +29,7 @@ def publish(function, memory):
 
     sourceDir = func['source']
 
-    deployConfig = sourceDir + "/tools/config.json"
+    deployConfig = sourceDir + "/deploy/config.json"
     deployJson = json.load(open(deployConfig))
 
     if (deployJson['functionName'] != func['function']):
@@ -64,7 +64,7 @@ def publish(function, memory):
             print("Unknown platform.")
             return None
 
-        cmd = [sourceDir + "/tools/publish.sh"] + params
+        cmd = [sourceDir + "/deploy/publish.sh"] + params
         proc = subprocess.Popen(
             cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         o, e = proc.communicate()

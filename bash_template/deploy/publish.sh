@@ -21,6 +21,9 @@ lambdaRole=`cat ./config.json | jq '.lambdaRoleARN' | tr -d '"'`
 lambdaSubnets=`cat ./config.json | jq '.lambdaSubnets' | tr -d '"'`
 lambdaSecurityGroups=`cat ./config.json | jq '.lambdaSecurityGroups' | tr -d '"'`
 
+json=`cat config.json | jq -c '.test'`
+ibmjson=`cat config.json | jq '.test' | tr -d '"' | tr -d '{' | tr -d '}' | tr -d ':'`
+
 echo
 echo Deploying $function....
 echo
@@ -58,8 +61,11 @@ then
 	aws lambda update-function-code --function-name $function --zip-file fileb://function.zip
 	aws lambda update-function-configuration --function-name $function --memory-size $memory --runtime provided \
 	--vpc-config SubnetIds=[$lambdaSubnets],SecurityGroupIds=[$lambdaSecurityGroups]
-
 	cd ..
+
+	echo
+	echo Testing function on AWS Lambda...
+	aws lambda invoke --invocation-type RequestResponse --cli-read-timeout 900 --function-name $function --region us-east-1 --payload $json /dev/stdout
 fi
 
 # Deploy onto IBM Cloud Functions
