@@ -1,11 +1,11 @@
 {
 	"README": "See ./tools/README.md for help!",
 
-	"functionName":     "pythontestt51234y",
+	"functionName":     "helloWorld",
 	
-	"lambdaRoleARN": "arn:aws:iam::616835888336:role/lambda_basic_execution",
-	"lambdaSubnets": "subnet-c41f88ea",
-	"lambdaSecurityGroups": "sg-7852de36",
+	"lambdaRoleARN": "arn:aws:iam::aws:policy/AWSLambdaFullAccess",
+	"lambdaSubnets": "",
+	"lambdaSecurityGroups": "",
 
 	"test": {
 		"name": "Bob"

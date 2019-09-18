@@ -6,3 +6,4 @@ java_template/.project
 bash_template/tools/build
 *.class
 __pycache__
+bash_template/deploy/build/function.zip
