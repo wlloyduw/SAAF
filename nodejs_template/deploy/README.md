@@ -69,7 +69,7 @@ The publish script is meant to simplify the process of deploying functions and r
 
 ### Example Usage:
 ``` bash 
-# Parameters
+# Description of Parameters
 ./publish.sh AWS GOOGLE IBM AZURE Memory
 
 # Deploy to AWS and Azure with 512 MBs
