@@ -32,17 +32,8 @@ callservice() {
   #host=10.0.0.124
   #port=8080
   onesecond=1000
-  filename="parurl"
-  while read -r line
-  do
-    parurl=$line
-  done < "$filename"
-
-  filename="parfunction"
-  while read -r line
-  do
-    parfunction=$line
-  done < "$filename"
+ 
+  function=`cat ./config.json | jq '.functionName' | tr -d '"'`
 
   if [ $threadid -eq 1 ]
   then
@@ -51,10 +42,7 @@ callservice() {
   for (( i=1 ; i <= $totalruns; i++ ))
   do
     # JSON object to pass to Lambda Function
-    #json={"\"name\"":"\"Fred\u0020Smith\",\"param1\"":1,\"param2\"":2,\"param3\"":3}
-    json={"\"name\"":"\"\",\"calcs\"":1000000,\"sleep\"":0,\"loops\"":25}
-    #json={"\"name\"":"\"\",\"calcs\"":1000000,\"sleep\"":0,\"loops\"":25}
-
+    json=`cat config.json | jq -c '.payload'`
 
     time1=( $(($(date +%s%N)/1000000)) )
 
@@ -64,9 +52,21 @@ callservice() {
     #output=`curl -H "Content-Type: application/json" -X POST -d  $json $parurl 2>/dev/null`
 
     ####################################
-    # Uncomment for AWS Lambda CLI function invocation with $parfunction variable
+    # Uncomment for AWS Lambda CLI function invocation with $function variable
     ####################################
-    output=`aws lambda invoke --invocation-type RequestResponse --function-name $parfunction --cli-read-timeout 900 --region us-east-1 --payload $json /dev/stdout | head -n 1 | head -c -2 ; echo`
+    output=`aws lambda invoke --invocation-type RequestResponse --function-name $function --region us-east-1 --payload $json /dev/stdout | head -n 1 | head -c -2 ; echo`
+    
+    ####################################
+    # Uncomment for Google Cloud CLI function invocation with $function variable
+    ####################################
+    #output=`gcloud functions call $function --data $json | head -n 1 | head -c -2 ; echo`
+    
+    ####################################
+    # Uncomment for IBM Cloud CLI function invocation with $function variable
+    ####################################
+    #cat $json > input.temp
+    #output=`ibmcloud fn action invoke $function -P input.temp -r | head -n 1 | head -c -2 ; echo`
+    #rm input.temp
 
     ####################################
     # Uncomment for CURL invocation with inline URL

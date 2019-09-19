@@ -1,4 +1,5 @@
 #!/bin/bash
+
 # AWS Lambda parallel client testing script
 # requires curl, the gnu parallel package, the bash calculator, jq for json processing, and the awscli
 #
@@ -7,7 +8,7 @@
 #
 # To use this parallel test script, create files to provide your function name and AWS gateway URL
 # file: parurl        Provide URL from AWS-Gateway
-# file: parfunction   Provide AWS Lambda function name on a single line text file
+# file: function   Provide AWS Lambda function name on a single line text file
 #
 totalruns=$1
 threads=$2
@@ -20,7 +21,7 @@ csstimes=()
 clatency=()
 price_gbsec=.00001667
 memory_mb=3008
-memory_gb=`echo $memory_mb / 1000 | bc -l`
+memory_gb=$(echo $memory_mb / 1000 | bc -l)
 
 #########################################################################################################################################################
 #  callservice method - uses separate threads to call AWS Lambda in parallel
@@ -32,29 +33,21 @@ callservice() {
   #host=10.0.0.124
   #port=8080
   onesecond=1000
-  filename="parurl"
-  while read -r line
-  do
-    parurl=$line
-  done < "$filename"
 
-  filename="parfunction"
-  while read -r line
-  do
-    parfunction=$line
-  done < "$filename"
 
-  if [ $threadid -eq 1 ]
+  function=$(cat ./config.json | jq '.functionName' | tr -d '"')
+
+  if [ "$threadid" -eq 1 ]
   then
     echo "run_id,thread_id,uuid,cputype,cpusteal,vmuptime,pid,cpuusr,cpukrn,elapsed_time,server_runtime,latency,sleep_time_ms,new_container"
   fi
-  for (( i=1 ; i <= $totalruns; i++ ))
+  for (( i=1 ; i <= totalruns; i++ ))
   do
     # JSON object to pass to Lambda Function
     #json={"\"name\"":"\"Fred\u0020Smith\",\"param1\"":1,\"param2\"":2,\"param3\"":3}
     json={"\"name\"":"\"\",\"calcs\"":1000000,\"sleep\"":0,\"loops\"":25}
     #json={"\"name\"":"\"\",\"calcs\"":1000000,\"sleep\"":0,\"loops\"":25}
-
+    json=$(cat config.json | jq -c '.payload')
 
     time1=( $(($(date +%s%N)/1000000)) )
 
@@ -64,9 +57,21 @@ callservice() {
     #output=`curl -H "Content-Type: application/json" -X POST -d  $json $parurl 2>/dev/null`
 
     ####################################
-    # Uncomment for AWS Lambda CLI function invocation with $parfunction variable
+    # Uncomment for AWS Lambda CLI function invocation with $function variable
     ####################################
-    output=`aws lambda invoke --invocation-type RequestResponse --function-name $parfunction --cli-read-timeout 900 --region us-east-1 --payload $json /dev/stdout | head -n 1 | head -c -2 ; echo`
+    output=$(aws lambda invoke --invocation-type RequestResponse --function-name "$function" --region us-east-1 --payload "$json" /dev/stdout | head -n 1 | head -c -2 ; echo)
+    
+    ####################################
+    # Uncomment for Google Cloud CLI function invocation with $function variable
+    ####################################
+    #output=`gcloud functions call $function --data $json | head -n 1 | head -c -2 ; echo`
+    
+    ####################################
+    # Uncomment for IBM Cloud CLI function invocation with $function variable
+    ####################################
+    #cat $json > input.temp
+    #output=`ibmcloud fn action invoke $function -P input.temp -r | head -n 1 | head -c -2 ; echo`
+    #rm input.temp
 
     ####################################
     # Uncomment for CURL invocation with inline URL
@@ -85,7 +90,7 @@ callservice() {
     cputype=${cputype// /_}
     cpusteal=`echo $output | jq '.vmcpusteal'`
     vuptime=`echo $output | jq '.vmuptime'`
-    hostname=`echo $output | jq '.hostname'`
+    hostname=`echo $output | jq '.vmID'`
     newcont=`echo $output | jq '.newcontainer'`
     ssruntime=`echo $output | jq '.runtime'`
     
@@ -97,7 +102,7 @@ callservice() {
     echo "$uuid,$elapsedtime,$ssruntime,$latency,$vuptime,$newcont,$cputype,$hostname" >> .uniqcont
     if (( $sleeptime > 0 ))
     then
-      sleep $sleeptimems
+      sleep "$sleeptimems"
     fi
   done
 }
@@ -156,6 +161,7 @@ do
     alltimes=`expr $alltimes + $time`
     allsstimes=`expr $allsstimes + $sstime`
     alllatency=`expr $alllatency + $latency`
+    allcpusteal=`expr $allcpusteal + $cpusteal`
     #echo "Uuid read from file - $uuid"
     # if uuid is already in array
     found=0
@@ -173,6 +179,7 @@ do
             ctimes[$i]=`expr ${ctimes[$i]} + $time`
             csstimes[$i]=`expr ${csstimes[$i]} + $sstime`
             clatency[$i]=`expr ${clatency[$i]} + $latency`
+            ccpusteal[$i]=`expr ${ccpusteal[$i]} + $cpusteal`
             found=1
         fi
     }
@@ -187,6 +194,7 @@ do
         ctimes+=($time)
         csstimes+=($sstime)
         clatency+=($latency)
+        ccpusteal+=($cpusteal)
     fi
 
     # Populate array of unique hosts
@@ -197,6 +205,7 @@ do
             htimes[$i]=`expr ${htimes[$i]} + $time`
             hsstimes[$i]=`expr ${hsstimes[$i]} + $sstime`
             hlatency[$i]=`expr ${hlatency[$i]} + $latency`
+            hcpusteal[$i]=`expr ${hcpusteal[$i]} + $cpusteal`
             hfound=1
         fi
     }
@@ -208,6 +217,7 @@ do
         htimes+=($time)
         hsstimes+=($sstime)
         hlatency+=($latency)
+        hcpusteal+=($cpusteal)
         #hcontainers+=($uuid)
     fi
 
@@ -220,6 +230,7 @@ do
             cputimes[$i]=`expr ${cputimes[$i]} + $time`
             cpusstimes[$i]=`expr ${cpusstimes[$i]} + $sstime`
             cpulatency[$i]=`expr ${cpulatency[$i]} + $latency`
+            cpucpusteal[$i]=`expr ${cpusteal[$i]} + $cpusteal`
             cpufound=1
         fi
 
@@ -230,6 +241,7 @@ do
         cputimes+=($time)
         cpusstimes+=($sstime)
         cpulatency+=($latency)
+        cpucpusteal+=($cpusteal)
     fi
 
 
@@ -281,6 +293,8 @@ avgsstime=`echo $allsstimes / $totalruns | bc -l`
 avgsstime=`printf '%.*f\n' 0 $avgsstime`
 avglatency=`echo $alllatency / $totalruns | bc -l`
 avglatency=`printf '%.*f\n' 0 $avglatency`
+avgcpusteal=`echo $allcpusteal / $totalruns | bc -l`
+avgcpusteal=`printf '%.*f\n' 0 $avgcpusteal`
 allsstimes_sec=`echo $allsstimes / 1000 | bc -l`
 totalcost=`echo "$allsstimes_sec * $price_gbsec * $memory_gb" | bc -l`
 totalcost=`printf '%.*f\n' 4 $totalcost`
@@ -311,7 +325,7 @@ stdev=`printf '%.*f\n' 3 $stdev`
 # hosts info
 currtime=$(date +%s)
 echo "Current time of test=$currtime"
-echo "host,host_cpu,host_up_time,uses,containers,totaltime,avgruntime_host,avgssruntime_host,avglatency_host,uses_minus_avguses_sq"
+echo "host,host_cpu,host_up_time,uses,containers,totaltime,avgruntime_host,avgssruntime_host,avglatency_host,uses_minus_avguses_sq,avgcpusteal"
 total=0
 if [[ ! -z $vmreport && $vmreport -eq 1 ]]
 then
@@ -324,6 +338,8 @@ for ((i=0;i < ${#hosts[@]};i++)) {
   avg=`printf '%.*f\n' 0 $avg`
   ssavg=`echo ${hsstimes[$i]} / ${huses[$i]} | bc -l`
   ssavg=`printf '%.*f\n' 0 $ssavg`
+  avgcpusteal=`echo ${hcpusteal[$i]} / ${huses[$i]} | bc -l`
+  avgcpusteal=`printf '%.*f\n' 0 $avgcpusteal`
   latencyavg=`echo ${hlatency[$i]} / ${huses[$i]} | bc -l`
   latencyavg=`printf '%.*f\n' 0 $latencyavg`
   stdiff=`echo ${huses[$i]} - $runsperhost | bc -l` 
@@ -340,45 +356,7 @@ for ((i=0;i < ${#hosts[@]};i++)) {
           (( ccount ++ ))
       fi
   } 
-  echo "${hosts[$i]},${hcputype[$i]},$uptime,${huses[$i]},$ccount,${htimes[$i]},$avg,$ssavg,$latencyavg,$stdiffsq"
-  cpuusestype=`echo ${hcputype[$i]} | cut -d'"' -f 2`
-  cpuusestype=`echo $cpuusestype-${huses[$i]}`
-  #echo $cpuuses
-  #cpuuses=`echo ${hcputype[$i]}-${huses[$i]} | cut -d'"' -f 2
-
-  ##  GROUP BY CPU-USES
-  # Populate array of unique CPU-USES types
-  cpuusesfound=0
-  for ((j=0;j < ${#cpuusesTypes[@]};j++)) {
-    #echo "IN ARRAY CHECK:'${cpuusesTypes[$j]}' == '${cpuusestype}'"
-    if [ "${cpuusesTypes[$j]}" == "${cpuusestype}" ]; then
-        #echo "DUPE"
-        (( cpuusesUses[$j]++ ))
-        cpuusesTimes[$j]=`expr ${cpuusesTimes[$j]} + ${htimes[$i]}`
-	#echo "'${cpuusesTimes[$j]}' + '${htimes[$i]}'"
-        cpuusesSstimes[$j]=`expr ${cpuusesSstimes[$j]} + ${hsstimes[$i]}`
-	#echo "'${cpuusesSstimes[$j]}' + '${hsstimes[$i]}'"
-        cpuusesLatency[$j]=`expr ${cpuusesLatency[$j]} + ${hlatency[$i]}`
-	#echo "'${cpuusesLatency[$j]}' + '${hlatency[$i]}'"
-        cpuusesfound=1
-        #echo "expr err?"
-    fi
-  }
-
-  # if not found, add to array
-  if [ $cpuusesfound != 1 ]; then
-      #echo "NEW"
-      cpuusesTypes+=($cpuusestype)
-      cpuusesUses+=(1)
-      cpuusesTimes+=(${htimes[$i]})
-      cpuusesSstimes+=(${hsstimes[$i]})
-      cpuusesLatency+=(${hlatency[$i]})
-      cpuusesTenancy+=(${huses[$i]})
-      #echo "ADDING"
-      #echo "'${htimes[$i]}'"
-      #echo "'${hsstimes[$i]}'"	
-      #echo "'${hlatency[$i]}'"
-  fi
+  echo "${hosts[$i]},${hcputype[$i]},$uptime,${huses[$i]},$ccount,${htimes[$i]},$avg,$ssavg,$latencyavg,$stdiffsq,$avgcpusteal"
 
   ##  Determine count of recycled hosts...
   ## 
@@ -438,35 +416,6 @@ for ((i=0;i < ${#cpuTypes[@]};i++)) {
   echo "${cpuTypes[$i]},${cpuuses[$i]},${cputimes[$i]},$cpuavg,$cpussavg,$cpulatency"
 }
 
-
-
-#########################################################################################################################################################
-# Generate CSV output - group by CPU-uses Types
-#########################################################################################################################################################
-
-# CPU Types info
-echo "cpu-uses-type,tenancy,occurrences,totaltime,avgruntime_per_cpu-uses,avgssruntime_per_cpu-uses,avglatency_per_cpu-uses"
-total=0
-#echo "CHECK IF DELETE ORIGVM"
-#if [[ ! -z $vmreport && $vmreport -eq 1 ]]
-#then
-#  echo "DELETING ORIGVM !!!"
-#  rm -f .origvm 
-#fi
-
-# Loop through CPU Types and make summary data
-for ((i=0;i < ${#cpuusesTypes[@]};i++)) {
-  cpuavg=`echo ${cpuusesTimes[$i]} / ${cpuusesUses[$i]} | bc -l`
-  cpuavg=`echo ${cpuavg} / ${cpuusesTenancy[$i]} | bc -l`
-  cpuavg=`printf '%.*f\n' 0 $cpuavg`
-  cpussavg=`echo ${cpuusesSstimes[$i]} / ${cpuusesUses[$i]} | bc -l`
-  cpussavg=`echo ${cpussavg} / ${cpuusesTenancy[$i]} | bc -l`
-  cpussavg=`printf '%.*f\n' 0 $cpussavg`
-  cpulatency=`echo ${cpuusesLatency[$i]} / ${cpuusesUses[$i]} | bc -l`
-  cpulatency=`echo ${cpulatency} / ${cpuusesTenancy[$i]} | bc -l`
-  cpulatency=`printf '%.*f\n' 0 $cpulatency`
-  echo "${cpuusesTypes[$i]},${cpuusesTenancy[$i]},${cpuusesUses[$i]},${cpuusesTimes[$i]},$cpuavg,$cpussavg,$cpulatency"
-}
 
 #########################################################################################################################################################
 # Generate CSV output - report summary, final data
