@@ -5,7 +5,7 @@ A generic Hello World function is provided for each language as a starting point
 
 SAAF also provides tools to automate the process of deploying functions to AWS Lambda, Google Cloud Functions, IBM Cloud Functions, and Azure Functions. Each language comes with a publish script built to allow functions to be written once and then automatically packaged, deployed, and tested on all supported platforms. This platform-neutral system allows functions to be easily written and compared accross different FaaS platforms, hardware configurations, and deployment options.
 
-### Other Articles:
+### More Articles:
 
 1. [Java Framework](./java_template/)
 2. [Java Deployment Tools](./java_template/deploy/)
@@ -17,14 +17,15 @@ SAAF also provides tools to automate the process of deploying functions to AWS L
 8. [BASH Deployment Tools](./bash_template/deploy/)
 9. [FaaS Runner](./test/)
 
-### Supported Platforms and Languages:
+### Quick Install:
 
-| **Platform** | **Node.js** | **Python** | **Java** | **Bash** |
-| --- | :---: | :---: | :---: | :---: |
-| AWS Lambda | ✔️ | ✔️ | ✔️ | ✔️ |
-| Google Cloud Functions | ✔️ | ✔️ | ⏳ | ❌ |
-| IBM Cloud Functions | ✔️ | ✔️ | ✔️ | ❌ |
-| Azure Functions (Linux) | ✔️ | ✔️ | ❌ | ❌ |
+Install and setup all of the dependencies, SAAF templates, cloud CLI's, FaaS Runner, and all other tools with one script:
+```
+curl -O https://github.com/RCordingly/SAAF/blob/master/quickInstall.sh
+sudo chmod 777 quickInstall.sh
+./quickInstall.sh
+```
+* quickInstall.sh works with Ubuntu 18.04. All tools also work on MacOS Mohave and should work with the Windows Linux subsystem but must all dependencies must be installed manually.
 
 &nbsp;
 
@@ -78,6 +79,15 @@ The attributes collect can be customized by changing which functions are called.
 	"runtime": 38.94
 }
 ```
+
+### Supported FaaS Platforms and Languages:
+
+| **Platform** | **Node.js** | **Python** | **Java** | **Bash** |
+| --- | :---: | :---: | :---: | :---: |
+| AWS Lambda | ✔️ | ✔️ | ✔️ | ✔️ |
+| Google Cloud Functions | ✔️ | ✔️ | ⏳ | ❌ |
+| IBM Cloud Functions | ✔️ | ✔️ | ✔️ | ❌ |
+| Azure Functions (Linux) | ✔️ | ✔️ | ❌ | ❌ |
 
 &nbsp;
 
