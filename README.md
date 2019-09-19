@@ -21,7 +21,7 @@ SAAF also provides tools to automate the process of deploying functions to AWS L
 
 Install and setup all of the dependencies, SAAF templates, cloud CLI's, FaaS Runner, and all other tools with one script:
 ```
-curl -O https://github.com/RCordingly/SAAF/blob/master/quickInstall.sh
+curl -O https://raw.githubusercontent.com/RCordingly/SAAF/master/quickInstall.sh
 sudo chmod 777 quickInstall.sh
 ./quickInstall.sh
 ```
