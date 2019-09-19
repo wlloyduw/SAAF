@@ -121,7 +121,7 @@ Each language comes with a publish.sh script that can be used to simplify the pr
 ```
 
   For more information about each languages deployment tools, see the README.md in each of the template's deploy folder:
-[Java](./java_template/deploy/README.md), [Python](./python_template/deploy/README.md), [Node.js](./nodejs_template/deploy/README.md), [BASH](./bash_template/deploy/README.md)
+[Java](./java_template/deploy), [Python](./python_template/deploy), [Node.js](./nodejs_template/deploy), [BASH](./bash_template/deploy)
 
 &nbsp;
 
