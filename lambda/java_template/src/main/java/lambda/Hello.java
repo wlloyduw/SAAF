@@ -11,6 +11,7 @@ import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.LambdaLogger;
 import faasinspector.register;
+import java.io.IOException;
 import java.nio.charset.Charset;
 /**
  * uwt.lambda_test::handleRequest
@@ -43,6 +44,15 @@ public class Hello implements RequestHandler<Request, Response>
         
         //Print log information to the Lambda log as needed
         //logger.log("log message...");
+        
+        try
+        {
+            Thread.sleep(80000);
+        }
+        catch (Exception ioe)
+        {
+            logger.log("error sleeping=" + ioe.toString());
+        }
         
         // Set return result in Response class, class is marshalled into JSON
         r.setValue(hello);

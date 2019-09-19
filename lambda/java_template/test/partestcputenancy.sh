@@ -66,7 +66,7 @@ callservice() {
     ####################################
     # Uncomment for AWS Lambda CLI function invocation with $parfunction variable
     ####################################
-    output=`aws lambda invoke --invocation-type RequestResponse --function-name $parfunction --region us-east-1 --payload $json /dev/stdout | head -n 1 | head -c -2 ; echo`
+    output=`aws lambda invoke --invocation-type RequestResponse --function-name $parfunction --cli-read-timeout 900 --region us-east-1 --payload $json /dev/stdout | head -n 1 | head -c -2 ; echo`
 
     ####################################
     # Uncomment for CURL invocation with inline URL
