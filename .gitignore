@@ -1,1 +1,9 @@
-/lambda/java_template/target/
+/**/.DS_Store
+*.prefs
+java_template/.classpath
+java_template/.project
+.vscode/tags
+bash_template/tools/build
+*.class
+__pycache__
+bash_template/deploy/build/function.zip

@@ -1,0 +1,13 @@
+{
+	"README": "See ./tools/README.md for help!",
+
+	"functionName":     "helloWorld",
+
+	"lambdaRoleARN": "arn:aws:iam::aws:policy/AWSLambdaFullAccess",
+	"lambdaSubnets": "",
+	"lambdaSecurityGroups": "",
+
+	"test": {
+		"name": "Bob"
+	}
+}

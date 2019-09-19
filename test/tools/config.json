@@ -1,0 +1,13 @@
+{
+	"functionName":     "test",	
+	"azureFunctionApp": "UWT-Workspace",
+	
+	"awsEndpoint":      "",
+	"googleEndpoint":   "",
+	"ibmEndpoint":      "",
+	"azureEndpoint":    "",
+	
+	"payload": {
+		"name": "Bob"
+	}
+}
