@@ -1,5 +1,5 @@
 {
-	"README": "See ./tools/README.md for help!",
+	"README": "See ./deploy/README.md for help!",
 
 	"functionName":     "helloWorld",
 
