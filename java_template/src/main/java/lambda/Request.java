@@ -11,6 +11,10 @@ public class Request {
     public String getName() {
         return name;
     }
+    
+    public String getNameALLCAPS() {
+        return name.toUpperCase();
+    }
 
     public void setName(String name) {
         this.name = name;

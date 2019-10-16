@@ -26,17 +26,22 @@ public class HelloPOJO implements RequestHandler<Request, HashMap<String, Object
         //Collect inital data.
         Inspector inspector = new Inspector();
         inspector.inspectAll();
+        inspector.addTimeStamp("frameworkRuntime");
         
-        //Add custom message to FaaS Inspector.
+        //****************START FUNCTION IMPLEMENTATION*************************
+        //Add custom key/value attribute to SAAF's output. (OPTIONAL)
         inspector.addAttribute("message", "Hello " + request.getName() 
                 + "! This is an attributed added to the Inspector!");
         
-        //Use and consome a response object. (OPTIONAL)
+        
+        //Create and populate a separate response object for function output. (OPTIONAL)
         Response response = new Response();
-        response.setValue("Hello " + request.getName() 
+        response.setValue("Hello " + request.getNameALLCAPS()
                 + "! This is from a response object!");
         
         inspector.consumeResponse(response);
+        
+        //****************END FUNCTION IMPLEMENTATION***************************
         
         //Collect final information such as total runtime and cpu deltas.
         inspector.inspectAllDeltas();
