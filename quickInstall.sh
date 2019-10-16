@@ -11,7 +11,7 @@ echo
 if [[ $REPLY =~ ^[Yy]$ ]]
 then
     sudo apt install git
-    git clone https://github.com/RCordingly/SAAF
+    git clone https://github.com/wlloyduw/SAAF
 fi
 
 clear
