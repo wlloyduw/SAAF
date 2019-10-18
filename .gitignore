@@ -3,7 +3,7 @@
 java_template/.classpath
 java_template/.project
 .vscode/tags
-bash_template/tools/build
+bash_template/deploy/build
 *.class
 __pycache__
 bash_template/deploy/build/function.zip

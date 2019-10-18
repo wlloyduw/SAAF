@@ -83,7 +83,7 @@ def parTest(functionList, experiment):
                 #response = client.invoke(FunctionName = str(function_call['endpoint']), InvocationType='RequestResponse', Payload = jsonString.encode())
                 #jsonResponse = response['Payload'].read().decode('ascii')
                 #print("Response: " + str(jsonResponse))
-                cmd = ['aws', 'lambda', 'invoke', '--invocation-type', 'RequestResponse', '--cli-read-timeout', '450', '--function-name', str(function_call['endpoint']), '--region', 'us-east-1', '--payload', jsonString, '/dev/stdout']
+                cmd = ['aws', 'lambda', 'invoke', '--invocation-type', 'RequestResponse', '--cli-read-timeout', '450', '--function-name', str(function_call['endpoint']), '--payload', jsonString, '/dev/stdout']
                 proc = subprocess.Popen( cmd, bufsize=-1, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 o, e = proc.communicate()
                 print("STDOUT: " + str(o.decode('ascii')) + "\nSTDERR: " + str(e.decode('ascii')))

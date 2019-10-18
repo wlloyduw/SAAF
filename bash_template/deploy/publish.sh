@@ -65,7 +65,7 @@ then
 
 	echo
 	echo Testing function on AWS Lambda...
-	aws lambda invoke --invocation-type RequestResponse --cli-read-timeout 900 --function-name $function --region us-east-1 --payload $json /dev/stdout
+	aws lambda invoke --invocation-type RequestResponse --cli-read-timeout 900 --function-name $function --payload $json /dev/stdout
 fi
 
 # Deploy onto IBM Cloud Functions

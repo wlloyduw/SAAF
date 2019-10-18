@@ -91,6 +91,17 @@ def run_experiment(functions, experiments, outDir):
     combineSheets = exp['combineSheets']
     warmupBuffer = exp['warmupBuffer']
 
+    if (not memoryList):
+        memoryList.append(0)
+
+    if (iterations <= 0):
+        print("Invalid Parameters! Iterations must be >= 1!")
+        return False
+
+    if (combineSheets and (warmupBuffer > iterations or iterations == 1)):
+        combineSheets = False
+        print("Conflicting parameters. CombineSheets has been disabled...\nEither warmupBuffer > iterations or iterations == 1")
+
     for mem in memoryList:
 
         if mem != 0:
@@ -126,8 +137,14 @@ def run_experiment(functions, experiments, outDir):
                 partestResult = report(runList[i], currentExp, True)
 
                 try:
-                    csvFilename = outDir + "/" + functionName + " - " + str(
-                        expName) + " - " + str(mem) + " - " + str(i) + ".csv"
+                    csvFilename = outDir + "/" + functionName + "-" + str(
+                        expName) + "-" + str(mem) + "MBs-run" + str(i)
+                    if (os.path.isfile(csvFilename + ".csv")):
+                        duplicates = 1
+                        while (os.path.isfile(csvFilename + "-" + str(duplicates) + ".csv")):
+                            duplicates += 1
+                        csvFilename += "-" + str(duplicates)
+                    csvFilename += ".csv"
                     text = open(csvFilename, "w")
                     text.write(str(partestResult))
                     text.close()
@@ -164,8 +181,14 @@ def run_experiment(functions, experiments, outDir):
             print(str(finalRunList))
             partestResult = report(finalRunList, currentExp, False)
             try:
-                csvFilename = outDir + "/" + functionName + " - " + str(
-                    expName) + "COMBINED" + ".csv"
+                csvFilename = outDir + "/" + functionName + "-" + str(
+                    expName) + "-" + str(mem) + "MBs-COMBINED"
+                if (os.path.isfile(csvFilename + ".csv")):
+                    duplicates = 1
+                    while (os.path.isfile(csvFilename + "-" + str(duplicates) + ".csv")):
+                        duplicates += 1
+                    csvFilename += "-" + str(duplicates)
+                csvFilename += ".csv"
                 text = open(csvFilename, "w")
                 text.write(str(partestResult))
                 text.close()
