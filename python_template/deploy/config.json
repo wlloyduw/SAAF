@@ -1,7 +1,7 @@
 {
 	"README": "See ./deploy/README.md for help!",
 
-	"functionName":     "helloWorld",
+	"functionName":     "hello",
 	
 	"lambdaRoleARN": "arn:aws:iam::aws:policy/AWSLambdaFullAccess",
 	"lambdaSubnets": "",
