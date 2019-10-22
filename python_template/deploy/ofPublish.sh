@@ -1,21 +1,9 @@
 #!/bin/bash
 
-# Mutli-platform Publisher. Used to publish FaaS Inspector Python functions onto AWS Lambda, Google Cloud Functions, IBM
-# Cloud Functions, and Azure Functions.
 #
-# Each platform's default function is defined in the platforms folder. These are copied into the source folder as index.js
-# and deployed onto each platform accordingly. Developers should write their function in the function.js file. 
-# All source files should be in the src folder and dependencies defined in package.json.
-#
-# This script requires each platform's CLI to be installed and properly configured to update functions.
-# AWS CLI: apt install awscli 
-# Google Cloud CLI: https://cloud.google.com/sdk/docs/quickstarts
-# IBM Cloud CLI: https://www.ibm.com/cloud/cli
-# Azure CLI: https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest
-#
-# Choose which platforms to deploy to using command line arguments:
-# ./publish.sh AWS GCF IBM AZURE MEMORY
-# Example to deploy to AWS and Azure: ./publish.sh 1 0 0 1 1024
+# This script allows functions to be deployed onto local kubernetes 
+# clusters using OpenFaaS. It is still a work in progress.
+# It is not recommended to be used yet. Functions must be named the same as your docker registry.
 #
 # Get the function name from the config.json file.
 
@@ -45,18 +33,33 @@ cp -R ../src/* ./build/$function
 mv ./build/$function/handler.py ./build/$function/myFunction.py
 
 cp -R ../platforms/openfaas/* ./build/$function
-mv ./build/$function/hello.yml ./build/hello.yml
+mv ./build/$function/hello.yml ./build/$function.yml
+
+
+sed "s/hello/$function/g" ./build/$function.yml > ./build/temp.yml
+mv ./build/temp.yml ./build/$function.yml
+
 mv ./build/$function/.gitignore ./build/.gitignore
 
 cd ./build
 
-faas-cli up -f hello.yml --update=false --replace
+faas-cli up -f $function.yml --update=false --replace
 
 cd ..
 
+echo WARNING! Function may not update immediately. Waiting 5 seconds...
+sleep 1
+echo 4..
+sleep 1
+echo 3..
+sleep 1
+echo 2..
+sleep 1
+echo 1..
+sleep 1
+
 echo
 echo Testing function on Local...
-sleep 1
-endPoint=`echo http://127.0.0.1:31112/function/hello`
+endPoint=`echo http://127.0.0.1:31112/function/$function`
 curl -H "Content-Type: application/json" -X POST -d $json $endPoint
 echo
