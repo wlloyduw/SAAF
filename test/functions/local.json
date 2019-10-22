@@ -1,0 +1,6 @@
+{
+	"function": "hello",
+    "platform": "HTTP",
+    "source": "../python_template",
+    "endpoint": "http://127.0.0.1:31112/function/hello"
+}

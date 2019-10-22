@@ -1,0 +1,39 @@
+{
+    "callWithCLI": false,
+    "memorySettings": [],
+    "payloads": [
+        { "name": "Bob" },
+        { "name": "Joe" },
+        { "name": "Steve" }
+    ],
+
+    "runs": 50,
+    "threads": 50,
+    "iterations": 3,
+    "sleepTime": 5,
+    "randomSeed": 42,
+
+    "outputGroups": ["uuid", "cpuType", "vmuptime", "newcontainer", "endpoint", "containerID", "vmID", "zAll", "zTenancy[vmID]", "zTenancy[vmID[iteration]]"],
+    "outputRawOfGroup": ["zTenancy[vmID[iteration]]", "zTenancy[vmID]", "cpuType"],
+    "showAsList": ["vmuptime", "cpuType", "endpoint", "containerID", "vmID", "vmID[iteration]"],
+    "showAsSum": ["newcontainer"],
+
+    "ignoreFromAll": ["zAll", "lang", "version", "linuxVersion", "platform", "hostname"],
+    "ignoreFromGroups": ["1_run_id", "2_thread_id", "cpuModel", "cpuIdle", "cpuIowait", "cpuIrq", "cpuKrn", "cpuNice", "cpuSoftIrq", "cpuUsr"],
+    "ignoreByGroup": {
+		"containerID": ["containerID"],
+		"cpuType": ["cpuType"],
+		"vmID": ["vmID"],
+    "zTenancy[vmID]": ["cpuType"],
+    "zTenancy[vmID[iteration]]": ["cpuType"]
+    },
+    
+    "invalidators": {},
+    "removeDuplicateContainers": false,
+
+    "openCSV": true,
+    "combineSheets": true,
+    "warmupBuffer": 1
+} 
+
+
