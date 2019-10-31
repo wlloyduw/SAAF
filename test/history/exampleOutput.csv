@@ -1,0 +1,50 @@
+2019-10-30 10:13:35.410330 - Python Partest Version 0.5
+Setting up test: runsperthread=1 threads=50 totalruns=50 payload=[{'name': 'Bob'} {'name': 'Joe'} {'name': 'Steve'}]
+
+Raw results of each run:
+1_run_id,2_thread_id,cpuIdle,cpuIdleDelta,cpuIowait,cpuIowaitDelta,cpuIrq,cpuIrqDelta,cpuKrn,cpuKrnDelta,cpuModel,cpuNice,cpuNiceDelta,cpuSoftIrq,cpuSoftIrqDelta,cpuType,cpuUsr,cpuUsrDelta,frameworkRuntime,latency,message,newcontainer,payload,roundTripTime,runtime,uuid,vmcpusteal,vmcpustealDelta,vmuptime
+0,12,6920964,0,8556,0,0,0,1030169,7,Intel(R) Core(TM) i7-6567U CPU @ 3.30GHz,147,0,22534,0,Intel(R) Core(TM) i7-6567U CPU @ 3.30GHz - Model Intel(R) Core(TM) i7-6567U CPU @ 3.30GHz,603927,7,122.0,1845.52,Hello Joe!,0,{'name': 'Joe'},1996.52,151.38,66669d7c-08ad-4ca5-b9fb-df6c39e8d69e,0,0,1572408278
+0,8,6920969,0,8556,0,0,0,1030256,17,Intel(R) Core(TM) i7-6567U CPU @ 3.30GHz,147,0,22535,1,Intel(R) Core(TM) i7-6567U CPU @ 3.30GHz - Model Intel(R) Core(TM) i7-6567U CPU @ 3.30GHz,604124,66,328.44,2910.77,Hello Bob!,0,{'name': 'Bob'},3363.77,453.15,66669d7c-08ad-4ca5-b9fb-df6c39e8d69e,0,0,1572408278
+0,32,6920969,0,8556,0,0,0,1030271,4,Intel(R) Core(TM) i7-6567U CPU @ 3.30GHz,147,0,22536,0,Intel(R) Core(TM) i7-6567U CPU @ 3.30GHz - Model Intel(R) Core(TM) i7-6567U CPU @ 3.30GHz,604182,20,56.15,3118.05,Hello Steve!,0,{'name': 'Steve'},3304.05,186.8,66669d7c-08ad-4ca5-b9fb-df6c39e8d69e,0,0,1572408278
+0,0,6920969,0,8556,0,0,0,1030258,23,Intel(R) Core(TM) i7-6567U CPU @ 3.30GHz,147,0,22535,1,Intel(R) Core(TM) i7-6567U CPU @ 3.30GHz - Model Intel(R) Core(TM) i7-6567U CPU @ 3.30GHz,604132,86,752.74,2686.54,Hello Bob!,0,{'name': 'Bob'},3622.54,936.76,66669d7c-08ad-4ca5-b9fb-df6c39e8d69e,0,0,1572408278
+0,15,6920969,0,8556,0,0,0,1030300,33,Intel(R) Core(TM) i7-6567U CPU @ 3.30GHz,147,0,22536,0,Intel(R) Core(TM) i7-6567U CPU @ 3.30GHz - Model Intel(R) Core(TM) i7-6567U CPU @ 3.30GHz,604343,71,717.21,3817.51,Hello Steve!,0,{'name': 'Steve'},4745.51,928.86,66669d7c-08ad-4ca5-b9fb-df6c39e8d69e,0,0,1572408278
+0,31,6920969,0,8556,0,0,0,1030332,11,Intel(R) Core(TM) i7-6567U CPU @ 3.30GHz,147,0,22536,0,Intel(R) Core(TM) i7-6567U CPU @ 3.30GHz - Model Intel(R) Core(TM) i7-6567U CPU @ 3.30GHz,604413,55,945.4,3904.16,Hello Steve!,0,{'name': 'Steve'},4938.16,1034.66,66669d7c-08ad-4ca5-b9fb-df6c39e8d69e,0,0,1572408278
+0,41,6920969,0,8556,0,0,0,1030343,7,Intel(R) Core(TM) i7-6567U CPU @ 3.30GHz,147,0,22536,0,Intel(R) Core(TM) i7-6567U CPU @ 3.30GHz - Model Intel(R) Core(TM) i7-6567U CPU @ 3.30GHz,604468,13,298.32,4606.44,Hello Joe!,0,{'name': 'Joe'},5014.44,408.94,66669d7c-08ad-4ca5-b9fb-df6c39e8d69e,0,0,1572408278
+Successful Runs: 7
+
+Category cpuType:
+cpuType,uses,avg_cpuIdleDelta,avg_cpuIowaitDelta,avg_cpuIrqDelta,avg_cpuKrnDelta,avg_cpuNiceDelta,avg_cpuSoftIrqDelta,avg_cpuUsrDelta,avg_frameworkRuntime,avg_latency,sum_newcontainer,avg_roundTripTime,avg_runtime,avg_vmcpusteal,avg_vmcpustealDelta,vmuptime_list
+Intel(R) Core(TM) i7-6567U CPU @ 3.30GHz - Model Intel(R) Core(TM) i7-6567U CPU @ 3.30GHz,7,0.00,0.00,0.00,14.57,0.00,0.29,45.43,460.04,3269.86,0,3855.00,585.79,0.00,0.00,['1572408278']
+Total number of unique cpuTypes: 1
+
+--- Runs of Group cpuType ---
+
+Category cpuType with Intel(R) Core(TM) i7-6567U CPU @ 3.30GHz - Model Intel(R) Core(TM) i7-6567U CPU @ 3.30GHz:
+cpuIdleDelta,cpuIowaitDelta,cpuIrqDelta,cpuKrnDelta,cpuNiceDelta,cpuSoftIrqDelta,cpuUsrDelta,frameworkRuntime,latency,message,newcontainer,payload,roundTripTime,runtime,uuid,vmcpusteal,vmcpustealDelta,vmuptime
+0,0,0,7,0,0,7,122.0,1845.52,Hello Joe!,0,{'name': 'Joe'},1996.52,151.38,66669d7c-08ad-4ca5-b9fb-df6c39e8d69e,0,0,1572408278
+0,0,0,17,0,1,66,328.44,2910.77,Hello Bob!,0,{'name': 'Bob'},3363.77,453.15,66669d7c-08ad-4ca5-b9fb-df6c39e8d69e,0,0,1572408278
+0,0,0,4,0,0,20,56.15,3118.05,Hello Steve!,0,{'name': 'Steve'},3304.05,186.8,66669d7c-08ad-4ca5-b9fb-df6c39e8d69e,0,0,1572408278
+0,0,0,23,0,1,86,752.74,2686.54,Hello Bob!,0,{'name': 'Bob'},3622.54,936.76,66669d7c-08ad-4ca5-b9fb-df6c39e8d69e,0,0,1572408278
+0,0,0,33,0,0,71,717.21,3817.51,Hello Steve!,0,{'name': 'Steve'},4745.51,928.86,66669d7c-08ad-4ca5-b9fb-df6c39e8d69e,0,0,1572408278
+0,0,0,11,0,0,55,945.4,3904.16,Hello Steve!,0,{'name': 'Steve'},4938.16,1034.66,66669d7c-08ad-4ca5-b9fb-df6c39e8d69e,0,0,1572408278
+0,0,0,7,0,0,13,298.32,4606.44,Hello Joe!,0,{'name': 'Joe'},5014.44,408.94,66669d7c-08ad-4ca5-b9fb-df6c39e8d69e,0,0,1572408278
+
+Category newcontainer:
+newcontainer,uses,avg_cpuIdleDelta,avg_cpuIowaitDelta,avg_cpuIrqDelta,avg_cpuKrnDelta,avg_cpuNiceDelta,avg_cpuSoftIrqDelta,cpuType_list,avg_cpuUsrDelta,avg_frameworkRuntime,avg_latency,sum_newcontainer,avg_roundTripTime,avg_runtime,avg_vmcpusteal,avg_vmcpustealDelta,vmuptime_list
+0,7,0.00,0.00,0.00,14.57,0.00,0.29,['Intel(R) Core(TM) i7-6567U CPU @ 3.30GHz - Model Intel(R) Core(TM) i7-6567U CPU @ 3.30GHz'],45.43,460.04,3269.86,0,3855.00,585.79,0.00,0.00,['1572408278']
+Total number of unique newcontainers: 1
+
+Category uuid:
+uuid,uses,avg_cpuIdleDelta,avg_cpuIowaitDelta,avg_cpuIrqDelta,avg_cpuKrnDelta,avg_cpuNiceDelta,avg_cpuSoftIrqDelta,cpuType_list,avg_cpuUsrDelta,avg_frameworkRuntime,avg_latency,sum_newcontainer,avg_roundTripTime,avg_runtime,avg_vmcpusteal,avg_vmcpustealDelta,vmuptime_list
+66669d7c-08ad-4ca5-b9fb-df6c39e8d69e,7,0.00,0.00,0.00,14.57,0.00,0.29,['Intel(R) Core(TM) i7-6567U CPU @ 3.30GHz - Model Intel(R) Core(TM) i7-6567U CPU @ 3.30GHz'],45.43,460.04,3269.86,0,3855.00,585.79,0.00,0.00,['1572408278']
+Total number of unique uuids: 1
+
+Category vmuptime:
+vmuptime,uses,avg_cpuIdleDelta,avg_cpuIowaitDelta,avg_cpuIrqDelta,avg_cpuKrnDelta,avg_cpuNiceDelta,avg_cpuSoftIrqDelta,cpuType_list,avg_cpuUsrDelta,avg_frameworkRuntime,avg_latency,sum_newcontainer,avg_roundTripTime,avg_runtime,avg_vmcpusteal,avg_vmcpustealDelta,vmuptime_list
+1572408278,7,0.00,0.00,0.00,14.57,0.00,0.29,['Intel(R) Core(TM) i7-6567U CPU @ 3.30GHz - Model Intel(R) Core(TM) i7-6567U CPU @ 3.30GHz'],45.43,460.04,3269.86,0,3855.00,585.79,0.00,0.00,['1572408278']
+Total number of unique vmuptimes: 1
+
+Category zAll:
+zAll,uses,avg_cpuIdleDelta,avg_cpuIowaitDelta,avg_cpuIrqDelta,avg_cpuKrnDelta,avg_cpuNiceDelta,avg_cpuSoftIrqDelta,cpuType_list,avg_cpuUsrDelta,avg_frameworkRuntime,avg_latency,sum_newcontainer,avg_roundTripTime,avg_runtime,avg_vmcpusteal,avg_vmcpustealDelta,vmuptime_list
+Final Results:,7,0.00,0.00,0.00,14.57,0.00,0.29,['Intel(R) Core(TM) i7-6567U CPU @ 3.30GHz - Model Intel(R) Core(TM) i7-6567U CPU @ 3.30GHz'],45.43,460.04,3269.86,0,3855.00,585.79,0.00,0.00,['1572408278']
+Total number of unique zAlls: 1
