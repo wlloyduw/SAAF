@@ -20,7 +20,12 @@ public class Hello {
         inspector.inspectAll();
         
         //Add custom message and finish the function
-        inspector.addAttribute("message", "Hello " + args.getAsJsonPrimitive("name").getAsString() + "!");
+        String name = "World";
+        JsonPrimitive input = args.getAsJsonPrimitive("name");
+        if (input != null) {
+            name = input.getAsString();
+        }
+        inspector.addAttribute("message", "Hello " + name + "!");
         
         //Calculate CPU deltas.
         inspector.inspectAllDeltas();

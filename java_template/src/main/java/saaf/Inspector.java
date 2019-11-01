@@ -33,6 +33,12 @@ public class Inspector {
     private final HashMap<String, Object> attributes;
     private final long startTime;
 
+    private boolean inspectedCPU = false;
+    private boolean inspectedMemory = false;
+    private boolean inspectedContainer = false;
+    private boolean inspectedPlatform = false;
+    private boolean inspectedLinux = false;
+
     /**
      * Initialize Inspector.
      *
@@ -56,6 +62,7 @@ public class Inspector {
      * vmuptime:     The time when the system started in Unix time.
      */
     public void inspectContainer() {
+        inspectedContainer = true;
 
         File f;
         Path p;
@@ -128,6 +135,7 @@ public class Inspector {
      * contextSwitches: Number of context switches.
      */
     public void inspectCPU() {
+        inspectedCPU = true;
 
         String text;
         int start;
@@ -196,36 +204,39 @@ public class Inspector {
      * contextSwitchesDelta: Number of context switches.
      */
     public void inspectCPUDelta() {
+        if (inspectedCPU) {
+            String text;
 
-        String text;
+            //Get CPU Metrics
+            String filename = "/proc/stat";
+            File f = new File(filename);
+            Path p = Paths.get(filename);
+            if (f.exists()) {
+                try (BufferedReader br = Files.newBufferedReader(p)) {
+                    text = br.readLine();
+                    String params[] = text.split(" ");
 
-        //Get CPU Metrics
-        String filename = "/proc/stat";
-        File f = new File(filename);
-        Path p = Paths.get(filename);
-        if (f.exists()) {
-            try (BufferedReader br = Files.newBufferedReader(p)) {
-                text = br.readLine();
-                String params[] = text.split(" ");
+                    String[] metricNames = {"cpuUsr", "cpuNice", "cpuKrn", "cpuIdle",
+                        "cpuIowait", "cpuIrq", "cpuSoftIrq", "vmcpusteal"};
 
-                String[] metricNames = {"cpuUsr", "cpuNice", "cpuKrn", "cpuIdle",
-                    "cpuIowait", "cpuIrq", "cpuSoftIrq", "vmcpusteal"};
-
-                for (int i = 0; i < metricNames.length; i++) {
-                    attributes.put(metricNames[i] + "Delta", Long.parseLong(params[i + 2]) - (Long)attributes.get(metricNames[i]));
-                }
-
-                while ((text = br.readLine()) != null && text.length() != 0) {
-                    if (text.contains("ctxt")) {
-                        String prms[] = text.split(" ");
-                        attributes.put("contextSwitchesDelta", Long.parseLong(prms[1]) - (Long)attributes.get("contextSwitches"));
+                    for (int i = 0; i < metricNames.length; i++) {
+                        attributes.put(metricNames[i] + "Delta", Long.parseLong(params[i + 2]) - (Long)attributes.get(metricNames[i]));
                     }
-                }
 
-                br.close();
-            } catch (IOException ioe) {
-                //sb.append("Error reading file=" + filename);
+                    while ((text = br.readLine()) != null && text.length() != 0) {
+                        if (text.contains("ctxt")) {
+                            String prms[] = text.split(" ");
+                            attributes.put("contextSwitchesDelta", Long.parseLong(prms[1]) - (Long)attributes.get("contextSwitches"));
+                        }
+                    }
+
+                    br.close();
+                } catch (IOException ioe) {
+                    //sb.append("Error reading file=" + filename);
+                }
             }
+        } else {
+            attributes.put("SAAFCPUDeltaError", "CPU not inspected before collecting deltas!");
         }
     }
 
@@ -239,6 +250,7 @@ public class Inspector {
      * 
      */
     public void inspectMemory() {
+        inspectedMemory = true;
         String memInfo = getFileAsString("/proc/meminfo");
         String[] lines = memInfo.split("\n");
         attributes.put("totalMemory", lines[0].replace("MemTotal:", "").replace("\t", "").replace(" kB", "").replace(" ", ""));
@@ -276,28 +288,32 @@ public class Inspector {
      * majorPageFaultsDelta: The number of major pafe faults since inspectMemory was called.
      */
     public void inspectMemoryDelta() {
-        String text;
+        if (inspectedMemory) {
+            String text;
 
-        //Get CPU Metrics
-        String filename = "/proc/vmstat";
-        File f = new File(filename);
-        Path p = Paths.get(filename);
-        if (f.exists()) {
-            try (BufferedReader br = Files.newBufferedReader(p)) {
-                while ((text = br.readLine()) != null && text.length() != 0) {
-                    if (text.contains("pgfault")) {
-                        String prms[] = text.split(" ");
-                        attributes.put("pageFaultsDelta", Long.parseLong(prms[1]) - (Long)attributes.get("pageFaults"));
-                    } else if (text.contains("pgmajfault")) {
-                        String prms[] = text.split(" ");
-                        attributes.put("majorPageFaultsDelta", Long.parseLong(prms[1]) - (Long)attributes.get("majorPageFaults"));
+            //Get CPU Metrics
+            String filename = "/proc/vmstat";
+            File f = new File(filename);
+            Path p = Paths.get(filename);
+            if (f.exists()) {
+                try (BufferedReader br = Files.newBufferedReader(p)) {
+                    while ((text = br.readLine()) != null && text.length() != 0) {
+                        if (text.contains("pgfault")) {
+                            String prms[] = text.split(" ");
+                            attributes.put("pageFaultsDelta", Long.parseLong(prms[1]) - (Long)attributes.get("pageFaults"));
+                        } else if (text.contains("pgmajfault")) {
+                            String prms[] = text.split(" ");
+                            attributes.put("majorPageFaultsDelta", Long.parseLong(prms[1]) - (Long)attributes.get("majorPageFaults"));
+                        }
                     }
-                }
 
-                br.close();
-            } catch (IOException ioe) {
-                //sb.append("Error reading file=" + filename);
+                    br.close();
+                } catch (IOException ioe) {
+                    //sb.append("Error reading file=" + filename);
+                }
             }
+        } else {
+            attributes.put("SAAFMemoryDeltaError", "Memory not inspected before collecting deltas!");
         }
     }
 
@@ -309,6 +325,8 @@ public class Inspector {
      * vmID:        A unique identifier for virtual machines of a platform.
      */
     public void inspectPlatform() {
+        inspectedPlatform = true;
+
         String environment = runCommand(new String[]{"env"});
         if (environment.contains("AWS_LAMBDA")) {
             attributes.put("platform", "AWS Lambda");
@@ -354,6 +372,7 @@ public class Inspector {
      * linuxVersion: The version of the linux kernel.
      */
     public void inspectLinux() {
+        inspectedLinux = true;
         String linuxVersion = runCommand(new String[]{"uname", "-v"}).trim();
         attributes.put("linuxVersion", linuxVersion);
     }
@@ -375,9 +394,11 @@ public class Inspector {
      * use code runtime from time spent collecting data.
      */
     public void inspectAllDeltas() {
-        Long currentTime = System.currentTimeMillis();
-        Long codeRuntime = (currentTime - startTime) - (Long)attributes.get("frameworkRuntime");
-        attributes.put("userRuntime", codeRuntime);
+        if (attributes.containsKey("frameworkRuntime")) {
+            Long currentTime = System.currentTimeMillis();
+            Long codeRuntime = (currentTime - startTime) - (Long)attributes.get("frameworkRuntime");
+            attributes.put("userRuntime", codeRuntime);
+        }
 
         this.inspectCPUDelta();
         this.inspectMemoryDelta();
