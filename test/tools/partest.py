@@ -21,10 +21,8 @@ import time
 from decimal import Decimal
 from threading import Thread
 
-def parTest(functionList, experiment):
+def parTest(functionList, exp):
     output = ""
-
-    exp = experiment
 
     threads = exp['threads']
     total_runs = exp['runs']

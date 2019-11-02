@@ -17,12 +17,8 @@ from decimal import Decimal
 #
 # @author Robert Cordingly
 #
-def report(responses, experiment, addCPUModel):
+def report(responses, exp, addCPUModel):
     output = ""
-
-    exp = experiment
-
-    print("Experiment data: " + str(exp))
 
     threads = exp['threads']
     total_runs = exp['runs']
