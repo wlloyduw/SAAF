@@ -24,7 +24,7 @@ from threading import Thread
 def parTest(functionList, experiment):
     output = ""
 
-    exp = json.load(open(experiment))
+    exp = experiment
 
     threads = exp['threads']
     total_runs = exp['runs']
@@ -38,7 +38,7 @@ def parTest(functionList, experiment):
 
     function_calls = []
     for i in range(0, len(functionList)):
-        func = json.load(open(functionList[i]))
+        func = functionList[i]
         if useCLI:
             function_calls.append({
                 'platform': func['platform'],

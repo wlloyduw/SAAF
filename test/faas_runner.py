@@ -18,6 +18,7 @@ import time
 from decimal import Decimal
 from enum import Enum
 
+sys.path.append('./tools')
 from partest import parTest
 from report_generator import report
 
@@ -130,11 +131,11 @@ def run_experiment(functions, experiments, outDir):
 
         for i in range(iterations):
             print("Running test " + str(i) + ": ")
-            runList.append(parTest([currentFunc], currentExp))
+            runList.append(parTest([json.load(open(currentFunc))], json.load(open(currentExp))))
 
             if runList[i] != None:
                 print("Test complete! Generating report...")
-                partestResult = report(runList[i], currentExp, True)
+                partestResult = report(runList[i], json.load(open(currentExp)), True)
 
                 try:
                     csvFilename = outDir + "/" + functionName + "-" + str(
@@ -179,7 +180,7 @@ def run_experiment(functions, experiments, outDir):
                             run['vmID[iteration]'] = run['vmID'] + "[" + str(i) + "]"
                     finalRunList.extend(runList[i])
             print(str(finalRunList))
-            partestResult = report(finalRunList, currentExp, False)
+            partestResult = report(finalRunList, json.load(open(currentExp)), False)
             try:
                 csvFilename = outDir + "/" + functionName + "-" + str(
                     expName) + "-" + str(mem) + "MBs-COMBINED"

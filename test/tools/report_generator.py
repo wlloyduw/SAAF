@@ -20,7 +20,9 @@ from decimal import Decimal
 def report(responses, experiment, addCPUModel):
     output = ""
 
-    exp = json.load(open(experiment))
+    exp = experiment
+
+    print("Experiment data: " + str(exp))
 
     threads = exp['threads']
     total_runs = exp['runs']
