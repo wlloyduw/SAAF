@@ -134,12 +134,11 @@ def parTest(functionList, exp):
                 print("Run " + str(thread_id) + "." + str(i) + " successful.")
             except Exception as e:
                 print("Run " + str(thread_id) + "." +
-                      str(i) + " failed: " + str(e))
+                      str(i) + " Failed with exeption: " + str(e)) + ".\nRequest Response: " + jsonResponse
 
     #
     # Create a bunch of threads and run make_call.
-    #
-    
+    # 
     payloadList = payload
     while (len(payloadList) < total_runs):
         payloadList += payload

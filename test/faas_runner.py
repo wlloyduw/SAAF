@@ -85,6 +85,13 @@ def run_experiment(functions, experiments, outDir):
     functionName = func['function']
     platform = func['platform']
 
+    threads = exp['threads']
+    runs = exp['runs']
+
+    if (threads > runs):
+        print("Invalid Experiment! Error: Threads > Runs")
+        return False
+
     memoryList = exp['memorySettings']
     iterations = exp['iterations']
     sleepTime = exp['sleepTime']
@@ -96,15 +103,14 @@ def run_experiment(functions, experiments, outDir):
         memoryList.append(0)
 
     if (iterations <= 0):
-        print("Invalid Parameters! Iterations must be >= 1!")
+        print("Invalid Experiment! Iterations must be >= 1!")
         return False
 
     if (combineSheets and (warmupBuffer > iterations or iterations == 1)):
         combineSheets = False
-        print("Conflicting parameters. CombineSheets has been disabled...\nEither warmupBuffer > iterations or iterations == 1")
+        print("Conflicting experiment parameters. CombineSheets has been disabled...\nEither warmupBuffer > iterations or iterations == 1")
 
     for mem in memoryList:
-
         if mem != 0:
             # Update memory value based on platform, hopefully without redeploying function.
             print("Setting memory value to: " + str(mem) + "MBs...")
@@ -208,99 +214,6 @@ def run_experiment(functions, experiments, outDir):
                 pass
 
     print("All tests complete!")
-
-
-
-class FaaSRunner(cmd.Cmd):
-    intro = "FaaS Runner: Type help or ? for help. Use < and > to switch FaaS Functions.\n"
-    currentFunction = 0
-    #prompt = "\n" + str(functions[currentFunction]) + ": "
-
-    def do_clear(self, arg):
-        'Clear the screen.'
-        print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
-
-    def do_refresh(self, arg):
-        'Destroy and republish a function.'
-
-    #
-    # Redeploy the function. Platforms like IBM and Google do not let you change memory values without completely redeploying the function.
-    #
-    def do_publish(self, arg):
-        'Publish a function.'
-        currentJson = "./functions/" + \
-            str(functions[self.currentFunction]) + ".json"
-
-        publish(currentJson)
-
-    #
-    # Open the configuration file of this function.
-    #
-    def do_edit(self, arg):
-        'Edit the function configuration.'
-        currentJson = "./functions/" + \
-            str(functions[self.currentFunction]) + ".json"
-        print("Opening " + currentJson)
-
-        if sys.platform == "linux" or sys.platform == "linux2":
-            # linux
-            subprocess.call(["xdg-open", currentJson])
-        elif sys.platform == "darwin":
-            # OS X
-            subprocess.call(["open", currentJson])
-        elif sys.platform == "win32":
-            # Windows...
-            pass
-
-    #
-    # Open the folder containing the source code of this function.
-    #
-    def do_source(self, arg):
-        'Open the source code of this function.'
-        currentJson = "./functions/" + \
-            str(functions[self.currentFunction]) + ".json"
-        func = json.load(open(currentJson))
-        print("Opening " + func['source'])
-
-        if sys.platform == "linux" or sys.platform == "linux2":
-            # linux
-            subprocess.call(["xdg-open", func['source']])
-        elif sys.platform == "darwin":
-            # OS X
-            subprocess.call(["open", func['source']])
-        elif sys.platform == "win32":
-            # Windows...
-            pass
-
-    def default(self, line):
-        line = line.strip()
-        if line == '>':
-            self.currentFunction = (self.currentFunction + 1) % len(functions)
-            self.prompt = "\n" + functions[self.currentFunction] + ": "
-        elif line == '<':
-            self.currentFunction = (self.currentFunction - 1) % len(functions)
-            self.prompt = "\n" + functions[self.currentFunction] + ": "
-        elif line[:3] == "run":
-            line = line[4:]
-            experiment = "./experiments/" + str(line) + ".json"
-
-            currentJson = "./functions/" + \
-                str(functions[self.currentFunction]) + ".json"
-
-            run_experiment([currentJson], [experiment], "./history")
-
-        else:
-            pass
-
-    def do_close(self, arg):
-        'close the program.'
-        return True
-
-
-def parse(arg):
-    'Convert a series of zero or more numbers to an argument tuple'
-    return tuple(map(int, arg.split()))
-
 #
 # Modes for parsing parameters.
 #
@@ -330,14 +243,8 @@ elif (len(sys.argv) > 1):
     for arg in sys.argv:
         if (arg == "-f"):
             mode = Mode.FUNC
-            #loadFunctions = True
-            #loadExp = False
-            #setOut = False
         elif (arg == "-e"):
             mode = Mode.EXP
-            #loadFunctions = False
-            #loadExp = True
-            #setOut = False
         elif (arg == "-o"):
             mode = Mode.OUT
         else:
@@ -347,23 +254,14 @@ elif (len(sys.argv) > 1):
                 expList.append(arg)
             elif mode == Mode.OUT:
                 outDir = arg
-            #if loadFunctions:
-            #    functionList.append(arg)
-            #elif loadExp:
-            #    expList.append(arg)
 
-    run_experiment(functionList, expList, outDir)
-else:
-    #
-    # Use FaaS Shell interface.
-    #
-    if __name__ == '__main__':
+    if (len(functionList) > 0 and len(expList) > 0):
+        if (not os.path.isdir(outDir)):
+            os.mkdir(outDir)
+
+        run_experiment(functionList, expList, outDir)
+    else:
         print("Please supply parameteres! Usage:\n./faas_runner.py -f {PATH TO FUNCTION JSON} -e {PATH TO EXPERIMENT JSON} -o {OPTIONAL: PATH FOR OUTPUT}")
-        #
-        # Load functions.
-        #
-        #for filename in os.listdir("./functions"):
-        #   if filename.endswith(".json"):
-        #        functions.append(str(filename.replace(".json", "")))
-        #
-        #FaaSRunner().cmdloop()
+else:
+    print("Please supply parameteres! Usage:\n./faas_runner.py -f {PATH TO FUNCTION JSON} -e {PATH TO EXPERIMENT JSON} -o {OPTIONAL: PATH FOR OUTPUT}")
+
