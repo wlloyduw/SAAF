@@ -21,11 +21,14 @@
 cd "$(dirname "$0")"
 
 function=`cat ./config.json | jq '.functionName' | tr -d '"'`
+lambdaHandler=`cat ./config.json | jq '.lambdaHandler' | tr -d '"'`
 lambdaRole=`cat ./config.json | jq '.lambdaRoleARN' | tr -d '"'`
 lambdaSubnets=`cat ./config.json | jq '.lambdaSubnets' | tr -d '"'`
 lambdaSecurityGroups=`cat ./config.json | jq '.lambdaSecurityGroups' | tr -d '"'`
 
 json=`cat config.json | jq -c '.test'`
+
+ibmHandler=`cat ./config.json | jq '.ibmHandler' | tr -d '"'`
 ibmjson=`cat config.json | jq '.test' | tr -d '"' | tr -d '{' | tr -d '}' | tr -d ':'`
 
 echo
@@ -53,7 +56,7 @@ then
 	# Submit jar to AWS Lambda.
 	cd ..
 	cd target
-	aws lambda create-function --function-name $function --runtime java8 --role $lambdaRole --timeout 900 --handler lambda.Hello::handleRequest --zip-file fileb://lambda_test-1.0-SNAPSHOT.jar
+	aws lambda create-function --function-name $function --runtime java8 --role $lambdaRole --timeout 900 --handler $lambdaHandler --zip-file fileb://lambda_test-1.0-SNAPSHOT.jar
 	aws lambda update-function-code --function-name $function --zip-file fileb://lambda_test-1.0-SNAPSHOT.jar
 	aws lambda update-function-configuration --function-name $function --memory-size $memory --runtime java8 \
 	--vpc-config SubnetIds=[$lambdaSubnets],SecurityGroupIds=[$lambdaSecurityGroups]
@@ -79,7 +82,7 @@ then
 	# Submit jar to AWS Lambda.
 	cd ..
 	cd target
-	ibmcloud fn action update $function --kind java --memory $memory --main ibm.Hello lambda_test-1.0-SNAPSHOT.jar
+	ibmcloud fn action update $function --kind java --memory $memory --main $ibmHandler lambda_test-1.0-SNAPSHOT.jar
 	cd ..
 	cd deploy
 

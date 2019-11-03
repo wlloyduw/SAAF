@@ -29,7 +29,6 @@ public class HelloMain implements RequestHandler<HashMap<String, Object>, HashMa
         //Collect inital data.
         Inspector inspector = new Inspector();
         inspector.inspectAll();
-        inspector.addTimeStamp("frameworkRuntime");
         
         //****************START FUNCTION IMPLEMENTATION*************************
         

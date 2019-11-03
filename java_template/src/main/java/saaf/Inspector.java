@@ -320,49 +320,53 @@ public class Inspector {
     /**
      * Collect information about the current FaaS platform.
      *
-     * platform:    The FaaS platform hosting this function.
-     * containerID: A unique identifier for containers of a platform.
-     * vmID:        A unique identifier for virtual machines of a platform.
+     * platform:        The FaaS platform hosting this function.
+     * containerID:     A unique identifier for containers of a platform.
+     * vmID:            A unique identifier for virtual machines of a platform.
+     * functionName:    The name of the function.
+     * functionMemory:  The memory setting of the function.
+     * functionRegion:  The region the function is deployed onto.
      */
     public void inspectPlatform() {
         inspectedPlatform = true;
 
-        String environment = runCommand(new String[]{"env"});
-        if (environment.contains("AWS_LAMBDA")) {
+        String key = System.getenv("AWS_LAMBDA_LOG_STREAM_NAME");
+        if (key != null) {
             attributes.put("platform", "AWS Lambda");
-            
-            String searchTerm = "AWS_LAMBDA_LOG_STREAM_NAME=";
-            int logIndex = environment.indexOf(searchTerm);
-            int startIndex = logIndex + searchTerm.length();
-            int endIndex = startIndex;
-            while (environment.charAt(endIndex) != '\n') endIndex++;
-            
-            attributes.put("containerID", environment.substring(startIndex, endIndex).replace("\n", ""));
-                    
+            attributes.put("containerID", key);
+            attributes.put("functionName", System.getenv("AWS_LAMBDA_FUNCTION_NAME"));
+            attributes.put("functionMemory", System.getenv("AWS_LAMBDA_FUNCTION_MEMORY_SIZE"));
+            attributes.put("functionRegion", System.getenv("AWS_REGION"));
+
             String vmID = runCommand(new String[]{"cat", "/proc/self/cgroup"});
             int index = vmID.indexOf("sandbox-root");
             attributes.put("vmID", vmID.substring(index + 13, index + 19));
-            
-        } else if (environment.contains("X_GOOGLE")) {
-            attributes.put("platform", "Google Cloud Functions");
-        } else if (environment.contains("functions.cloud.ibm")) {
-            attributes.put("platform", "IBM Cloud Functions");
-
-            attributes.put("vmID", runCommand(new String[]{"cat", "/sys/hypervisor/uuid"}).trim());
-
-        } else if (environment.contains("microsoft.com/azure-functions")) {
-            attributes.put("platform", "Azure Functions");
-            
-            String searchTerm = "CONTAINER_NAME=";
-            int logIndex = environment.indexOf(searchTerm);
-            int startIndex = logIndex + searchTerm.length();
-            int endIndex = startIndex;
-            while (environment.charAt(endIndex) != '\n') endIndex++;
-            
-            attributes.put("containerID", environment.substring(startIndex, endIndex).replace("\n", ""));
-            
         } else {
-            attributes.put("platform", "Unknown Platform");
+            key = System.getenv("X_GOOGLE_FUNCTION_NAME");
+            if (key != null) {
+                attributes.put("platform", "Google Cloud Functions");
+                attributes.put("functionName", key);
+                attributes.put("functionMemory", System.getenv("X_GOOGLE_FUNCTION_MEMORY_MB"));
+                attributes.put("functionRegion", System.getenv("X_GOOGLE_FUNCTION_REGION"));
+            } else {
+                key = System.getenv("__OW_ACTION_NAME");
+                if (key != null) {
+                    attributes.put("platform", "IBM Cloud Functions");
+                    attributes.put("functionName", key);
+                    attributes.put("functionRegion", System.getenv("__OW_API_HOST"));
+                    attributes.put("vmID", runCommand(new String[]{"cat", "/sys/hypervisor/uuid"}).trim());
+                } else {
+                    key = System.getenv("CONTAINER_NAME");
+                    if (key != null) {
+                        attributes.put("platform", "Azure Functions");
+                        attributes.put("containerID", key);
+                        attributes.put("functionName", "WEBSITE_SITE_NAME");
+                        attributes.put("functionRegion", System.getenv("Location"));
+                    } else {
+                        attributes.put("platform", "Unknown Platform");
+                    }
+                }
+            }
         }
     }
 

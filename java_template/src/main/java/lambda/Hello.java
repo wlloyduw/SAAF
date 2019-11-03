@@ -26,7 +26,6 @@ public class Hello implements RequestHandler<HashMap<String, Object>, HashMap<St
         //Collect inital data.
         Inspector inspector = new Inspector();
         inspector.inspectAll();
-        inspector.addTimeStamp("frameworkRuntime");
         
         //****************START FUNCTION IMPLEMENTATION*************************
         

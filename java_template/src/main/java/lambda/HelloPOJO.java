@@ -26,7 +26,6 @@ public class HelloPOJO implements RequestHandler<Request, HashMap<String, Object
         //Collect inital data.
         Inspector inspector = new Inspector();
         inspector.inspectAll();
-        inspector.addTimeStamp("frameworkRuntime");
         
         //****************START FUNCTION IMPLEMENTATION*************************
         //Add custom key/value attribute to SAAF's output. (OPTIONAL)

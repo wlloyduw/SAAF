@@ -42,9 +42,14 @@ This folder contains tools to help deploy serverless functions onto each support
 
   * [**config.json**](./config.json) contains all of the neccessary variables to deploy a function and is used by [publish.sh](./publish.sh).
     * **functionName:** The name of your function. 
-    * **lambdaRoleARN:** The ARN of the AWS Lambda role to use.
-    * **lambdaSubnets:** The VPC subnet to use. This is optional and can be left blank.
-    * **lambdaSecurityGroups:** The VPC security group to use. This is optional and can be left blank.
+    * **AWS Lambda Attributes**:
+      * **lambdaHandler:** The package, class, and method to use as the function handler.
+      * **lambdaRoleARN:** The ARN of the AWS Lambda role to use.
+      * **lambdaSubnets:** The VPC subnet to use. This is optional and can be left blank.
+      * **lambdaSecurityGroups:** The VPC security group to use. This is optional and can be left blank.
+    * **IBM Cloud Functions Attributes**:
+      * **ibmHandler:** The package and class to use as the function handler.
+
     * **test:** After a function is deployed, this payload will be use to automatically test the function.
 
 

@@ -3,9 +3,12 @@
 
 	"functionName":     "helloWorld",
 
+	"lambdaHandler": "lambda.Hello::handleRequest",
 	"lambdaRoleARN": "arn:aws:iam::aws:policy/AWSLambdaFullAccess",
 	"lambdaSubnets": "",
 	"lambdaSecurityGroups": "",
+
+	"ibmHandler": "ibm.Hello",
 
 	"test": {
 		"name": "Bob"
