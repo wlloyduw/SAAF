@@ -88,7 +88,7 @@ bucketName = 'saafdump'
 experimentfile = './experiments/exampleExperiment.json'
 delete = False
 if (len(sys.argv) != 4):
-    print("Please supply parameteres! Usage:\n./s3pull.py {s3 bucket name} {experiment json path} {0/1 clear bucket?}")
+    print("Please supply parameteres! Usage:\n./s3pull.py {S3 BUCKET NAME} {PATH TO EXPERIMENT JSON} {0/1 CLEAR BUCKET?}")
 elif (len(sys.argv) == 4):
     bucketName = sys.argv[1]
     experimentfile = sys.argv[2]

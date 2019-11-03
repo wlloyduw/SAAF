@@ -85,9 +85,10 @@ The attributes collect can be customized by changing which functions are called.
 | **Platform** | **Node.js** | **Python** | **Java** | **Bash** |
 | --- | :---: | :---: | :---: | :---: |
 | AWS Lambda | ✔️ | ✔️ | ✔️ | ✔️ |
-| Google Cloud Functions | ✔️ | ✔️ | ⏳ | ❌ |
+| Google Cloud Functions | ✔️ | ✔️ | ❌ | ❌ |
 | IBM Cloud Functions | ✔️ | ✔️ | ✔️ | ❌ |
 | Azure Functions (Linux) | ✔️ | ✔️ | ❌ | ❌ |
+| OpenFaaS | ❌ | ✔️ | ❌ | ❌ |
 
 &nbsp;
 

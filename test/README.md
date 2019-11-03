@@ -66,11 +66,11 @@ An example function configuration can be found in [./functions/exampleFunction.j
 } 
 ```
 
-Experiment files determine how your function with be executed, what setting to use, and how to display the results. Due to this, there are many more ways to customize your experiments. An example experiment configuration can be found in [./experiments/exampleExperiment.json](./experiments/exampleExperiment.json). Here are all of the attributes to define an experiment: 
+Experiment files determine how your function with be executed, what settings to use, and how to display the results. Due to this, there are many more ways to customize your experiments. An example experiment configuration can be found in [./experiments/exampleExperiment.json](./experiments/exampleExperiment.json). Below are all of the attributes to define an experiment: 
 
 **Test Settings**
-* **callWithCLI:** Boolean - Whether to execute functions with a platforms CLI, or HTTP requests.
-* **memorySettings:** Integer List - A list of memory settings to use. If you do not want settings changed, use [0].
+* **callWithCLI:** Boolean - Whether to execute functions with a platform's CLI, or HTTP requests.
+* **memorySettings:** Integer List - A list of memory settings to use. If you do not want settings changed, use [].
 * **payload:** Object List - A list of JSON objects to use as payloads. If more than one is listed, these will be randomly distributed across runs.
 
 **Execution Settings**
@@ -120,13 +120,24 @@ If an output path is not defined, FaaS Runner will save output to the ./history 
 
 Many observations can be made from the default CSV report alone. To support importing data into another tool, such as R, you may want to use the provided [./tools/report_splitter.py](./tools/report_splitter.py) script. This tool will break a FaaS Runner report into a folder of smaller, properly formatted, CSV files.
 
+### Example Usage:
 ``` bash 
 # Split a report.
 ./report_splitter.py {PATH TO LARGE CSV}
 ```
 
+# Asynchronous Functions:
 
+Functions that run asynchronously can still be used with SAAF. Any data returned must be saved onto some storage service and then pulled later after the experiment has finished. The [./s3pull.py](./s3pull.py) script can be used to automate the process of downloading json output files from S3 and reading them. This script will download all files in an S3 bucket, clear the bucket, and compile the downloaded files into a report like regular FaaS Runner experiments. 
 
+### Example Usage:
+``` bash 
+# Description of Parameters
+./s3pull.py {S3 BUCKET NAME} {PATH TO EXPERIMENT JSON} {0/1 CLEAR BUCKET?}
+
+# Pull an experiment:
+./s3pull.py saafdump ./experiments/exampleExperiment.json 0
+```
 
 
 
