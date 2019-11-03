@@ -6,7 +6,6 @@
 #
 # @author Robert Cordingly
 #
-
 import ast
 import cmd
 import datetime
@@ -162,10 +161,11 @@ def run_experiment(functions, experiments, outDir):
                             # linux
                             subprocess.call(["xdg-open", csvFilename])
                         elif sys.platform == "darwin":
-                            # OS X
+                            # MacOS
                             subprocess.call(["open", csvFilename])
                         elif sys.platform == "win32":
                             # Windows...
+                            print("File created: " + str(csvFilename))
                             pass
                     else:
                         print("Partest complete. " + str(csvFilename) + " created.")
@@ -207,6 +207,7 @@ def run_experiment(functions, experiments, outDir):
                     subprocess.call(["open", csvFilename])
                 elif sys.platform == "win32":
                     # Windows...
+                    print("File created: " + str(csvFilename))
                     pass
                 else:
                     print("Report generated. " + str(csvFilename) + " created.")

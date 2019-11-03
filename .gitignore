@@ -7,3 +7,4 @@ bash_template/deploy/build
 *.class
 __pycache__
 bash_template/deploy/build/function.zip
+.s3cache
