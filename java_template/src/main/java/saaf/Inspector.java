@@ -50,7 +50,7 @@ public class Inspector {
         startTime = System.currentTimeMillis();
         attributes = new HashMap<>();
 
-        attributes.put("version", 0.31);
+        attributes.put("version", 0.4);
         attributes.put("lang", "java");
     }
 
@@ -64,15 +64,12 @@ public class Inspector {
     public void inspectContainer() {
         inspectedContainer = true;
 
-        File f;
-        Path p;
-
         //Stamp Container
         int newContainer;
         String uuid = "";
 
-        f = new File("/tmp/container-id");
-        p = Paths.get("/tmp/container-id");
+        File f = new File("/tmp/container-id");
+        Path p = Paths.get("/tmp/container-id");
         if (f.exists()) {
             newContainer = 0;
             try (BufferedReader br = Files.newBufferedReader(p)) {
@@ -258,7 +255,7 @@ public class Inspector {
 
         String text;
 
-        //Get CPU Metrics
+        //Get Memory Metrics
         String filename = "/proc/vmstat";
         File f = new File(filename);
         Path p = Paths.get(filename);

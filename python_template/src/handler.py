@@ -21,7 +21,6 @@ def yourFunction(request, context):
     # Import the module and collect data
     inspector = Inspector()
     inspector.inspectAll()
-    inspector.addTimeStamp("frameworkRuntime")
 
     # Add custom message and finish the function
     if ('name' in request):
@@ -29,5 +28,5 @@ def yourFunction(request, context):
     else:
         inspector.addAttribute("message", "Hello World!")
     
-    inspector.inspectCPUDelta()
+    inspector.inspectAllDeltas()
     return inspector.finish()

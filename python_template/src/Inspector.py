@@ -8,7 +8,7 @@ import shlex
 import time
 
 #
-# FaaS Inspector
+# SAAF
 #
 # @author Wes Lloyd
 # @author Wen Shu
@@ -17,13 +17,20 @@ import time
 class Inspector:
     
     #
-    # Initialize FaaS Inspector.
+    # Initialize SAAF.
     #
     # __attributes: Used to store information collected by each function.
+    # __startTime:  The time the function started running.
     #
     def __init__(self):
         self.__startTime = time.time()
-        self.__attributes = {"version": 0.2, "lang": "python"}
+        self.__attributes = {"version": 0.4, "lang": "python"}
+
+        self.__inspectedCPU = False
+        self.__inspectedMemory = False
+        self.__inspectedContainer = False
+        self.__inspectedPlatform = False
+        self.__inspectedLinux = False
         
     #
     # Collect information about the runtime container.
@@ -33,6 +40,8 @@ class Inspector:
     # vmuptime:        The time when the system started in Unix time.
     #
     def inspectContainer(self):
+        self.__inspectedContainer = True
+
         myUuid = ''
         newContainer = 1
         if os.path.isfile('/tmp/container-id'):
@@ -49,11 +58,10 @@ class Inspector:
             
         self.__attributes['uuid'] = myUuid
         self.__attributes['newcontainer'] = newContainer
-        
-        cliInput = 'grep btime /proc/stat'
-        args = shlex.split(cliInput)
-        f = subprocess.check_output(args).decode('utf-8')
-        self.__attributes['vmuptime'] = int(f.strip().replace('btime ',''))
+
+        upTime = self.runCommand('cat /proc/stat | grep btime')
+        upTime = upTime.replace('btime ', '').strip()
+        self.__attributes['vmuptime'] = int(upTime)
         
     #
     # Collect information about the CPU assigned to this function.
@@ -68,27 +76,26 @@ class Inspector:
     # cpuIrq:      Time spent servicing interrupts.
     # cpuSoftIrq:  Time spent servicing software interrupts.
     # vmcpusteal:  Time spent waiting for real CPU while hypervisor is using another virtual CPU.
+    # contextSwitches: Number of context switches.
     #
     def inspectCPU(self):
-        child = os.popen('grep \'model name\' /proc/cpuinfo | head -1')
-        CPUModelName = child.read()
-        CPUModelName = re.sub('[\n\t]','', CPUModelName)
-        CPUModelName = CPUModelName.replace('model name: ', '')
+        self.__inspectedCPU = True
+
+        command = self.runCommand('grep \'model name\t:\' /proc/cpuinfo | head -1')
+        CPUModelName = command.replace('model name\t:', '').strip()
         self.__attributes['cpuType'] = CPUModelName
         
-        child = os.popen('grep \'model\t:\' /proc/cpuinfo | head -1')
-        CPUModel = child.read()
-        CPUModel = re.sub('[\n\t]','', CPUModel)
-        CPUModel = CPUModelName.replace('model\t: ', '')
+        command = self.runCommand('grep \'model\t\t:\' /proc/cpuinfo | head -1')
+        CPUModel = command.replace('model\t\t: ', '').strip()
         self.__attributes['cpuModel'] = CPUModel
         
-        child = os.popen('cat /proc/stat | grep "^cpu" | head -1')
-        CPUMetrics = child.read()
-        CPUMetrics = CPUMetrics.split()
-        
+        CPUMetrics = self.runCommand('cat /proc/stat | grep "^cpu" | head -1').split()
         metricNames = ['cpuUsr', 'cpuNice', 'cpuKrn', 'cpuIdle', 'cpuIowait', 'cpuIrq', 'cpuSoftIrq', 'vmcpusteal']
         for i, name in enumerate(metricNames):
             self.__attributes[name] = int(CPUMetrics[i + 1]) 
+
+        contextSwitches = self.runCommand('cat /proc/stat | grep "ctxt"').replace('\n', '').replace('ctxt ', '')
+        self.__attributes['contextSwitches'] = int(contextSwitches)
         
     #
     # Compare information gained from inspectCPU to the current CPU metrics.
@@ -104,45 +111,80 @@ class Inspector:
     # cpuIrqDelta:      Time spent servicing interrupts.
     # cpuSoftIrqDelta:  Time spent servicing software interrupts.
     # vmcpustealDelta:  Time spent waiting for real CPU while hypervisor is using another virtual CPU.
+    # contextSwitchesDelta: Number of context switches.
     #
     def inspectCPUDelta(self):
-        child = os.popen('cat /proc/stat | grep "^cpu" | head -1')
-        CPUMetrics = child.read()
-        CPUMetrics = CPUMetrics.split()
-        
-        metricNames = ['cpuUsr', 'cpuNice', 'cpuKrn', 'cpuIdle', 'cpuIowait', 'cpuIrq', 'cpuSoftIrq', 'vmcpusteal']
-        for i, name in enumerate(metricNames):
-            self.__attributes[name + "Delta"] = int(CPUMetrics[i + 1]) - self.__attributes[name]
+        if (self.__inspectedCPU):
+            child = os.popen('cat /proc/stat | grep "^cpu" | head -1')
+            CPUMetrics = child.read()
+            CPUMetrics = CPUMetrics.split()
+            
+            metricNames = ['cpuUsr', 'cpuNice', 'cpuKrn', 'cpuIdle', 'cpuIowait', 'cpuIrq', 'cpuSoftIrq', 'vmcpusteal']
+            for i, name in enumerate(metricNames):
+                self.__attributes[name + "Delta"] = int(CPUMetrics[i + 1]) - self.__attributes[name]
+
+            contextSwitches = self.runCommand('cat /proc/stat | grep "ctxt"').replace('\n', '').replace('ctxt ', '')
+            self.__attributes['contextSwitchesDelta'] = int(contextSwitches) - self.__attributes['contextSwitches']
+        else:
+            self.__attributes['SAAFCPUDeltaError'] = "CPU not inspected before collecting deltas!"
+
+    def inspectMemory(self):
+        self.__inspectedMemory = True
+
+    def inspectMemoryDelta(self):
+        if (self.__inspectedMemory):
+            pass
+        else:
+            self.__attributes['SAAFMemoryDeltaError'] = "Memory not inspected before collecting deltas!"
+        pass
         
     #
     # Collect information about the current FaaS platform.
     #
-    # platform:    The FaaS platform hosting this function.
+    # platform:        The FaaS platform hosting this function.
+    # containerID:     A unique identifier for containers of a platform.
+    # vmID:            A unique identifier for virtual machines of a platform.
+    # functionName:    The name of the function.
+    # functionMemory:  The memory setting of the function.
+    # functionRegion:  The region the function is deployed onto.
     #
     def inspectPlatform(self):
-        child = os.popen('env')
-        environment = child.read()
-        if "AWS_LAMBDA" in environment:
+        self.__inspectedPlatform = True
+
+        key = os.environ.get('AWS_LAMBDA_LOG_STREAM_NAME', None)
+        if (key != None):
             self.__attributes['platform'] = "AWS Lambda"
-            
-            containerID = os.popen('echo $AWS_LAMBDA_LOG_STREAM_NAME').read().replace('\n', '')
-            self.__attributes['containerID'] = containerID
-            
+            self.__attributes['containerID'] = key
+            self.__attributes['functionName'] = os.environ.get('AWS_LAMBDA_FUNCTION_NAME', None)
+            self.__attributes['functionMemory'] = os.environ.get('AWS_LAMBDA_FUNCTION_MEMORY_SIZE', None)
+            self.__attributes['functionRegion'] = os.environ.get('AWS_REGION', None)
+
             vmID = os.popen('cat /proc/self/cgroup | grep 2:cpu').read().replace('\n', '')
             self.__attributes['vmID'] = vmID[20: 26]
-            
-        elif "X_GOOGLE" in environment:
-            self.__attributes['platform'] = "Google Cloud Functions"
-        elif "functions.cloud.ibm" in environment:
-            self.__attributes['platform'] = "IBM Cloud Functions"
-        elif "microsoft.com/azure-functions" in environment:
-            self.__attributes['platform'] = "Azure Functions"
-            
-            containerID = os.popen('echo $CONTAINER_NAME').read().replace('\n', '')
-            self.__attributes['containerID'] = containerID
-            
         else:
-            self.__attributes['platform'] = "Unknown Platform"
+            key = os.environ.get('X_GOOGLE_FUNCTION_NAME', None)
+            if (key != None):
+                self.__attributes['platform'] = "Google Cloud Functions"
+                self.__attributes['functionName'] = key
+                self.__attributes['functionMemory'] = os.environ.get('X_GOOGLE_FUNCTION_MEMORY_MB', None)
+                self.__attributes['functionRegion'] = os.environ.get('X_GOOGLE_FUNCTION_REGION', None)
+            else:
+                key = os.environ.get('__OW_ACTION_NAME', None)
+                if (key != None):
+                    self.__attributes['platform'] = "IBM Cloud Functions"
+                    self.__attributes['functionName'] = key
+                    self.__attributes['functionRegion'] = os.environ.get('__OW_API_HOST', None)
+                    self.__attributes["vmID"] = self.runCommand("cat /sys/hypervisor/uuid").strip()
+
+                else:
+                    key = os.environ.get('CONTAINER_NAME', None)
+                    if (key != None):
+                        self.__attributes['platform'] = "Azure Functions"
+                        self.__attributes['containerID'] = key
+                        self.__attributes['functionName'] = os.environ.get('WEBSITE_SITE_NAME', None)
+                        self.__attributes['functionRegion'] = os.environ.get('Location', None)
+                    else:
+                        self.__attributes['platform'] = "Unknown Platform"
         
     #
     # Collect information about the linux kernel.
@@ -150,6 +192,8 @@ class Inspector:
     # linuxVersion:    The version of the linux kernel.
     #
     def inspectLinux(self):
+        self.__inspectedLinux = True
+
         child = os.popen('uname -v')
         linuxVersion = child.read()
         linuxVersion = re.sub('[\n]','', linuxVersion)
@@ -159,11 +203,20 @@ class Inspector:
     # Run all data collection methods and record framework runtime.
     #
     def inspectAll(self):
-        self.inspectCPU()
         self.inspectContainer()
-        self.inspectLinux()
         self.inspectPlatform()
+        self.inspectLinux()
+        self.inspectMemory()
+        self.inspectCPU()
         self.addTimeStamp("frameworkRuntime")
+
+    #
+    # Run all delta collection methods add userRuntime attribute to further isolate
+    # use code runtime from time spent collecting data.
+    #
+    def inspectAllDeltas(self):
+        self.inspectCPUDelta()
+        self.inspectMemoryDelta()
         
     #
     # Add a custom attribute to the output.
@@ -193,6 +246,15 @@ class Inspector:
     def addTimeStamp(self, key):
         timeSinceStart = round((time.time() - self.__startTime) * 100000) / 100
         self.__attributes[key] = timeSinceStart
+
+    #
+    # Execute a bash command and get the output.
+    #
+    # @param command An array of strings with each part of the command.
+    # @return Standard out of the command.
+    #
+    def runCommand(self, command):
+        return os.popen(command).read()
         
     #
     # Add custom time stamps to the output. The key value determines the name

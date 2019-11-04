@@ -12,7 +12,6 @@ module.exports = function(request, context) {
     //Import the module and collect data
     const inspector = new (require('./Inspector'))();
     inspector.inspectAll();
-    inspector.addTimeStamp("frameworkRuntime");
 
     //Add custom message and finish the function
     if (typeof request.name !== 'undefined' && request.name !== null) {
@@ -21,6 +20,6 @@ module.exports = function(request, context) {
         inspector.addAttribute("message", "Hello World!");
     }
     
-    inspector.inspectCPUDelta()
+    inspector.inspectAllDeltas()
     return inspector.finish();
 };

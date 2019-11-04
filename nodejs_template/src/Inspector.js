@@ -1,21 +1,29 @@
 /**
- * FaaS Inspector
+ * SAAF
  *
  *
  * @author Wes Lloyd
  * @author Wen Shu
  * @author Robert Cordingly
  */
-class Inspector {
 
+const { execSync } = require('child_process');
+
+class Inspector {
     /**
-     * Initialize FaaS Inspector.
+     * Initialize SAAF.
      *
      * attributes: Used to store information collected by each function.
      */
     constructor() {
         this.startTime = process.hrtime();
-        this.attributes = {"version": 0.2, "lang": "node.js"};
+        this.attributes = {"version": 0.4, "lang": "node.js"};
+
+        this.inspectedCPU = false;
+        this.inspectedMemory = false;
+        this.inspectedContainer = false;
+        this.inspectedPlatform = false;
+        this.inspectedLinux = false;
     }
 
     /**
@@ -26,6 +34,8 @@ class Inspector {
      * vmuptime:        The time when the system started in Unix time.
      */
     inspectContainer() {
+        this.inspectedContainer = true;
+
         let fs = require('fs');
         let myUuid = '';
         let newContainer = 1;
@@ -41,13 +51,9 @@ class Inspector {
         this.attributes['uuid'] = myUuid;
         this.attributes['newcontainer'] = newContainer;
 
-        const { spawnSync } = require('child_process');
-        const child = spawnSync('grep', ['btime', '/proc/stat'], { encoding : 'utf8' });
-        let upTime = child.stdout;
-        upTime = upTime.replace('btime ', '');
-        upTime = upTime.trim();
-        upTime = parseInt(upTime);
-        this.attributes['vmuptime'] = upTime;
+        let upTime = this.runCommand('cat /proc/stat | grep btime');
+        upTime = upTime.replace('btime ', '').trim();
+        this.attributes['vmuptime'] = parseInt(upTime);
     }
 
     /**
@@ -63,22 +69,20 @@ class Inspector {
      * cpuIrq:      Time spent servicing interrupts.
      * cpuSoftIrq:  Time spent servicing software interrupts.
      * vmcpusteal:  Time spent waiting for real CPU while hypervisor is using another virtual CPU.
+     * contextSwitches: Number of context switches.
      */
     inspectCPU() {
-        const { execSync } = require('child_process');
-        let child = execSync('grep \'model name\' /proc/cpuinfo | head -1', { encoding : 'utf8' });
-        let CPUModelName = child.replace('\n','');
-        CPUModelName = CPUModelName.replace('\t','');
-        CPUModelName = CPUModelName.replace('model name: ', '');
+        this.inspectedCPU = true;
+
+        let command = this.runCommand('grep \'model name\t:\' /proc/cpuinfo | head -1');
+        let CPUModelName = command.replace('model name\t:', '').trim();
         this.attributes['cpuType'] = CPUModelName;
 
-        child = execSync('grep \'model\' /proc/cpuinfo | head -1', { encoding : 'utf8' });
-        let CPUModel = child.replace('\n', '');
-        CPUModel = CPUModel.replace('\t', '');
-        CPUModel = CPUModel.replace('model\t: ', '');
+        command = this.runCommand('grep \'model\t\t:\' /proc/cpuinfo | head -1');
+        let CPUModel = command.replace('model\t\t: ', '').trim();
         this.attributes['cpuModel'] = CPUModel;
 
-        child = execSync('cat /proc/stat | grep "^cpu" | head -1', { encoding : 'utf8' });
+        let child = this.runCommand('cat /proc/stat | grep "^cpu" | head -1');
         let CPUMetrics = child.replace('\n', '');
         CPUMetrics = CPUMetrics.replace('cpu  ', '');
         CPUMetrics = CPUMetrics.split(" ");
@@ -88,13 +92,15 @@ class Inspector {
         for (let i = 0; i < metricsNames.length; i++) {
             this.attributes[metricsNames[i]] = parseInt(CPUMetrics[i]);
         }
+
+        child = this.runCommand('cat /proc/stat | grep "ctxt"');
+        let contextSwitches = child.replace('\n','');
+        contextSwitches = contextSwitches.replace('ctxt ', '');
+        this.attributes['contextSwitches'] = parseInt(contextSwitches);
     }
     
     /**
      * Compare information gained from inspectCPU to the current CPU metrics.
-     *
-     * Note: This function should be called at the end of your function and 
-     * must be called AFTER inspectCPU.
      *
      * cpuUsrDelta:      Time spent normally executing in user mode.
      * cpuNiceDelta:     Time spent executing niced processes in user mode.
@@ -104,53 +110,111 @@ class Inspector {
      * cpuIrqDelta:      Time spent servicing interrupts.
      * cpuSoftIrqDelta:  Time spent servicing software interrupts.
      * vmcpustealDelta:  Time spent waiting for real CPU while hypervisor is using another virtual CPU.
+     * contextSwitchesDelta: Number of context switches.
      */
     inspectCPUDelta() {
-        const { execSync } = require('child_process');
-        let child = execSync('cat /proc/stat | grep "^cpu" | head -1', { encoding : 'utf8' });
-        let CPUMetrics = child.replace('\n', '');
-        CPUMetrics = CPUMetrics.replace('cpu  ', '');
-        CPUMetrics = CPUMetrics.split(" ");
+        if (this.inspectedCPU) {
+            let child = this.runCommand('cat /proc/stat | grep "^cpu" | head -1');
+            let CPUMetrics = child.replace('\n', '');
+            CPUMetrics = CPUMetrics.replace('cpu  ', '');
+            CPUMetrics = CPUMetrics.split(" ");
 
-        let metricsNames = ['cpuUsr', 'cpuNice', 'cpuKrn', 'cpuIdle',
-                            'cpuIowait', 'cpuIrq', 'cpuSoftIrq', 'vmcpusteal'];
-        for (let i = 0; i < metricsNames.length; i++) {
-            this.attributes[metricsNames[i] + "Delta"] = parseInt(CPUMetrics[i]) - this.attributes[metricsNames[i]]
+            let metricsNames = ['cpuUsr', 'cpuNice', 'cpuKrn', 'cpuIdle',
+                                'cpuIowait', 'cpuIrq', 'cpuSoftIrq', 'vmcpusteal'];
+            for (let i = 0; i < metricsNames.length; i++) {
+                this.attributes[metricsNames[i] + "Delta"] = parseInt(CPUMetrics[i]) - this.attributes[metricsNames[i]];
+            }
+
+            child = this.runCommand('cat /proc/stat | grep "ctxt"');
+            let contextSwitches = child.replace('\n','');
+            contextSwitches = contextSwitches.replace('\t','');
+            contextSwitches = contextSwitches.replace('ctxt ', '');
+            this.attributes['contextSwitchesDelta'] = parseInt(contextSwitches) - this.attributes['contextSwitches']
+        } else {
+            this.attributes["SAAFCPUDeltaError"] = "CPU not inspected before collecting deltas!";
         }
+    }
+
+    /**
+     * Inspects /proc/meminfo and /proc/vmstat. Add memory specific attributes:
+     * 
+     * totalMemory:     Total memory allocated to the VM in kB.
+     * freeMemory:      Current free memory in kB when inspectMemory is called.
+     * pageFaults:      Total number of page faults experienced by the vm since boot.
+     * majorPageFaults: Total number of major page faults experienced since boot.
+     * 
+     */
+    inspectMemory() {
+        this.inspectedMemory = true;
+
+        this.attributes["SAAFMemoryDeltaError"] = "Memory not inspected before collecting deltas!";
+    }
+
+    /**
+     * Inspects /proc/vmstat to see how specific memory stats have changed.
+     * 
+     * pageFaultsDelta:     The number of page faults experienced since inspectMemory was called.
+     * majorPageFaultsDelta: The number of major pafe faults since inspectMemory was called.
+     */
+    inspectMemoryDelta() {
+        if (this.inspectedMemory) {
+
+        } else {
+            this.attributes["SAAFMemoryDeltaError"] = "Memory not inspected before collecting deltas!";
+        }
+
     }
 
     /**
      * Collect information about the current FaaS platform.
      *
-     * platform:    The FaaS platform hosting this function.
-     * containerID: A unique identifier for containers of a platform.
-     * vmID:        A unique identifier for virtual machines of a platform.
+     * platform:        The FaaS platform hosting this function.
+     * containerID:     A unique identifier for containers of a platform.
+     * vmID:            A unique identifier for virtual machines of a platform.
+     * functionName:    The name of the function.
+     * functionMemory:  The memory setting of the function.
+     * functionRegion:  The region the function is deployed onto.
      */
     inspectPlatform() {
-        const { execSync } = require('child_process');
-        let environment = execSync('env', { encoding : 'utf8' });
-        if (environment.indexOf("AWS_LAMBDA") > -1) {
-            this.attributes['platform'] = "AWS Lambda";
-            
-            let containerID = execSync('echo $AWS_LAMBDA_LOG_STREAM_NAME', { encoding : 'utf8' });
-            this.attributes['containerID'] = containerID.replace("\n", "");
-            
-            let vmID = execSync('cat /proc/self/cgroup | grep 2:cpu', { encoding : 'utf8' });
-            vmID = vmID.replace("\n", "").substring(20, 26);
-            this.attributes['vmID'] = vmID;
-            
-        } else if (environment.indexOf("X_GOOGLE") > -1) {
-            this.attributes['platform'] = "Google Cloud Functions";
-        } else if (environment.indexOf("functions.cloud.ibm") > -1) {
-            this.attributes['platform'] = "IBM Cloud Functions";
-        } else if (environment.indexOf("microsoft.com/azure-functions") > -1) {
-            this.attributes['platform'] = "Azure Functions";
-            
-            let containerID = execSync('echo $CONTAINER_NAME', { encoding : 'utf8' });
-            this.attributes['containerID'] = containerID.replace("\n", "");
-            
+        this.inspectedPlatform = true;
+        
+        var key = process.env.AWS_LAMBDA_LOG_STREAM_NAME;
+        if (key != null) {
+            this.attributes["platform"] = "AWS Lambda";
+            this.attributes["containerID"] = key;
+            this.attributes["functionName"] = process.env.AWS_LAMBDA_FUNCTION_NAME;
+            this.attributes["functionMemory"] = process.env.AWS_LAMBDA_FUNCTION_MEMORY_SIZE;
+            this.attributes["functionRegion"] = process.env.AWS_REGION;
+
+            var vmID = this.runCommand("cat /proc/self/cgroup");
+            var index = vmID.indexOf("sandbox-root");
+            this.attributes["vmID"] = vmID.substring(index + 13, index + 19);
         } else {
-            this.attributes['platform'] = "Unknown Platform";
+            key = process.env.X_GOOGLE_FUNCTION_NAME;
+            if (key != null) {
+                this.attributes["platform"] = "Google Cloud Functions";
+                this.attributes["functionName"] = key;
+                this.attributes["functionMemory"] = process.env.X_GOOGLE_FUNCTION_MEMORY_MB;
+                this.attributes["functionRegion"] = process.env.X_GOOGLE_FUNCTION_REGION;
+            } else {
+                key = process.env.__OW_ACTION_NAME;
+                if (key != null) {
+                    this.attributes["platform"] = "IBM Cloud Functions";
+                    this.attributes["functionName"] = key;
+                    this.attributes["functionRegion"] = process.env.__OW_API_HOST;
+                    this.attributes["vmID"] = this.runCommand("cat /sys/hypervisor/uuid").trim();
+                } else {
+                    key = process.env.CONTAINER_NAME;
+                    if (key != null) {
+                        this.attributes["platform"] = "Azure Functions";
+                        this.attributes["containerID"] = key;
+                        this.attributes["functionName"] = process.env.WEBSITE_SITE_NAME;
+                        this.attributes["functionRegion"] = process.env.Location;
+                    } else {
+                        this.attributes["platform"] = "Unknown Platform";
+                    }
+                }
+            }
         }
     }
     
@@ -160,21 +224,29 @@ class Inspector {
      * linuxVersion:    The version of the linux kernel.
      */
     inspectLinux() {
-        const { execSync } = require('child_process');
-        let child = execSync('uname -v', { encoding : 'utf8' });
-        let linuxVersion = child.replace('\n', '');
-        this.attributes['linuxVersion'] = linuxVersion;
+        this.inspectedLinux = true;
+        this.attributes['linuxVersion'] = this.runCommand('uname -v').replace('\n', '');
     }
     
     /**
      * Run all data collection methods and record framework runtime.
      */
     inspectAll() {
-        this.inspectCPU();
         this.inspectContainer();
-        this.inspectLinux();
         this.inspectPlatform();
+        this.inspectLinux();
+        this.inspectMemory();
+        this.inspectCPU();
         this.addTimeStamp("frameworkRuntime");
+    }
+
+    /**
+     * Run all delta collection methods add userRuntime attribute to further isolate
+     * use code runtime from time spent collecting data.
+     */
+    inspectAllDeltas() {
+        this.inspectCPUDelta();
+        this.inspectMemoryDelta();
     }
     
     /**
@@ -207,6 +279,16 @@ class Inspector {
     addTimeStamp(key) {
         let timeSinceStart = process.hrtime(this.startTime);
         this.attributes[key] = timeSinceStart[0] * 1000 + Math.round(timeSinceStart[1] / 10000) / 100;
+    }
+
+    /**
+     * Execute a bash command and get the output.
+     *
+     * @param command An array of strings with each part of the command.
+     * @return Standard out of the command.
+     */
+    runCommand(command) {
+        return execSync(command, { encoding : 'utf8' });
     }
 
     /**
