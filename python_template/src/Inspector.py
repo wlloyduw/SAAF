@@ -128,12 +128,50 @@ class Inspector:
         else:
             self.__attributes['SAAFCPUDeltaError'] = "CPU not inspected before collecting deltas!"
 
+    #
+    # Inspects /proc/meminfo and /proc/vmstat. Add memory specific attributes:
+    # 
+    # totalMemory:     Total memory allocated to the VM in kB.
+    # freeMemory:      Current free memory in kB when inspectMemory is called.
+    # pageFaults:      Total number of page faults experienced by the vm since boot.
+    # majorPageFaults: Total number of major page faults experienced since boot.
+    #
     def inspectMemory(self):
         self.__inspectedMemory = True
+        memInfo = ""
+        with open('/proc/meminfo', 'r') as file:
+            memInfo = file.read()
+        lines = memInfo.split('\n')
+        self.__attributes['totalMemory'] = int(lines[0].replace("MemTotal:", "").replace(" kB", "").strip())
+        self.__attributes['freeMemory'] = int(lines[1].replace("MemFree:", "").replace(" kB", "").strip())
 
+        vmStat = ""
+        with open('/proc/vmstat', 'r') as file:
+            vmStat = file.read()
+        lines = vmStat.split("\n")
+        for line in lines:
+            if 'pgfault' in line:
+                self.__attributes['pageFaults'] = int(line.split(' ')[1])
+            elif 'mgmajfault' in line:
+                self.__attributes['majorPageFaults'] = int(line.split(' ')[1])
+
+    #
+    # Inspects /proc/vmstat to see how specific memory stats have changed.
+    # 
+    # pageFaultsDelta:     The number of page faults experienced since inspectMemory was called.
+    # majorPageFaultsDelta: The number of major pafe faults since inspectMemory was called.
+    #
     def inspectMemoryDelta(self):
         if (self.__inspectedMemory):
-            pass
+            vmStat = ""
+            with open('/proc/vmstat', 'r') as file:
+                vmStat = file.read()
+            lines = vmStat.split("\n")
+            for line in lines:
+                if 'pgfault' in line:
+                    self.__attributes['pageFaultsDelta'] = int(line.split(' ')[1]) - self.__attributes['pageFaults']
+                elif 'mgmajfault' in line:
+                    self.__attributes['majorPageFaultsDelta'] = int(line.split(' ')[1]) - self.__attributes['majorPageFaults']
         else:
             self.__attributes['SAAFMemoryDeltaError'] = "Memory not inspected before collecting deltas!"
         pass
@@ -193,11 +231,7 @@ class Inspector:
     #
     def inspectLinux(self):
         self.__inspectedLinux = True
-
-        child = os.popen('uname -v')
-        linuxVersion = child.read()
-        linuxVersion = re.sub('[\n]','', linuxVersion)
-        self.__attributes['linuxVersion'] = linuxVersion
+        self.__attributes['linuxVersion'] = self.runCommand('uname -v').replace('\n', '')
         
     #
     # Run all data collection methods and record framework runtime.

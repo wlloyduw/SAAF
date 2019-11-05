@@ -8,12 +8,14 @@
  */
 
 const { execSync } = require('child_process');
+const fs = require('fs');
 
 class Inspector {
     /**
      * Initialize SAAF.
      *
-     * attributes: Used to store information collected by each function.
+     * attributes:  Used to store information collected by each function.
+     * startTime:   The time the function started running.
      */
     constructor() {
         this.startTime = process.hrtime();
@@ -36,7 +38,6 @@ class Inspector {
     inspectContainer() {
         this.inspectedContainer = true;
 
-        let fs = require('fs');
         let myUuid = '';
         let newContainer = 1;
         if (fs.existsSync('/tmp/container-id')) {
@@ -142,12 +143,23 @@ class Inspector {
      * freeMemory:      Current free memory in kB when inspectMemory is called.
      * pageFaults:      Total number of page faults experienced by the vm since boot.
      * majorPageFaults: Total number of major page faults experienced since boot.
-     * 
      */
     inspectMemory() {
         this.inspectedMemory = true;
-
-        this.attributes["SAAFMemoryDeltaError"] = "Memory not inspected before collecting deltas!";
+        var memInfo = fs.readFileSync("/proc/meminfo", "utf8");
+        var lines = memInfo.split("\n");
+        this.attributes["totalMemory"] = parseInt(lines[0].replace("MemTotal:", "").replace(" kB", "").trim());
+        this.attributes["freeMemory"] = parseInt(lines[1].replace("MemFree:", "").replace(" kB", "").trim());
+        
+        var vmStat = fs.readFileSync("/proc/vmstat", "utf8");
+        var lines = vmStat.split("\n");
+        lines.forEach((line) => {
+            if (line.indexOf("pgfault") != -1) {
+                this.attributes["pageFaults"] = parseInt(line.split(" ")[1]);
+            } else if (line.indexOf("mgmajfault") != -1) {
+                this.attributes["majorPageFaults"] = parseInt(line.split(" ")[1]);
+            }
+        });
     }
 
     /**
@@ -158,7 +170,15 @@ class Inspector {
      */
     inspectMemoryDelta() {
         if (this.inspectedMemory) {
-
+            var vmStat = fs.readFileSync("/proc/vmstat", "utf8");
+            var lines = vmStat.split("\n");
+            lines.forEach((line) => {
+                if (line.indexOf("pgfault") != -1) {
+                    this.attributes["pageFaultsDelta"] = parseInt(line.split(" ")[1]) - this.attributes["pageFaults"];
+                } else if (line.indexOf("mgmajfault") != -1) {
+                    this.attributes["majorPageFaultsDelta"] = parseInt(line.split(" ")[1]) - this.attributes["majorPageFaults"];
+                }
+            });
         } else {
             this.attributes["SAAFMemoryDeltaError"] = "Memory not inspected before collecting deltas!";
         }
