@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import time
 import boto3
 import os
 import sys
@@ -14,12 +15,23 @@ from report_generator import report
 s3_client = boto3.client('s3')
 
 def pull_file(client, bucket, k, local, delete):
-    dest_pathname = os.path.join(local, k)
-    if not os.path.exists(os.path.dirname(dest_pathname)):
-        os.makedirs(os.path.dirname(dest_pathname))
-        print("Directory Created: " + str(os.path.dirname(dest_pathname)))
-    client.download_file(bucket, k, dest_pathname)
-    print("Pulled File: " + str(k))
+    success = False
+    tries = 0
+    while (not success and tries < 20):
+        try:
+            dest_pathname = os.path.join(local, k)
+            if not os.path.exists(os.path.dirname(dest_pathname)):
+                os.makedirs(os.path.dirname(dest_pathname))
+                print("Directory Created: " + str(os.path.dirname(dest_pathname)))
+            client.download_file(bucket, k, dest_pathname)
+            print("Pulled File: " + str(k))
+            success = True
+        except Exception as e:
+            tries += 1
+            print("Error pulling " + str(k) + "trying again in 3 seconds...")
+            time.sleep(3)
+    if (not success):
+        print("Pulling file failed after 20 attempts, giving up....")
 
 #
 # Download all files from an S3 bucket, delete them after they are downloaded.
