@@ -4,7 +4,7 @@ SAAF is a programming framework that allows for tracing FaaS function server inf
 
 ### Getting Started
 
-To use the core SAAF framework, download the [Inspector.js](./src/Inspector.js) script into an existing Node.js project and simply import the module as shown below.
+To use the core SAAF framework, download the [Inspector.js](./src/Inspector.js) script into an existing Node.js project and simply import the module as shown below. The uuid module must also be included with node_modules.
 
 SAAF also includes tools to deploy and develop new functions for each supported platform automatically. To make use of these tools, download the entire repository and follow the directions in the [deploy directory](./deploy). 
 
