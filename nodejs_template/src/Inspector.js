@@ -311,6 +311,32 @@ class Inspector {
         return execSync(command, { encoding : 'utf8' });
     }
 
+    pushS3(bucket) {
+        //return new Promise((resolve, reject) => {
+            const aws = require('aws-sdk');
+            const s3 = new aws.S3();
+
+            const output = JSON.stringify(this.finish());
+            let uuidv4 = require('uuid/v4');
+            let runUUID = uuidv4();
+
+            var params = {
+                Body: output, 
+                Bucket: bucket, 
+                Key: "run " + runUUID + ".json"
+            };
+            s3.putObject(params, (err, data) => {
+                if (err) {
+                    this.addAttribute("SAAFS3Error", "ERROR PUSHING TO S3 " + err);
+                    //context.fail(err);
+                } else {
+                    this.addAttribute("SAAFS3Error", "SUCCESS PUSHING TO S3 " + data);
+                    //context.succeed(output.replace("\"", '"'));
+                }
+            });
+        //});
+    }
+
     /**
      * Finalize FaaS inspector. Calculator the total runtime and return the JSON object
      * containing all attributes collected.

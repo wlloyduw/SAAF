@@ -20,6 +20,7 @@ module.exports = function(request, context) {
         inspector.addAttribute("message", "Hello World!");
     }
     
-    inspector.inspectAllDeltas()
+    inspector.inspectAllDeltas();
+    //inspector.pushS3("saafdump", context)
     return inspector.finish();
 };
