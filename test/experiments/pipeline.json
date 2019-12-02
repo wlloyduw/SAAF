@@ -1,5 +1,6 @@
 {
     "callWithCLI": true,
+    "callAsync": false,
     "memorySettings": [],
     "payloads": [
         { "name": "Bob" },

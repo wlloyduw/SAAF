@@ -29,6 +29,7 @@ def parTest(functionList, exp):
     runs_per_thread = int(total_runs / threads)
     payload = exp['payloads']
     useCLI = exp['callWithCLI']
+    callAsync = exp['callAsync']
 
     random.seed(exp['randomSeed'])
 
@@ -77,15 +78,16 @@ def parTest(functionList, exp):
                 jsonResponse = response.text
                 print("Response: " + str(jsonResponse))
             elif (platform == 'AWS Lambda'):
-                #client = boto3.client('lambda')
-                #response = client.invoke(FunctionName = str(function_call['endpoint']), InvocationType='RequestResponse', Payload = jsonString.encode())
-                #jsonResponse = response['Payload'].read().decode('ascii')
-                #print("Response: " + str(jsonResponse))
                 cmd = ['aws', 'lambda', 'invoke', '--invocation-type', 'RequestResponse', '--cli-read-timeout', '450', '--function-name', str(function_call['endpoint']), '--payload', jsonString, '/dev/stdout']
+                if (callAsync):
+                    cmd = ['aws', 'lambda', 'invoke', '--invocation-type', 'Event', '--cli-read-timeout', '450', '--function-name', str(function_call['endpoint']), '--payload', jsonString, '/dev/stdout']
                 proc = subprocess.Popen( cmd, bufsize=-1, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 o, e = proc.communicate()
                 print("STDOUT: " + str(o.decode('ascii')) + "\nSTDERR: " + str(e.decode('ascii')))
                 jsonResponse = str(o.decode('ascii')).split('\n')[0][:-1]
+
+                if (callAsync):
+                    jsonResponse = '{"RESPONSE": "USE S3 PULL TO RETRIEVE RESPONSES", "version":42}'
             elif (platform == 'Google'):
                 cmd = ['gcloud', 'functions', 'call', str(function_call['endpoint']), '--data', jsonString]
                 proc = subprocess.Popen(cmd, bufsize=-1, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
