@@ -50,8 +50,9 @@ public class Inspector {
         startTime = System.currentTimeMillis();
         attributes = new HashMap<>();
 
-        attributes.put("version", 0.4);
+        attributes.put("version", 0.5);
         attributes.put("lang", "java");
+        attributes.put("startTime", startTime);
     }
 
     /**
@@ -395,14 +396,16 @@ public class Inspector {
      * use code runtime from time spent collecting data.
      */
     public void inspectAllDeltas() {
+
+        // Add the 'userRuntime' timestamp.
         if (attributes.containsKey("frameworkRuntime")) {
-            Long currentTime = System.currentTimeMillis();
-            Long codeRuntime = (currentTime - startTime) - (Long)attributes.get("frameworkRuntime");
-            attributes.put("userRuntime", codeRuntime);
+            this.addTimeStamp("userRuntime", this.startTime + (Long)attributes.get("frameworkRuntime"));
         }
 
+        long deltaTime = System.currentTimeMillis();
         this.inspectCPUDelta();
         this.inspectMemoryDelta();
+        this.addTimeStamp("frameworkRuntimeDeltas", deltaTime);
     }
 
     /**
@@ -433,8 +436,19 @@ public class Inspector {
      * @param key The name of the time stamp.
      */
     public void addTimeStamp(String key) {
+        addTimeStamp(key, startTime);
+    }
+
+    /**
+     * Add a custom time stamp to the output. This will append the
+     * time in milliseconds between the current time and the timeSince variable.
+     * 
+     * @param key The key to add to the output.
+     * @param timeSince The time to compare to.
+     */
+    public void addTimeStamp(String key, long timeSince) {
         Long currentTime = System.currentTimeMillis();
-        attributes.put(key, currentTime - startTime);
+        attributes.put(key, currentTime - timeSince);
     }
 
     /**
@@ -450,14 +464,14 @@ public class Inspector {
     }
 
     /**
-     * Finalize FaaS inspector. Calculator the total runtime and return the JSON
+     * Finalize the Inspector. Calculator the total runtime and return the HashMap
      * object containing all attributes collected.
      *
-     * @return Attributes collected by FaaS Inspector.
+     * @return Attributes collected by the Inspector.
      */
     public HashMap<String, Object> finish() {
-        Long endTime = System.currentTimeMillis();
-        attributes.put("runtime", endTime - startTime);
+        this.addTimeStamp("runtime");
+        attributes.put("endTime", System.currentTimeMillis());
         return attributes;
     }
 

@@ -7,7 +7,7 @@
  * @author Robert Cordingly
  */
 
-const { execSync } = require('child_process');
+const { execSync } = require('child_process'); 
 const fs = require('fs');
 
 class Inspector {
@@ -18,8 +18,12 @@ class Inspector {
      * startTime:   The time the function started running.
      */
     constructor() {
-        this.startTime = process.hrtime();
-        this.attributes = {"version": 0.4, "lang": "node.js"};
+        this.startTime = Date.now();
+        this.attributes = {
+            "version": 0.5, 
+            "lang": "node.js",
+            "startTime": this.startTime
+        };
 
         this.inspectedCPU = false;
         this.inspectedMemory = false;
@@ -151,15 +155,19 @@ class Inspector {
         this.attributes["totalMemory"] = parseInt(lines[0].replace("MemTotal:", "").replace(" kB", "").trim());
         this.attributes["freeMemory"] = parseInt(lines[1].replace("MemFree:", "").replace(" kB", "").trim());
         
-        var vmStat = fs.readFileSync("/proc/vmstat", "utf8");
-        var lines = vmStat.split("\n");
-        lines.forEach((line) => {
-            if (line.indexOf("pgfault") != -1) {
-                this.attributes["pageFaults"] = parseInt(line.split(" ")[1]);
-            } else if (line.indexOf("mgmajfault") != -1) {
-                this.attributes["majorPageFaults"] = parseInt(line.split(" ")[1]);
-            }
-        });
+        if (fs.existsSync("/proc/vmstat")) {
+            var vmStat = fs.readFileSync("/proc/vmstat", "utf8");
+            var lines = vmStat.split("\n");
+            lines.forEach((line) => {
+                if (line.indexOf("pgfault") != -1) {
+                    this.attributes["pageFaults"] = parseInt(line.split(" ")[1]);
+                } else if (line.indexOf("mgmajfault") != -1) {
+                    this.attributes["majorPageFaults"] = parseInt(line.split(" ")[1]);
+                }
+            });
+        } else {
+            this.attributes['SAAFMemoryError'] = "/proc/vmstat does not exist!";
+        }
     }
 
     /**
@@ -170,19 +178,22 @@ class Inspector {
      */
     inspectMemoryDelta() {
         if (this.inspectedMemory) {
-            var vmStat = fs.readFileSync("/proc/vmstat", "utf8");
-            var lines = vmStat.split("\n");
-            lines.forEach((line) => {
-                if (line.indexOf("pgfault") != -1) {
-                    this.attributes["pageFaultsDelta"] = parseInt(line.split(" ")[1]) - this.attributes["pageFaults"];
-                } else if (line.indexOf("mgmajfault") != -1) {
-                    this.attributes["majorPageFaultsDelta"] = parseInt(line.split(" ")[1]) - this.attributes["majorPageFaults"];
-                }
-            });
+            if (fs.existsSync("/proc/vmstat")) {
+                var vmStat = fs.readFileSync("/proc/vmstat", "utf8");
+                var lines = vmStat.split("\n");
+                lines.forEach((line) => {
+                    if (line.indexOf("pgfault") != -1) {
+                        this.attributes["pageFaultsDelta"] = parseInt(line.split(" ")[1]) - this.attributes["pageFaults"];
+                    } else if (line.indexOf("mgmajfault") != -1) {
+                        this.attributes["majorPageFaultsDelta"] = parseInt(line.split(" ")[1]) - this.attributes["majorPageFaults"];
+                    }
+                });
+            } else {
+                this.attributes['SAAFMemoryDeltaError'] = "/proc/vmstat does not exist!";
+            }
         } else {
             this.attributes["SAAFMemoryDeltaError"] = "Memory not inspected before collecting deltas!";
         }
-
     }
 
     /**
@@ -257,7 +268,7 @@ class Inspector {
         this.inspectLinux();
         this.inspectMemory();
         this.inspectCPU();
-        this.addTimeStamp("frameworkRuntime");
+        this.addTimeStamp('frameworkRuntime');
     }
 
     /**
@@ -265,8 +276,16 @@ class Inspector {
      * use code runtime from time spent collecting data.
      */
     inspectAllDeltas() {
+
+        // Add 'userRuntime' timestamp.
+        if ("frameworkRuntime" in this.attributes) {
+            this.addTimeStamp('userRuntime', this.startTime + this.attributes['frameworkRuntime']);
+        }
+
+        let deltaTime = Date.now();
         this.inspectCPUDelta();
         this.inspectMemoryDelta();
+        this.addTimeStamp("frameworkRuntimeDeltas", deltaTime);
     }
     
     /**
@@ -292,13 +311,17 @@ class Inspector {
     /**
      * Add custom time stamps to the output. The key value determines the name
      * of the attribute and the value will be the time from Inspector initialization
-     * to this function call. 
+     * to this function call. timeSince is optional and is used 
+     * to compare current time to a different time.
      *
      * @param key The name of the time stamp.
      */
-    addTimeStamp(key) {
-        let timeSinceStart = process.hrtime(this.startTime);
-        this.attributes[key] = timeSinceStart[0] * 1000 + Math.round(timeSinceStart[1] / 10000) / 100;
+    addTimeStamp(key, timeSince) {
+        if (!timeSince) {
+            timeSince = this.startTime;
+        }
+        let currentTime = Date.now();
+        this.attributes[key] = currentTime - timeSince;
     }
 
     /**
@@ -311,41 +334,15 @@ class Inspector {
         return execSync(command, { encoding : 'utf8' });
     }
 
-    pushS3(bucket) {
-        //return new Promise((resolve, reject) => {
-            const aws = require('aws-sdk');
-            const s3 = new aws.S3();
-
-            const output = JSON.stringify(this.finish());
-            let uuidv4 = require('uuid/v4');
-            let runUUID = uuidv4();
-
-            var params = {
-                Body: output, 
-                Bucket: bucket, 
-                Key: "run " + runUUID + ".json"
-            };
-            s3.putObject(params, (err, data) => {
-                if (err) {
-                    this.addAttribute("SAAFS3Error", "ERROR PUSHING TO S3 " + err);
-                    //context.fail(err);
-                } else {
-                    this.addAttribute("SAAFS3Error", "SUCCESS PUSHING TO S3 " + data);
-                    //context.succeed(output.replace("\"", '"'));
-                }
-            });
-        //});
-    }
-
     /**
-     * Finalize FaaS inspector. Calculator the total runtime and return the JSON object
+     * Finalize the inspector. Calculator the total runtime and return the JSON object
      * containing all attributes collected.
      *
-     * @return Attributes collected by FaaS Inspector.
+     * @return Attributes collected by the Inspector.
      */
     finish() {
-        let endTime = process.hrtime(this.startTime);
-        this.attributes['runtime'] = endTime[0] * 1000 + Math.round(endTime[1] / 10000) / 100;
+        this.addTimeStamp('runtime')
+        this.attributes['endTime'] = Date.now();
         return this.attributes;
     }
 }

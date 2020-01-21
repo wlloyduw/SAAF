@@ -1,0 +1,29 @@
+    /* 
+        Originally allowed you to push a json file to S3.
+        This function was problematic with asynchronous JS functions so 
+        it is better to simply implement this function in your code yourself.
+    pushS3(bucket) {
+        //return new Promise((resolve, reject) => {
+            const aws = require('aws-sdk');
+            const s3 = new aws.S3();
+
+            const output = JSON.stringify(this.finish());
+            let uuidv4 = require('uuid/v4');
+            let runUUID = uuidv4();
+
+            var params = {
+                Body: output, 
+                Bucket: bucket, 
+                Key: "run " + runUUID + ".json"
+            };
+            s3.putObject(params, (err, data) => {
+                if (err) {
+                    this.addAttribute("SAAFS3Error", "ERROR PUSHING TO S3 " + err);
+                    //context.fail(err);
+                } else {
+                    this.addAttribute("SAAFS3Error", "SUCCESS PUSHING TO S3 " + data);
+                    //context.succeed(output.replace("\"", '"'));
+                }
+            });
+        //});
+    }*/

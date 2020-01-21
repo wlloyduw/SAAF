@@ -3,7 +3,7 @@
 
 	"functionName":     "helloWorld",
 
-	"lambdaRoleARN": "arn:aws:iam::aws:policy/AWSLambdaFullAccess",
+	"lambdaRoleARN": "arn:aws:iam::616835888336:role/lambda_basic_execution",
 	"lambdaSubnets": "",
 	"lambdaSecurityGroups": "",
 

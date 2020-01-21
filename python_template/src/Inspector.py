@@ -23,8 +23,12 @@ class Inspector:
     # __startTime:  The time the function started running.
     #
     def __init__(self):
-        self.__startTime = time.time()
-        self.__attributes = {"version": 0.4, "lang": "python"}
+        self.__startTime = int(round(time.time() * 1000))
+        self.__attributes = {
+            "version": 0.5, 
+            "lang": "python", 
+            "startTime": self.__startTime
+        }
 
         self.__inspectedCPU = False
         self.__inspectedMemory = False
@@ -145,15 +149,18 @@ class Inspector:
         self.__attributes['totalMemory'] = int(lines[0].replace("MemTotal:", "").replace(" kB", "").strip())
         self.__attributes['freeMemory'] = int(lines[1].replace("MemFree:", "").replace(" kB", "").strip())
 
-        vmStat = ""
-        with open('/proc/vmstat', 'r') as file:
-            vmStat = file.read()
-        lines = vmStat.split("\n")
-        for line in lines:
-            if 'pgfault' in line:
-                self.__attributes['pageFaults'] = int(line.split(' ')[1])
-            elif 'mgmajfault' in line:
-                self.__attributes['majorPageFaults'] = int(line.split(' ')[1])
+        if os.path.isfile('/proc/vmstat'):
+            vmStat = ""
+            with open('/proc/vmstat', 'r') as file:
+                vmStat = file.read()
+            lines = vmStat.split("\n")
+            for line in lines:
+                if 'pgfault' in line:
+                    self.__attributes['pageFaults'] = int(line.split(' ')[1])
+                elif 'mgmajfault' in line:
+                    self.__attributes['majorPageFaults'] = int(line.split(' ')[1])
+        else:
+            self.__attributes['SAAFMemoryError'] = "/proc/vmstat does not exist!"
 
     #
     # Inspects /proc/vmstat to see how specific memory stats have changed.
@@ -163,15 +170,18 @@ class Inspector:
     #
     def inspectMemoryDelta(self):
         if (self.__inspectedMemory):
-            vmStat = ""
-            with open('/proc/vmstat', 'r') as file:
-                vmStat = file.read()
-            lines = vmStat.split("\n")
-            for line in lines:
-                if 'pgfault' in line:
-                    self.__attributes['pageFaultsDelta'] = int(line.split(' ')[1]) - self.__attributes['pageFaults']
-                elif 'mgmajfault' in line:
-                    self.__attributes['majorPageFaultsDelta'] = int(line.split(' ')[1]) - self.__attributes['majorPageFaults']
+            if os.path.isfile('/proc/vmstat'):
+                vmStat = ""
+                with open('/proc/vmstat', 'r') as file:
+                    vmStat = file.read()
+                lines = vmStat.split("\n")
+                for line in lines:
+                    if 'pgfault' in line:
+                        self.__attributes['pageFaultsDelta'] = int(line.split(' ')[1]) - self.__attributes['pageFaults']
+                    elif 'mgmajfault' in line:
+                        self.__attributes['majorPageFaultsDelta'] = int(line.split(' ')[1]) - self.__attributes['majorPageFaults']
+            else:
+                self.__attributes['SAAFMemoryDeltaError'] = "/proc/vmstat does not exist!"
         else:
             self.__attributes['SAAFMemoryDeltaError'] = "Memory not inspected before collecting deltas!"
         pass
@@ -249,8 +259,15 @@ class Inspector:
     # use code runtime from time spent collecting data.
     #
     def inspectAllDeltas(self):
+
+        # Add the 'userRuntime' timestamp.
+        if ('frameworkRuntime' in self.__attributes):
+            self.addTimeStamp("userRuntime", self.__startTime + self.__attributes['frameworkRuntime'])
+
+        deltaTime = int(round(time.time() * 1000))
         self.inspectCPUDelta()
         self.inspectMemoryDelta()
+        self.addTimeStamp("frameworkRuntimeDeltas", deltaTime)
         
     #
     # Add a custom attribute to the output.
@@ -273,13 +290,15 @@ class Inspector:
     #
     # Add custom time stamps to the output. The key value determines the name
     # of the attribute and the value will be the time from Inspector initialization
-    # to this function call. 
+    # to this function call. Add timeSince to compare current time to a different time.
     #
     # @param key The name of the time stamp.
     #
-    def addTimeStamp(self, key):
-        timeSinceStart = round((time.time() - self.__startTime) * 100000) / 100
-        self.__attributes[key] = timeSinceStart
+    def addTimeStamp(self, key, timeSince = None):
+        if timeSince == None:
+            timeSince = self.__startTime
+        currentTime = int(round(time.time() * 1000))
+        self.__attributes[key] = currentTime - timeSince
 
     #
     # Execute a bash command and get the output.
@@ -291,12 +310,12 @@ class Inspector:
         return os.popen(command).read()
         
     #
-    # Add custom time stamps to the output. The key value determines the name
-    # of the attribute and the value will be the time from Inspector initialization
-    # to this function call. 
+    # Finalize the Inspector. Calculator the total runtime and return the dictionary
+    # object containing all attributes collected.
     #
-    # @param key The name of the time stamp.
+    # @return Attributes collected by the Inspector.
     #
     def finish(self):
-        self.__attributes['runtime'] = round((time.time() - self.__startTime) * 100000) / 100
+        self.addTimeStamp('runtime')
+        self.__attributes['endTime'] = int(round(time.time() * 1000))
         return self.__attributes
