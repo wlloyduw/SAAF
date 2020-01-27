@@ -29,6 +29,7 @@
     
     "invalidators": {},
     "removeDuplicateContainers": false,
+    "overlapFilter": "functionName",
 
     "openCSV": true,
     "combineSheets": false,

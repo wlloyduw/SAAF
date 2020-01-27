@@ -84,19 +84,41 @@ def run_experiment(functions, experiments, outDir):
     functionName = func['function']
     platform = func['platform']
 
-    threads = exp['threads']
-    runs = exp['runs']
+    threads = 100
+    if ('threads' in exp):
+        threads = exp['threads']
+
+    runs = 100
+    if ('runs' in exp):
+        runs = exp['runs']
 
     if (threads > runs):
         print("Invalid Experiment! Error: Threads > Runs")
         return False
 
-    memoryList = exp['memorySettings']
-    iterations = exp['iterations']
-    sleepTime = exp['sleepTime']
-    openCSV = exp['openCSV']
-    combineSheets = exp['combineSheets']
-    warmupBuffer = exp['warmupBuffer']
+    memoryList = []
+    if ('memorySettings' in exp):
+        memoryList = exp['memorySettings']
+
+    iterations = 1
+    if ('iterations' in exp):
+        iterations = exp['iterations']
+
+    sleepTime = 0
+    if ('sleepTime' in exp):
+        sleepTime = exp['sleepTime']
+
+    openCSV = True
+    if ('openCSV' in exp):
+        openCSV = exp['openCSV']
+
+    combineSheets = False
+    if ('combineSheets' in exp):
+        combineSheets = exp['combineSheets']
+
+    warmupBuffer = 0
+    if ('warmupBuffer' in exp):
+        warmupBuffer = exp['warmupBuffer']
 
     if (not memoryList):
         memoryList.append(0)

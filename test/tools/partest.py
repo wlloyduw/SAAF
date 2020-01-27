@@ -24,14 +24,32 @@ from threading import Thread
 def parTest(functionList, exp):
     output = ""
 
-    threads = exp['threads']
-    total_runs = exp['runs']
-    runs_per_thread = int(total_runs / threads)
-    payload = exp['payloads']
-    useCLI = exp['callWithCLI']
-    callAsync = exp['callAsync']
+    threads = 100
+    if ('threads' in exp):
+        threads = exp['threads']
 
-    random.seed(exp['randomSeed'])
+    total_runs = 100
+    if ('runs' in exp):
+        total_runs = exp['runs']
+
+    runs_per_thread = int(total_runs / threads)
+
+    payload = [{}]
+    if ('payloads' in exp):
+        payload = exp['payloads']
+
+    useCLI = True
+    if ('callWithCLI' in exp):
+        useCLI = exp['callWithCLI']
+
+    callAsync = False
+    if ('callAsync' in exp):
+        callAsync = exp['callAsync']
+
+    randomSeed = 42
+    if ('randomSeed' in exp):
+        randomSeed = exp['randomSeed']
+    random.seed(randomSeed)
 
     #botocore.config.Config(connect_timeout = 120, read_timeout = 120, max_pool_connections = threads, retries = {'max_attempts': 0})
 
@@ -135,8 +153,12 @@ def parTest(functionList, exp):
 
                 print("Run " + str(thread_id) + "." + str(i) + " successful.")
             except Exception as e:
-                print("Run " + str(thread_id) + "." +
-                      str(i) + " Failed with exeption: " + str(e)) + ".\nRequest Response: " + jsonResponse
+                if (jsonResponse == None):
+                    print("Run " + str(thread_id) + "." +
+                      str(i) + " Failed with exception: " + str(e)) + ".\nNo response."
+                else:
+                    print("Run " + str(thread_id) + "." +
+                      str(i) + " Failed with exception: " + str(e)) + ".\nRequest Response: " + jsonResponse
 
     #
     # Create a bunch of threads and run make_call.

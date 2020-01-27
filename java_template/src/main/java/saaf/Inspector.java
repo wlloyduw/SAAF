@@ -63,6 +63,10 @@ public class Inspector {
      * vmuptime:     The time when the system started in Unix time.
      */
     public void inspectContainer() {
+        if (inspectedContainer) {
+            attributes.put("SAAFContainerError", "Container already inspected!");
+            return;
+        }
         inspectedContainer = true;
 
         //Stamp Container
@@ -248,6 +252,7 @@ public class Inspector {
      * 
      */
     public void inspectMemory() {
+
         inspectedMemory = true;
         String memInfo = getFileAsString("/proc/meminfo");
         String[] lines = memInfo.split("\n");
@@ -326,6 +331,10 @@ public class Inspector {
      * functionRegion:  The region the function is deployed onto.
      */
     public void inspectPlatform() {
+        if (inspectedPlatform) {
+            attributes.put("SAAFPlatformError", "Platform already inspected!");
+            return;
+        }
         inspectedPlatform = true;
 
         String key = System.getenv("AWS_LAMBDA_LOG_STREAM_NAME");
@@ -374,6 +383,10 @@ public class Inspector {
      * linuxVersion: The version of the linux kernel.
      */
     public void inspectLinux() {
+        if (inspectedLinux) {
+            attributes.put("SAAFLinuxError", "Linux already inspected!");
+            return;
+        }
         inspectedLinux = true;
         String linuxVersion = runCommand(new String[]{"uname", "-v"}).trim();
         attributes.put("linuxVersion", linuxVersion);
