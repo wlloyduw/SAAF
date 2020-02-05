@@ -18,225 +18,42 @@ from decimal import Decimal
 from enum import Enum
 
 sys.path.append('./tools')
-from partest import parTest
 from report_generator import report
+from experiment_orchestrator import publish, run_experiment
 
-functions = []
+# Default function options:
+defaultFunction = {
+    'function': 'helloWorld',
+    'platform': 'AWS Lambda',
+    'source': '../java_template',
+    'endpoint': ''
+}
 
-def publish(function, memory):
-
-    func = json.load(open(function))
-
-    sourceDir = func['source']
-
-    deployConfig = sourceDir + "/deploy/config.json"
-    deployJson = json.load(open(deployConfig))
-
-    if (deployJson['functionName'] != func['function']):
-        print("Error! Deployment configuration does not match the current function. Please correct deployment files.")
-        if sys.platform == "linux" or sys.platform == "linux2":
-            # linux
-            subprocess.call(["xdg-open", function])
-            subprocess.call(["xdg-open", deployConfig])
-        elif sys.platform == "darwin":
-            # OS X
-            subprocess.call(["open", function])
-            subprocess.call(["open", deployConfig])
-        elif sys.platform == "win32":
-            # Windows...
-            pass
-    else:
-        platform = func['platform']
-
-        if (memory == None): 
-            memory = 512
-
-        params = []
-        if platform == "AWS Lambda":
-            params = ['1', '0', '0', '0', str(memory)]
-        elif platform == "Google":
-            params = ['0', '1', '0', '0', str(memory)]
-        elif platform == "IBM":
-            params = ['0', '0', '1', '0', str(memory)]
-        elif platform == "Azure":
-            params = ['0', '0', '0', '1', str(memory)]
-        else:
-            print("Unknown platform.")
-            return None
-
-        cmd = [sourceDir + "/deploy/publish.sh"] + params
-        proc = subprocess.Popen(
-            cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        o, e = proc.communicate()
-
-        print(str(o))
-
-def run_experiment(functions, experiments, outDir):
-
-    currentFunc = functions[0]
-    currentExp = experiments[0]
-    exp = json.load(open(currentExp))
-    expName = os.path.basename(currentExp)
-    expName = expName.replace(".json", "")
-    func = json.load(open(currentFunc))
-
-
-    functionName = func['function']
-    platform = func['platform']
-
-    threads = 100
-    if ('threads' in exp):
-        threads = exp['threads']
-
-    runs = 100
-    if ('runs' in exp):
-        runs = exp['runs']
-
-    if (threads > runs):
-        print("Invalid Experiment! Error: Threads > Runs")
-        return False
-
-    memoryList = []
-    if ('memorySettings' in exp):
-        memoryList = exp['memorySettings']
-
-    iterations = 1
-    if ('iterations' in exp):
-        iterations = exp['iterations']
-
-    sleepTime = 0
-    if ('sleepTime' in exp):
-        sleepTime = exp['sleepTime']
-
-    openCSV = True
-    if ('openCSV' in exp):
-        openCSV = exp['openCSV']
-
-    combineSheets = False
-    if ('combineSheets' in exp):
-        combineSheets = exp['combineSheets']
-
-    warmupBuffer = 0
-    if ('warmupBuffer' in exp):
-        warmupBuffer = exp['warmupBuffer']
-
-    if (not memoryList):
-        memoryList.append(0)
-
-    if (iterations <= 0):
-        print("Invalid Experiment! Iterations must be >= 1!")
-        return False
-
-    if (combineSheets and (warmupBuffer > iterations or iterations == 1)):
-        combineSheets = False
-        print("Conflicting experiment parameters. CombineSheets has been disabled...\nEither warmupBuffer > iterations or iterations == 1")
-
-    for mem in memoryList:
-        if mem != 0:
-            # Update memory value based on platform, hopefully without redeploying function.
-            print("Setting memory value to: " + str(mem) + "MBs...")
-
-            if platform == "AWS Lambda":
-                cmd = ['aws', 'lambda', 'update-function-configuration',
-                    '--function-name', functionName, '--memory-size', str(mem)]
-                proc = subprocess.Popen(
-                    cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                o, e = proc.communicate()
-                print(str(o.decode('ascii')))
-            elif platform == "Google":
-                publish(currentFunc, mem)
-            elif platform == "IBM":
-                publish(currentFunc, mem)
-            else:
-                print("Platform does not support changing memory values.")
-        else:
-            print("Skipping setting memory value.")
-
-        print("Sleeping after setting memory value...")
-        time.sleep(0)
-        runList = []
-
-        for i in range(iterations):
-            print("Running test " + str(i) + ": ")
-            runList.append(parTest([json.load(open(currentFunc))], json.load(open(currentExp))))
-
-            if runList[i] != None:
-                print("Test complete! Generating report...")
-                partestResult = report(runList[i], json.load(open(currentExp)), True)
-
-                try:
-                    csvFilename = outDir + "/" + functionName + "-" + str(
-                        expName) + "-" + str(mem) + "MBs-run" + str(i)
-                    if (os.path.isfile(csvFilename + ".csv")):
-                        duplicates = 1
-                        while (os.path.isfile(csvFilename + "-" + str(duplicates) + ".csv")):
-                            duplicates += 1
-                        csvFilename += "-" + str(duplicates)
-                    csvFilename += ".csv"
-                    text = open(csvFilename, "w")
-                    text.write(str(partestResult))
-                    text.close()
-
-                    if openCSV:
-                        print("Partest complete. Opening results...")
-                        if sys.platform == "linux" or sys.platform == "linux2":
-                            # linux
-                            subprocess.call(["xdg-open", csvFilename])
-                        elif sys.platform == "darwin":
-                            # MacOS
-                            subprocess.call(["open", csvFilename])
-                        elif sys.platform == "win32":
-                            # Windows...
-                            print("File created: " + str(csvFilename))
-                            pass
-                    else:
-                        print("Partest complete. " + str(csvFilename) + " created.")
-                except Exception:
-                    pass
-
-            print("Sleeping before next test...")
-            time.sleep(0)
-
-        if (combineSheets):
-            print("Generating Combined Report:")
-            finalRunList = []
-            for i in range(iterations):
-                if (i > warmupBuffer - 1):
-                    for run in runList[i]:
-                        run['iteration'] = i
-                        if 'vmID' in run:
-                            run['vmID[iteration]'] = run['vmID'] + "[" + str(i) + "]"
-                    finalRunList.extend(runList[i])
-            print(str(finalRunList))
-            partestResult = report(finalRunList, json.load(open(currentExp)), False)
-            try:
-                csvFilename = outDir + "/" + functionName + "-" + str(
-                    expName) + "-" + str(mem) + "MBs-COMBINED"
-                if (os.path.isfile(csvFilename + ".csv")):
-                    duplicates = 1
-                    while (os.path.isfile(csvFilename + "-" + str(duplicates) + ".csv")):
-                        duplicates += 1
-                    csvFilename += "-" + str(duplicates)
-                csvFilename += ".csv"
-                text = open(csvFilename, "w")
-                text.write(str(partestResult))
-                text.close()
-                if sys.platform == "linux" or sys.platform == "linux2":
-                    # linux
-                    subprocess.call(["xdg-open", csvFilename])
-                elif sys.platform == "darwin":
-                    # OS X
-                    subprocess.call(["open", csvFilename])
-                elif sys.platform == "win32":
-                    # Windows...
-                    print("File created: " + str(csvFilename))
-                    pass
-                else:
-                    print("Report generated. " + str(csvFilename) + " created.")
-            except Exception:
-                pass
-
-    print("All tests complete!")
+# Default experiment options:
+defaultExperiment = {
+    'callWithCLI': True,
+    'callAsync': False,
+    'memorySettings': [],
+    'payloads': [{}],
+    'runs': 10,
+    'threads': 10,
+    'iterations': 1,
+    'sleepTime': 1,
+    'randomSeed': 42,
+    'outputGroups': [],
+    'outputRawOfGroup': [],
+    'showAsList': [],
+    'showAsSum': [],
+    'ignoreFromAll': [],
+    'ignoreFromGroups': [],
+    'ignoreByGroup': [],
+    'invalidators': {},
+    'removeDuplicateContainers': False,
+    'overlapFilter': "",
+    'openCSV': True,
+    'combineSheets': False,
+    'warmupBuffer': 0
+}
 #
 # Modes for parsing parameters.
 #
@@ -245,9 +62,10 @@ class Mode(Enum):
     EXP = 2
     OUT = 3
     NONE = 4
+    OVERRIDE = 5
 
 #
-# Use command line arguments to select function and experiements.
+# Use command line arguments to select function and experiments.
 #
 if ("-f" not in sys.argv or "-e" not in sys.argv):
     print("Please supply parameteres! Usage:\n./faas_runner.py -f {PATH TO FUNCTION JSON} -e {PATH TO EXPERIMENT JSON} -o {OPTIONAL: PATH FOR OUTPUT}")
@@ -255,14 +73,13 @@ elif (len(sys.argv) > 1):
 
     mode = Mode.NONE
 
-    loadFunctions = False
-    loadExp = False
-    setOut = False
     outDir = "./history"
+    overrides = {}
 
     functionList = []
     expList = []
 
+    # Parse arguments
     for arg in sys.argv:
         if (arg == "-f"):
             mode = Mode.FUNC
@@ -270,6 +87,10 @@ elif (len(sys.argv) > 1):
             mode = Mode.EXP
         elif (arg == "-o"):
             mode = Mode.OUT
+        elif ('--' in arg):
+            mode = Mode.OVERRIDE
+            overrideAttribute = arg[2:]
+            overrides.overrideAttribute = ""
         else:
             if mode == Mode.FUNC:
                 functionList.append(arg)
@@ -277,12 +98,45 @@ elif (len(sys.argv) > 1):
                 expList.append(arg)
             elif mode == Mode.OUT:
                 outDir = arg
+            elif mode == Mode.OVERRIDE:
+                overrides.overrideAttribute += arg
 
     if (len(functionList) > 0 and len(expList) > 0):
         if (not os.path.isdir(outDir)):
             os.mkdir(outDir)
 
-        run_experiment(functionList, expList, outDir)
+        loadedFunctions = []
+        loadedExperiments = []
+
+        # Load in function files
+        for function in functionList:
+            nextFunction = json.load(open(function))
+            nextFunction['sourceFile'] = function
+
+            # Set default options if needed.
+            for key in defaultFunction:
+                if key not in nextFunction:
+                    nextFunction[key] = defaultFunction[key]
+                    print("ERROR: " + str(key) + " missing in function file! Using default option of " 
+                        + str(defaultFunction[key]))
+
+            loadedFunctions.append(nextFunction)
+
+        # Load in experiment files
+        for experiment in expList:
+            nextExperiment = json.load(open(experiment))
+            nextExperiment['sourceFile'] = experiment
+            nextExperiment['experimentName'] = os.path.basename(experiment).replace(".json", "")
+
+            # Set default options if needed.
+            for key in defaultExperiment:
+                if key not in nextExperiment:
+                    nextExperiment[key] = defaultExperiment[key]
+                    print("ERROR: " + str(key) + " missing in experiment file! Using default option of " 
+                        + str(defaultExperiment[key]))
+            loadedExperiments.append(nextExperiment)
+
+        run_experiment(loadedFunctions, loadedExperiments, outDir)
     else:
         print("Please supply parameteres! Usage:\n./faas_runner.py -f {PATH TO FUNCTION JSON} -e {PATH TO EXPERIMENT JSON} -o {OPTIONAL: PATH FOR OUTPUT}")
 else:

@@ -19,68 +19,39 @@ from decimal import Decimal
 #
 def report(responses, exp, addCPUModel):
     output = ""
-
-    threads = 100
-    if ('threads' in exp):
-        threads = exp['threads']
-
-    total_runs = 100
-    if ('runs' in exp):
-        total_runs = exp['runs']
-
+    threads = exp['threads']
+    total_runs = exp['runs']
     runs_per_thread = int(total_runs / threads)
 
-    payload = [{}]
-    if ('payloads' in exp):
-        payload = exp['payloads']
+    payload = exp['payloads']
 
     # After runs all are finished, runs will be divided into categories based on this list.
-    categories = []
-    if ('outputGroups' in exp):
-        categories = exp['outputGroups']
+    categories = exp['outputGroups']
 
-    list_runs_of_category = []
-    if ('outputRawOfGroup' in exp):
-        list_runs_of_category = exp['outputRawOfGroup']
+    list_runs_of_category = exp['outputRawOfGroup']
 
     # In the category breakdown, these values will be displayed as a list of unqiue values instead of an average or being ignored.
-    list_category = []
-    if ('showAsList' in exp):
-        list_category = exp['showAsList']
+    list_category = exp['showAsList']
 
     # In the category breakdown, these values will be added up rather an showing an average or list.
-    sum_category = []
-    if ('showAsSum' in exp):
-        sum_category = exp['showAsSum']
+    sum_category = exp['showAsSum']
 
     # These attributes will be excluded from the raw run results and category breakdown. If one of these is listed as a category, runs will still be categorized by this attribute.
-    ignore_attributes = []
-    if ('ignoreFromAll' in exp):
-        ignore_attributes = exp['ignoreFromAll']
+    ignore_attributes = exp['ignoreFromAll']
 
     # These attributes will not be excluded from the raw run results but will be excluded from the category breakdown.
-    ignore_attributes_from_all_categories = []
-    if ('ignoreFromGroups' in exp):
-        ignore_attributes_from_all_categories = exp['ignoreFromGroups']
+    ignore_attributes_from_all_categories = exp['ignoreFromGroups']
 
     # These attributes will not be excluded from the raw run results but will be excluded from a specific category in the category breakdown.
-    ignore_attributes_from_specific_categories = []
-    if ('ignoreByGroup' in exp):
-        ignore_attributes_from_specific_categories = exp['ignoreByGroup']
+    ignore_attributes_from_specific_categories = exp['ignoreByGroup']
 
     # Runs with these attributes and values will be removed from the category breakdown. All runs will still be shown in the raw output.
-    invalidators = {}
-    if ('invalidators' in exp):
-        invalidators = exp['invalidators']
+    invalidators = exp['invalidators']
 
     # If a container is reused during one experiment (non-concurrent calls) they will be removed from the report.
-    removeDuplicateContainers = False
-    if ('removeDuplicateContainers' in exp):
-        removeDuplicateContainers = exp['removeDuplicateContainers']
+    removeDuplicateContainers = exp['removeDuplicateContainers']
 
-    overlapFilter = ""
-    if ('overlapFilter' in exp):
-        overlapFilter = exp['overlapFilter']
+    overlapFilter = exp['overlapFilter']
 
     for dictionary in responses:
         if 'vmID' in dictionary and 'vmuptime' in categories:
@@ -92,12 +63,6 @@ def report(responses, exp, addCPUModel):
             categories.remove('uuid')
             if 'uuid' in list_category:
                 list_category.remove('uuid')
-
-        if addCPUModel:
-            if 'cpuType' in dictionary:
-                dictionary['cpuType'] = dictionary['cpuType'] + " - Model " + str(dictionary['cpuModel'])
-                if 'platform' in dictionary:
-                    dictionary['cpuType'] = dictionary['cpuType']
 
     run_results = responses
 
@@ -149,7 +114,10 @@ def report(responses, exp, addCPUModel):
         run = run_results[i]
         for i in range(len(key_list)):
             if key_list[i] not in ignore_attributes:
-                line += str(run[key_list[i]]) + ","
+                if key_list[i] in run:
+                    line += str(run[key_list[i]]) + ","
+                else:
+                    line += "NONE,"
         line = line[:-1]
         output += line + "\n"
     output += "Successful Runs: " + str(len(run_results)) + "\n"
@@ -373,6 +341,4 @@ def report(responses, exp, addCPUModel):
                                 line += str(run[attribute]) + ","
                         line = line[:-1]
                         output += line + "\n"
-
-
     return output
