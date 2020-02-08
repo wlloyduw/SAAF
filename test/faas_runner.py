@@ -2,7 +2,7 @@
 
 #
 # FaaS Runner is an interface to run FaaS experiments. Feed in function.json files and experiment.json files
-# to determine how partest will execute and how the report will be generated.
+# to determine how an experiment will execute and how the report will be generated.
 #
 # @author Robert Cordingly
 #
@@ -34,7 +34,9 @@ defaultExperiment = {
     'callWithCLI': True,
     'callAsync': False,
     'memorySettings': [],
+    'parentPayload': {},
     'payloads': [{}],
+    'shufflePayloads': False,
     'runs': 10,
     'threads': 10,
     'iterations': 1,
@@ -54,9 +56,8 @@ defaultExperiment = {
     'combineSheets': False,
     'warmupBuffer': 0
 }
-#
+
 # Modes for parsing parameters.
-#
 class Mode(Enum):
     FUNC = 1
     EXP = 2

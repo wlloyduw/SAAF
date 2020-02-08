@@ -3,15 +3,13 @@
     "callAsync": false,
     "memorySettings": [],
     "payloads": [
-        { "name": "Bob" },
-        { "name": "Joe" },
-        { "name": "Steve" }
+        { "image": "pipeline" }
     ],
 
-    "runs": 50,
-    "threads": 50,
-    "iterations": 3,
-    "sleepTime": 5,
+    "runs": 1,
+    "threads": 1,
+    "iterations": 1,
+    "sleepTime": 0,
     "randomSeed": 42,
 
     "outputGroups": ["uuid", "cpuType", "vmuptime", "newcontainer", "endpoint", "containerID", "vmID", "zAll", "functionName", "lang"],
@@ -31,6 +29,7 @@
     
     "invalidators": {},
     "removeDuplicateContainers": false,
+    "overlapFilter": "",
 
     "openCSV": true,
     "combineSheets": true,

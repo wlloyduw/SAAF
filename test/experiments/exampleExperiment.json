@@ -2,6 +2,9 @@
     "callWithCLI": true,
     "callAsync": false,
     "memorySettings": [],
+    "parentPayload": {
+      "name": "Jose"
+    },
     "payloads": [
         { "name": "Bob" },
         { "name": "Joe" },
@@ -22,11 +25,11 @@
     "ignoreFromAll": ["zAll", "lang", "version", "linuxVersion", "platform", "hostname"],
     "ignoreFromGroups": ["1_run_id", "2_thread_id", "cpuModel", "cpuIdle", "cpuIowait", "cpuIrq", "cpuKrn", "cpuNice", "cpuSoftIrq", "cpuUsr"],
     "ignoreByGroup": {
-		"containerID": ["containerID"],
-		"cpuType": ["cpuType"],
-		"vmID": ["vmID"],
-    "zTenancy[vmID]": ["cpuType"],
-    "zTenancy[vmID[iteration]]": ["cpuType"]
+      "containerID": ["containerID"],
+      "cpuType": ["cpuType"],
+      "vmID": ["vmID"],
+      "zTenancy[vmID]": ["cpuType"],
+      "zTenancy[vmID[iteration]]": ["cpuType"]
     },
     
     "invalidators": {},

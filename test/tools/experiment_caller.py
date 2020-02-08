@@ -156,6 +156,7 @@ def callExperiment(functionList, exp):
     payload = exp['payloads']
     useCLI = exp['callWithCLI']
     randomSeed = exp['randomSeed']
+    shufflePayloads = exp['shufflePayloads']
     random.seed(randomSeed)
 
     function_calls = []
@@ -172,15 +173,19 @@ def callExperiment(functionList, exp):
                 'endpoint': func['endpoint']
             })
 
-    #
-    # Create a bunch of threads and run callThread.
-    # 
+    # Duplicate payloads so that the number of payloads >= number of runs.
+    # Shuffle if needed.
     payloadList = payload
     while (len(payloadList) < total_runs):
         payloadList += payload
-    random.shuffle(payloadList)
-    payloadIndex = 0
+    if (shufflePayloads):
+        random.shuffle(payloadList)
 
+
+    #
+    # Create threads and distribute payloads to threads.
+    #
+    payloadIndex = 0
     try:
         threadList = []
         for i in range(0, threads):

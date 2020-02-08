@@ -10,7 +10,7 @@ import subprocess
 from threading import Thread
 
 sys.path.append('./tools')
-from report_generator import report
+from report_generator import report_from_folder
 
 s3_client = boto3.client('s3')
 
@@ -110,28 +110,11 @@ elif (len(sys.argv) == 4):
     # Download files from s3 and delete from s3...
     download_dir('', './.s3cache', bucketName, delete)
 
-    # Load Json Files as Python dictionaries.
-    print("Files downloaded. Loading and generating report...")
-    run_list = []
-    for filename in os.listdir('./.s3cache'):
-        if filename.endswith(".json"):
-            try:
-                run = json.load(open('./.s3cache/' + str(filename)))
-                run_list.append(run)
-            except Exception as e:
-                print("Error loading: " + './.s3cache/' + str(filename) + " with exception " + str(e))
-                pass
-        else:
-            continue
-
-    print(str(run_list))
-
     # Create report text and save to csv file.
     print("Generating Report...")
     expName = os.path.basename(experimentfile)
     expName = expName.replace(".json", "")
-    exp = json.load(open(experimentfile))
-    partestResult = report(run_list, exp, True)
+    partestResult = report_from_folder("./.s3cache", json.load(open(experimentfile)))
 
     try:
         csvFilename = "./history" + "/" + "async-" + str(bucketName) + "-" + str(

@@ -17,7 +17,7 @@ from decimal import Decimal
 #
 # @author Robert Cordingly
 #
-def report(responses, exp, addCPUModel):
+def report(responses, exp):
     output = ""
     threads = exp['threads']
     total_runs = exp['runs']
@@ -342,3 +342,26 @@ def report(responses, exp, addCPUModel):
                         line = line[:-1]
                         output += line + "\n"
     return output
+
+
+def report_from_folder(path, exp):
+
+    if (not os.path.isdir(path)):
+        print("Directory does not exist!")
+        return ""
+
+    run_list = []
+    for filename in os.listdir(path):
+        if filename.endswith(".json"):
+            try:
+                run = json.load(open(path + '/' + str(filename)))
+                run_list.append(run)
+            except Exception as e:
+                print("Error loading: " + path + '/' + str(filename) + " with exception " + str(e))
+                pass
+        else:
+            continue
+
+    print(str(run_list))
+
+    return report(run_list, exp)

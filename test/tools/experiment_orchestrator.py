@@ -17,6 +17,12 @@ from enum import Enum
 from experiment_caller import callExperiment
 from report_generator import report
 
+#
+# Some platforms require you to redeploy you code to change
+# memory settings. This method uses a functions 'source' attribute
+# to locate the publish.sh script and redeploy your function with
+# a different memory setting.
+#
 def publish(func, memory):
     sourceDir = func['source']
     deployConfig = sourceDir + "/deploy/config.json"
@@ -61,7 +67,20 @@ def publish(func, memory):
 
         print(str(o))
 
+# For each experiment, merge each payload with 
+# the parent payload.
+def prepare_payloads(experiments):
+    for i, exp in enumerate(experiments):
+        parentPayload = exp['parentPayload']
+        for j, payload in enumerate(exp['payloads']):
+            newPayload = {**parentPayload, **payload}
+            experiments[i]['payloads'][j] = newPayload
+
+    return experiments
+
 def run_experiment(functions, experiments, outDir):
+
+    experiments = prepare_payloads(experiments)
 
     exp = experiments[0]
     expName = exp['experimentName']
@@ -124,7 +143,7 @@ def run_experiment(functions, experiments, outDir):
 
             if runList[i] != None:
                 print("Test complete! Generating report...")
-                partestResult = report(runList[i], exp, True)
+                partestResult = report(runList[i], exp)
 
                 try:
                     csvFilename = outDir + "/" + functionName + "-" + str(
@@ -134,6 +153,16 @@ def run_experiment(functions, experiments, outDir):
                         while (os.path.isfile(csvFilename + "-" + str(duplicates) + ".csv")):
                             duplicates += 1
                         csvFilename += "-" + str(duplicates)
+
+                    print("Writing raw runs to " + csvFilename)
+                    if not os.path.exists(csvFilename):
+                        os.makedirs(csvFilename)
+                        for i, run in enumerate(runList[i]):
+                            file = open(csvFilename + '/run' + str(i) + '.json', 'w') 
+                            file.write(json.dumps(run)) 
+                            file.close() 
+
+
                     csvFilename += ".csv"
                     text = open(csvFilename, "w")
                     text.write(str(partestResult))
@@ -154,7 +183,7 @@ def run_experiment(functions, experiments, outDir):
                     else:
                         print("Partest complete. " + str(csvFilename) + " created.")
                 except Exception:
-                    pass
+                    print("Error generating CSV results.")
 
             print("Sleeping before next test...")
             time.sleep(sleepTime)
@@ -170,7 +199,7 @@ def run_experiment(functions, experiments, outDir):
                             run['vmID[iteration]'] = run['vmID'] + "[" + str(i) + "]"
                     finalRunList.extend(runList[i])
             print(str(finalRunList))
-            partestResult = report(finalRunList, exp, False)
+            partestResult = report(finalRunList, exp)
             try:
                 csvFilename = outDir + "/" + functionName + "-" + str(
                     expName) + "-" + str(mem) + "MBs-COMBINED"

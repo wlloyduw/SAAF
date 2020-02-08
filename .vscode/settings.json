@@ -1,0 +1,115 @@
+{
+    "python.linting.enabled": true,
+    "python.linting.pylintEnabled": true,
+    "serverlessConsole.services": [
+        {
+            "type": "custom",
+            "title": "AWS",
+            "timeOffsetInMs": 0,
+            "awsProfile": "default",
+            "items": [
+                {
+                    "tabs": [
+                        {
+                            "logs": "/aws/lambda/calcService",
+                            "region": "us-east-1",
+                            "title": "dev"
+                        }
+                    ],
+                    "title": "/aws/lambda/calcService"
+                },
+                {
+                    "tabs": [
+                        {
+                            "logs": "/aws/lambda/dex_log",
+                            "region": "us-east-1",
+                            "title": "dev"
+                        }
+                    ],
+                    "title": "/aws/lambda/dex_log"
+                },
+                {
+                    "tabs": [
+                        {
+                            "logs": "/aws/lambda/multiCalcService",
+                            "region": "us-east-1",
+                            "title": "dev"
+                        }
+                    ],
+                    "title": "/aws/lambda/multiCalcService"
+                },
+                {
+                    "tabs": [
+                        {
+                            "logs": "/aws/lambda/serverlessrepo-blur-transform-1OMP1APLR7V44",
+                            "region": "us-east-1",
+                            "title": "dev"
+                        }
+                    ],
+                    "title": "/aws/lambda/serverlessrepo-blur-transform-1OMP1APLR7V44"
+                },
+                {
+                    "tabs": [
+                        {
+                            "logs": "/aws/lambda/serverlessrepo-compress-transform-OX3BERX5TGQS",
+                            "region": "us-east-1",
+                            "title": "dev"
+                        }
+                    ],
+                    "title": "/aws/lambda/serverlessrepo-compress-transform-OX3BERX5TGQS"
+                },
+                {
+                    "tabs": [
+                        {
+                            "logs": "/aws/lambda/serverlessrepo-resize-transform-1JP48WOHP9OJT",
+                            "region": "us-east-1",
+                            "title": "dev"
+                        }
+                    ],
+                    "title": "/aws/lambda/serverlessrepo-resize-transform-1JP48WOHP9OJT"
+                },
+                {
+                    "tabs": [
+                        {
+                            "logs": "/aws/lambda/serverlessrepo-rotate-transform-OVPC3A87QAQU",
+                            "region": "us-east-1",
+                            "title": "dev"
+                        }
+                    ],
+                    "title": "/aws/lambda/serverlessrepo-rotate-transform-OVPC3A87QAQU"
+                },
+                {
+                    "tabs": [
+                        {
+                            "logs": "/aws/lambda/serverlessrepo-sepia-transform-SJXFWQ26HD9Y",
+                            "region": "us-east-1",
+                            "title": "dev"
+                        }
+                    ],
+                    "title": "/aws/lambda/serverlessrepo-sepia-transform-SJXFWQ26HD9Y"
+                },
+                {
+                    "tabs": [
+                        {
+                            "logs": "/aws/lambda/shell",
+                            "region": "us-east-1",
+                            "title": "dev"
+                        }
+                    ],
+                    "title": "/aws/lambda/shell"
+                },
+                {
+                    "tabs": [
+                        {
+                            "logs": "/aws/lambda/shellOPEN",
+                            "region": "us-east-1",
+                            "title": "dev"
+                        }
+                    ],
+                    "title": "/aws/lambda/shellOPEN"
+                }
+            ]
+        }
+    ],
+    "serverlessConsole.autoRefreshInterval": 0
+}
