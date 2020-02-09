@@ -20,16 +20,23 @@
 
 cd "$(dirname "$0")"
 
-function=`cat ./config.json | jq '.functionName' | tr -d '"'`
-lambdaHandler=`cat ./config.json | jq '.lambdaHandler' | tr -d '"'`
-lambdaRole=`cat ./config.json | jq '.lambdaRoleARN' | tr -d '"'`
-lambdaSubnets=`cat ./config.json | jq '.lambdaSubnets' | tr -d '"'`
-lambdaSecurityGroups=`cat ./config.json | jq '.lambdaSecurityGroups' | tr -d '"'`
+# Load config.json if a value is not supplied.
+config="./config.json"
+if [[ ! -z $6 ]]
+then
+	config=$6
+fi
 
-json=`cat config.json | jq -c '.test'`
+function=`cat $config | jq '.functionName' | tr -d '"'`
+lambdaHandler=`cat $config | jq '.lambdaHandler' | tr -d '"'`
+lambdaRole=`cat $config | jq '.lambdaRoleARN' | tr -d '"'`
+lambdaSubnets=`cat $config | jq '.lambdaSubnets' | tr -d '"'`
+lambdaSecurityGroups=`cat $config | jq '.lambdaSecurityGroups' | tr -d '"'`
 
-ibmHandler=`cat ./config.json | jq '.ibmHandler' | tr -d '"'`
-ibmjson=`cat config.json | jq '.test' | tr -d '"' | tr -d '{' | tr -d '}' | tr -d ':'`
+json=`cat $config | jq -c '.test'`
+
+ibmHandler=`cat $config | jq '.ibmHandler' | tr -d '"'`
+ibmjson=`cat $config | jq '.test' | tr -d '"' | tr -d '{' | tr -d '}' | tr -d ':'`
 
 echo
 echo Deploying $function....

@@ -22,21 +22,28 @@
 
 cd "$(dirname "$0")"
 
-function=`cat ./config.json | jq '.functionName' | tr -d '"'`
+# Load config.json if a value is not supplied.
+config="./config.json"
+if [[ ! -z $6 ]]
+then
+	config=$6
+fi
 
-lambdaRole=`cat ./config.json | jq '.lambdaRoleARN' | tr -d '"'`
-lambdaSubnets=`cat ./config.json | jq '.lambdaSubnets' | tr -d '"'`
-lambdaSecurityGroups=`cat ./config.json | jq '.lambdaSecurityGroups' | tr -d '"'`
+function=`cat $config | jq '.functionName' | tr -d '"'`
 
-json=`cat config.json | jq -c '.test'`
-ibmjson=`cat config.json | jq '.test' | tr -d '"' | tr -d '{' | tr -d '}' | tr -d ':'`
+lambdaRole=`cat $config | jq '.lambdaRoleARN' | tr -d '"'`
+lambdaSubnets=`cat $config | jq '.lambdaSubnets' | tr -d '"'`
+lambdaSecurityGroups=`cat $config | jq '.lambdaSecurityGroups' | tr -d '"'`
+
+json=`cat $config | jq -c '.test'`
+ibmjson=`cat $config | jq '.test' | tr -d '"' | tr -d '{' | tr -d '}' | tr -d ':'`
 
 echo
 echo Deploying $function....
 echo
 
 #Define the memory value.
-memory=`cat ./config.json | jq '.memorySetting' | tr -d '"'`
+memory=`cat $config | jq '.memorySetting' | tr -d '"'`
 if [[ ! -z $5 ]]
 then
 	memory=$5

@@ -17,26 +17,33 @@
 # ./publish.sh AWS GCF IBM AZURE MEMORY
 # Example to deploy to AWS and Azure: ./publish.sh 1 0 0 1 1024
 #
-# Get the function name from the config.json file.
+# Get the function name from the config file.
 
 cd "$(dirname "$0")"
 
-# Get the function name from the config.json file.
-function=`cat ./config.json | jq '.functionName' | tr -d '"'`
+# Load config.json if a value is not supplied.
+config="./config.json"
+if [[ ! -z $6 ]]
+then
+	config=$6
+fi
 
-lambdaRole=`cat ./config.json | jq '.lambdaRoleARN' | tr -d '"'`
-lambdaSubnets=`cat ./config.json | jq '.lambdaSubnets' | tr -d '"'`
-lambdaSecurityGroups=`cat ./config.json | jq '.lambdaSecurityGroups' | tr -d '"'`
+# Get the function name from the config file.
+function=`cat $config | jq '.functionName' | tr -d '"'`
 
-json=`cat config.json | jq -c '.test'`
-ibmjson=`cat config.json | jq '.test' | tr -d '"' | tr -d '{' | tr -d '}' | tr -d ':'`
+lambdaRole=`cat $config | jq '.lambdaRoleARN' | tr -d '"'`
+lambdaSubnets=`cat $config | jq '.lambdaSubnets' | tr -d '"'`
+lambdaSecurityGroups=`cat $config | jq '.lambdaSecurityGroups' | tr -d '"'`
+
+json=`cat $config | jq -c '.test'`
+ibmjson=`cat $config | jq '.test' | tr -d '"' | tr -d '{' | tr -d '}' | tr -d ':'`
 
 echo
 echo Deploying $function...
 echo
 
 #Define the memory value.
-memory=`cat ./config.json | jq '.memorySetting' | tr -d '"'`
+memory=`cat $config | jq '.memorySetting' | tr -d '"'`
 if [[ ! -z $5 ]]
 then
 	memory=$5
