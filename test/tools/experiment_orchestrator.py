@@ -16,6 +16,7 @@ from enum import Enum
 
 from experiment_caller import callExperiment
 from report_generator import report
+from report_generator import write_file
 
 #
 # Some platforms require you to redeploy you code to change
@@ -67,10 +68,47 @@ def publish(func, memory):
 
         print(str(o))
 
+#
 # For each experiment, merge each payload with 
 # the parent payload.
+#
+# Load payloads from a folder if needed. Payloads will be
+# merged based off of this priority:
+# payloads > payloadfolder > parent
+#
+# If there are more payloads loaded from a folder than payloads in the list,
+# payloads in the list will be duplicated to match the size of the payload folder.
+#
 def prepare_payloads(experiments):
     for i, exp in enumerate(experiments):
+
+        # Load payloads from folder.
+        payloadFolder = exp['payloadFolder']
+        payloadsFromFolder = []
+        if (payloadFolder != "" and os.path.isdir(payloadFolder)):
+            for filename in os.listdir(payloadsFromFolder):
+                if filename.endswith(".json"):
+                    try:
+                        payloadsFromFolder.append(json.load(open(payloadsFromFolder + '/' + str(filename))))
+                    except Exception as e:
+                        print("Error loading: " + payloadsFromFolder + '/' + str(filename) + " with exception " + str(e))
+                        pass
+            
+            # Duplicate payloads to have same number as payloads folder. Trim some off if there is more.
+            while len(exp['payloads'] < len(payloadsFromFolder)):
+                exp['payloads'] += exp['payloads']
+            exp['payloads'] = exp['payloads'][:len(payloadsFromFolder)]
+
+            # Create new 'payloads' list based off loaded payloads.
+            newPayloadList = []
+            for j, payload in enumerate(exp['payloads']):
+                otherPayload = payloadsFromFolder[j]
+                newPayloadList.append({**otherPayload, **payload})
+            experiments[i]['payloads'] = newPayloadList
+        else:
+            print("Not loading payloads from folder. Either folder does not exist of payloadFolder is undefined.")
+
+        # Update payload list based off of parent payload.
         parentPayload = exp['parentPayload']
         for j, payload in enumerate(exp['payloads']):
             newPayload = {**parentPayload, **payload}
@@ -78,6 +116,11 @@ def prepare_payloads(experiments):
 
     return experiments
 
+#
+# This method andles executing the experiment with exeperiment_caller,
+# automatically changes memory values, calls the report_generator and
+# writes the output to disk.
+#
 def run_experiment(functions, experiments, outDir):
 
     experiments = prepare_payloads(experiments)
@@ -145,45 +188,9 @@ def run_experiment(functions, experiments, outDir):
                 print("Test complete! Generating report...")
                 partestResult = report(runList[i], exp)
 
-                try:
-                    csvFilename = outDir + "/" + functionName + "-" + str(
+                baseFileName = outDir + "/" + functionName + "-" + str(
                         expName) + "-" + str(mem) + "MBs-run" + str(i)
-                    if (os.path.isfile(csvFilename + ".csv")):
-                        duplicates = 1
-                        while (os.path.isfile(csvFilename + "-" + str(duplicates) + ".csv")):
-                            duplicates += 1
-                        csvFilename += "-" + str(duplicates)
-
-                    print("Writing raw runs to " + csvFilename)
-                    if not os.path.exists(csvFilename):
-                        os.makedirs(csvFilename)
-                        for i, run in enumerate(runList[i]):
-                            file = open(csvFilename + '/run' + str(i) + '.json', 'w') 
-                            file.write(json.dumps(run)) 
-                            file.close() 
-
-
-                    csvFilename += ".csv"
-                    text = open(csvFilename, "w")
-                    text.write(str(partestResult))
-                    text.close()
-
-                    if openCSV:
-                        print("Partest complete. Opening results...")
-                        if sys.platform == "linux" or sys.platform == "linux2":
-                            # linux
-                            subprocess.call(["xdg-open", csvFilename])
-                        elif sys.platform == "darwin":
-                            # MacOS
-                            subprocess.call(["open", csvFilename])
-                        elif sys.platform == "win32":
-                            # Windows...
-                            print("File created: " + str(csvFilename))
-                            pass
-                    else:
-                        print("Partest complete. " + str(csvFilename) + " created.")
-                except Exception:
-                    print("Error generating CSV results.")
+                write_file(baseFileName, partestResult, openCSV, runList[i])
 
             print("Sleeping before next test...")
             time.sleep(sleepTime)
@@ -200,31 +207,9 @@ def run_experiment(functions, experiments, outDir):
                     finalRunList.extend(runList[i])
             print(str(finalRunList))
             partestResult = report(finalRunList, exp)
-            try:
-                csvFilename = outDir + "/" + functionName + "-" + str(
+
+            baseFileName = outDir + "/" + functionName + "-" + str(
                     expName) + "-" + str(mem) + "MBs-COMBINED"
-                if (os.path.isfile(csvFilename + ".csv")):
-                    duplicates = 1
-                    while (os.path.isfile(csvFilename + "-" + str(duplicates) + ".csv")):
-                        duplicates += 1
-                    csvFilename += "-" + str(duplicates)
-                csvFilename += ".csv"
-                text = open(csvFilename, "w")
-                text.write(str(partestResult))
-                text.close()
-                if sys.platform == "linux" or sys.platform == "linux2":
-                    # linux
-                    subprocess.call(["xdg-open", csvFilename])
-                elif sys.platform == "darwin":
-                    # OS X
-                    subprocess.call(["open", csvFilename])
-                elif sys.platform == "win32":
-                    # Windows...
-                    print("File created: " + str(csvFilename))
-                    pass
-                else:
-                    print("Report generated. " + str(csvFilename) + " created.")
-            except Exception:
-                pass
+            write_file(baseFileName, partestResult, True)
 
     print("All tests complete!")

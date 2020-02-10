@@ -36,6 +36,7 @@ defaultExperiment = {
     'memorySettings': [],
     'parentPayload': {},
     'payloads': [{}],
+    'payloadFolder': '',
     'shufflePayloads': False,
     'runs': 10,
     'threads': 10,

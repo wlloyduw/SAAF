@@ -11,9 +11,13 @@ from threading import Thread
 
 sys.path.append('./tools')
 from report_generator import report_from_folder
+from report_generator import write_file
 
 s3_client = boto3.client('s3')
 
+#
+# Download a file from S3.
+#
 def pull_file(client, bucket, k, local, delete):
     success = False
     tries = 0
@@ -116,32 +120,6 @@ elif (len(sys.argv) == 4):
     expName = expName.replace(".json", "")
     partestResult = report_from_folder("./.s3cache", json.load(open(experimentfile)))
 
-    try:
-        csvFilename = "./history" + "/" + "async-" + str(bucketName) + "-" + str(
-            expName)
-        if (os.path.isfile(csvFilename + ".csv")):
-            duplicates = 1
-            while (os.path.isfile(csvFilename + "-" + str(duplicates) + ".csv")):
-                duplicates += 1
-            csvFilename += "-" + str(duplicates)
-        csvFilename += ".csv"
-        text = open(csvFilename, "w")
-        text.write(str(partestResult))
-        text.close()
+    baseFileName = "./history" + "/" + "async-" + str(bucketName) + "-" + str(expName)
 
-        print("Opening results...")
-        if sys.platform == "linux" or sys.platform == "linux2":
-            # linux
-            subprocess.call(["xdg-open", csvFilename])
-        elif sys.platform == "darwin":
-            # MacOS
-            subprocess.call(["open", csvFilename])
-        elif sys.platform == "win32":
-            # Windows...
-            print("File created: " + str(csvFilename))
-            pass
-        else:
-            print("Partest complete. " + str(csvFilename) + " created.")
-    except Exception as e:
-        print("Exception occurred: " + str(e))
-        pass
+    write_file(baseFileName, partestResult, True)

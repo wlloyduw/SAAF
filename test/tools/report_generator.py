@@ -343,9 +343,10 @@ def report(responses, exp):
                         output += line + "\n"
     return output
 
-
+#
+# Generate a report based off of a folder of payloads.
+#
 def report_from_folder(path, exp):
-
     if (not os.path.isdir(path)):
         print("Directory does not exist!")
         return ""
@@ -363,5 +364,48 @@ def report_from_folder(path, exp):
             continue
 
     print(str(run_list))
-
     return report(run_list, exp)
+
+#
+# Write the output file of a report, print a folder of runs if needed.
+#
+def write_file(baseFileName, data, openFile, runList = []):
+    try:
+        if (os.path.isfile(baseFileName + ".csv")):
+            duplicates = 1
+            while (os.path.isfile(baseFileName + "-" + str(duplicates) + ".csv")):
+                duplicates += 1
+            baseFileName += "-" + str(duplicates)
+
+        # Write runs to folder if needed.
+        if (len(runList) > 0):
+            print("Writing raw runs to folder " + baseFileName)
+            if not os.path.exists(baseFileName):
+                os.makedirs(baseFileName)
+                for i, run in enumerate(runList):
+                    file = open(baseFileName + '/run' + str(i) + '.json', 'w') 
+                    file.write(json.dumps(run)) 
+                    file.close() 
+
+        baseFileName += ".csv"
+        text = open(baseFileName, "w")
+        text.write(str(data))
+        text.close()
+
+        if (openFile):
+            print("Opening results...")
+            if sys.platform == "linux" or sys.platform == "linux2":
+                # linux
+                subprocess.call(["xdg-open", baseFileName])
+            elif sys.platform == "darwin":
+                # MacOS
+                subprocess.call(["open", baseFileName])
+            elif sys.platform == "win32":
+                # Windows...
+                print("File created: " + str(baseFileName))
+                pass
+            else:
+                print("Partest complete. " + str(baseFileName) + " created.")
+    except Exception as e:
+        print("Exception occurred: " + str(e))
+        pass
