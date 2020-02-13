@@ -23,7 +23,7 @@ from experiment_orchestrator import publish, run_experiment
 
 # Default function options:
 defaultFunction = {
-    'function': 'helloWorld',
+    'function': 'HELLOWORLD',
     'platform': 'AWS Lambda',
     'source': '../java_template',
     'endpoint': ''
@@ -41,7 +41,7 @@ defaultExperiment = {
     'runs': 10,
     'threads': 10,
     'iterations': 1,
-    'sleepTime': 1,
+    'sleepTime': 0,
     'randomSeed': 42,
     'outputGroups': [],
     'outputRawOfGroup': [],
@@ -55,7 +55,8 @@ defaultExperiment = {
     'overlapFilter': "",
     'openCSV': True,
     'combineSheets': False,
-    'warmupBuffer': 0
+    'warmupBuffer': 0,
+    'experimentName': "DEFAULT-EXP"
 }
 
 # Modes for parsing parameters.
@@ -69,9 +70,7 @@ class Mode(Enum):
 #
 # Use command line arguments to select function and experiments.
 #
-if ("-f" not in sys.argv or "-e" not in sys.argv):
-    print("Please supply parameteres! Usage:\n./faas_runner.py -f {PATH TO FUNCTION JSON} -e {PATH TO EXPERIMENT JSON} -o {OPTIONAL: PATH FOR OUTPUT}")
-elif (len(sys.argv) > 1):
+if (len(sys.argv) > 1):
 
     mode = Mode.NONE
 
@@ -92,7 +91,7 @@ elif (len(sys.argv) > 1):
         elif ('--' in arg):
             mode = Mode.OVERRIDE
             overrideAttribute = arg[2:]
-            overrides.overrideAttribute = ""
+            overrides[overrideAttribute] = ""
         else:
             if mode == Mode.FUNC:
                 functionList.append(arg)
@@ -101,46 +100,72 @@ elif (len(sys.argv) > 1):
             elif mode == Mode.OUT:
                 outDir = arg
             elif mode == Mode.OVERRIDE:
-                overrides.overrideAttribute += arg
+                overrides[overrideAttribute] += arg
 
-    if (len(functionList) > 0 and len(expList) > 0):
-        if (not os.path.isdir(outDir)):
-            os.mkdir(outDir)
+    print("\nOverrides: " + str(overrides))
 
-        loadedFunctions = []
-        loadedExperiments = []
+    #if (len(functionList) > 0 and len(expList) > 0 or True):
+    if (not os.path.isdir(outDir)):
+        os.mkdir(outDir)
 
-        # Load in function files
-        for function in functionList:
-            nextFunction = json.load(open(function))
-            nextFunction['sourceFile'] = function
+    loadedFunctions = []
+    loadedExperiments = []
 
-            # Set default options if needed.
-            for key in defaultFunction:
-                if key not in nextFunction:
-                    nextFunction[key] = defaultFunction[key]
-                    print("ERROR: " + str(key) + " missing in function file! Using default option of " 
-                        + str(defaultFunction[key]))
+    # Load in place the function files as dictionaries.
+    for index, function in enumerate(functionList):
+        nextFunction = json.load(open(function))
+        nextFunction['sourceFile'] = function
+        functionList[index] = nextFunction
 
-            loadedFunctions.append(nextFunction)
+    # Load in place the experiments files as dictionaries.
+    for index, experiment in enumerate(expList):
+        nextExperiment = json.load(open(experiment))
+        nextExperiment['sourceFile'] = experiment
+        nextExperiment['experimentName'] = os.path.basename(experiment).replace(".json", "")
+        expList[index] = nextExperiment
 
-        # Load in experiment files
-        for experiment in expList:
-            nextExperiment = json.load(open(experiment))
-            nextExperiment['sourceFile'] = experiment
-            nextExperiment['experimentName'] = os.path.basename(experiment).replace(".json", "")
+    # Add in default function in the event none are supplied.
+    if (len(functionList) == 0):
+        functionList.append(defaultFunction)
 
-            # Set default options if needed.
-            for key in defaultExperiment:
-                if key not in nextExperiment:
-                    nextExperiment[key] = defaultExperiment[key]
-                    print("ERROR: " + str(key) + " missing in experiment file! Using default option of " 
-                        + str(defaultExperiment[key]))
-            loadedExperiments.append(nextExperiment)
+    # Add in default experiment in the event none are supplied.
+    if (len(expList) == 0):
+        expList.append(defaultExperiment)
 
-        run_experiment(loadedFunctions, loadedExperiments, outDir)
-    else:
-        print("Please supply parameteres! Usage:\n./faas_runner.py -f {PATH TO FUNCTION JSON} -e {PATH TO EXPERIMENT JSON} -o {OPTIONAL: PATH FOR OUTPUT}")
+    # Apply inheritance to function objects.
+    for function in functionList:
+        # Set default options if needed.
+        for key in defaultFunction:
+            if key not in function:
+                function[key] = defaultFunction[key]
+                print("\nERROR: " + str(key) + " missing in function file! Using default option of " 
+                    + str(defaultFunction[key]))
+
+        # Add in overrides for function.
+        for key in overrides:
+            function[key] = overrides[key]
+
+        print("\nLoaded function: " + str(function))
+        loadedFunctions.append(function)
+
+    # Load in experiment files
+    for experiment in expList:
+        # Set default options if needed.
+        for key in defaultExperiment:
+            if key not in experiment:
+                experiment[key] = defaultExperiment[key]
+                print("\nERROR: " + str(key) + " missing in experiment file! Using default option of " 
+                    + str(defaultExperiment[key]))
+
+        # Add in overrides for experiments.
+        for key in overrides:
+            experiment[key] = overrides[key]
+
+        print("\nLoaded experiment: " + str(experiment))
+        loadedExperiments.append(experiment)
+
+    run_experiment(loadedFunctions, loadedExperiments, outDir)
 else:
-    print("Please supply parameteres! Usage:\n./faas_runner.py -f {PATH TO FUNCTION JSON} -e {PATH TO EXPERIMENT JSON} -o {OPTIONAL: PATH FOR OUTPUT}")
+    print("Please supply parameteres! Usage:\n" +
+    "./faas_runner.py -f {PATH TO FUNCTION JSON} -e {PATH TO EXPERIMENT JSON} -o {OPTIONAL: PATH FOR OUTPUT}")
 
