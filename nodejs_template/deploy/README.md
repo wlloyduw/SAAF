@@ -84,3 +84,11 @@ The publish script is meant to simplify the process of deploying functions and r
 # Deploy to AWS with 3GBs:
 ./publish.sh 1 0 0 0 3008
 ```
+
+## Multiple Configuration Files
+
+If you want to use more than one configuration file you can supply a path to a file as the optional last command line argument.
+
+``` bash 
+./publish.sh 1 1 1 1 128 ./otherConfig.json
+```

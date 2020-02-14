@@ -14,7 +14,7 @@
 #
 # Choose which platforms to deploy to using command line arguments:
 # ./publish.sh AWS GCF IBM AZURE MEMORY
-# Example to deploy to AWS and Azure: ./publish.sh 1 0 0 1 1024
+# Example to deploy to AWS and Azure: ./publish.sh 1 0 0 1 1024 {OPTIONAL PATH TO CSV}
 #
 # Get the function name from the config.json file.
 
@@ -32,6 +32,7 @@ lambdaHandler=`cat $config | jq '.lambdaHandler' | tr -d '"'`
 lambdaRole=`cat $config | jq '.lambdaRoleARN' | tr -d '"'`
 lambdaSubnets=`cat $config | jq '.lambdaSubnets' | tr -d '"'`
 lambdaSecurityGroups=`cat $config | jq '.lambdaSecurityGroups' | tr -d '"'`
+lambdaEnvironment=`cat $config | jq '.lambdaEnvironment' | tr -d '"'`
 
 json=`cat $config | jq -c '.test'`
 
@@ -66,7 +67,7 @@ then
 	aws lambda create-function --function-name $function --runtime java8 --role $lambdaRole --timeout 900 --handler $lambdaHandler --zip-file fileb://lambda_test-1.0-SNAPSHOT.jar
 	aws lambda update-function-code --function-name $function --zip-file fileb://lambda_test-1.0-SNAPSHOT.jar
 	aws lambda update-function-configuration --function-name $function --memory-size $memory --runtime java8 \
-	--vpc-config SubnetIds=[$lambdaSubnets],SecurityGroupIds=[$lambdaSecurityGroups]
+	--vpc-config SubnetIds=[$lambdaSubnets],SecurityGroupIds=[$lambdaSecurityGroups] --environment "$lambdaEnvironment"
 	cd ..
 	cd deploy
 
