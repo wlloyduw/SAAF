@@ -34,7 +34,7 @@ lambdaSubnets=`cat $config | jq '.lambdaSubnets' | tr -d '"'`
 lambdaSecurityGroups=`cat $config | jq '.lambdaSecurityGroups' | tr -d '"'`
 lambdaEnvironment=`cat $config | jq '.lambdaEnvironment' | tr -d '"'`
 
-json=`cat $config | jq -c '.test'`
+json=`cat $config | jq -c -a '.test'`
 
 ibmHandler=`cat $config | jq '.ibmHandler' | tr -d '"'`
 ibmjson=`cat $config | jq '.test' | tr -d '"' | tr -d '{' | tr -d '}' | tr -d ':'`
@@ -73,7 +73,7 @@ then
 
 	echo
 	echo Testing function on AWS Lambda...
-	aws lambda invoke --invocation-type RequestResponse --cli-read-timeout 900 --function-name $function --payload $json /dev/stdout
+	aws lambda invoke --invocation-type RequestResponse --cli-read-timeout 900 --function-name $function --payload "$json" /dev/stdout
 fi
 
 # Deploy onto IBM Cloud Functions

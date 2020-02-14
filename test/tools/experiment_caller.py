@@ -29,7 +29,7 @@ def callAWS(function, payload, callAsync):
            '450', '--function-name', str(function['endpoint']), '--payload', payload, '/dev/stdout']
     if (callAsync):
         cmd = ['aws', 'lambda', 'invoke', '--invocation-type', 'Event', '--cli-read-timeout', 
-               '450', '--function-name', str(function['endpoint']), '--payload', payload, '/dev/stdout']
+               '450', '--function-name', str(function['endpoint']), '--payload', '"' + payload + '"', '/dev/stdout']
     proc = subprocess.Popen( cmd, bufsize=-1, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     o, e = proc.communicate()
     print("STDOUT: " + str(o.decode('ascii')) + "\nSTDERR: " + str(e.decode('ascii')))
