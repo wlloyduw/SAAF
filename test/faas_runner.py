@@ -159,7 +159,18 @@ if (len(sys.argv) > 1):
 
         # Add in overrides for experiments.
         for key in overrides:
-            experiment[key] = overrides[key]
+            value = overrides[key]
+
+            try:
+                # Try to load as an integer
+                experiment[key] = int(overrides[key])
+            except ValueError:
+                try:
+                    # Try to load a JSON
+                    experiment[key] = json.loads(overrides[key])
+                except ValueError as e:
+                    # Give up and load a string
+                    experiment[key] = overrides[key]
 
         print("\nLoaded experiment: " + str(experiment))
         loadedExperiments.append(experiment)

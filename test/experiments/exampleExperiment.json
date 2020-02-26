@@ -6,7 +6,7 @@
       "name": "Jose"
     },
     "payloads": [
-        { "name": "Bob" },
+        { "name": "Bob Amazing" },
         { "name": "Joe" },
         { "name": "Steve" }
     ],
@@ -40,5 +40,3 @@
     "combineSheets": true,
     "warmupBuffer": 1
 } 
-
-
