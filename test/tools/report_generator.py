@@ -67,6 +67,20 @@ def report(responses, exp):
     run_results = responses
 
     #
+    # Fill in missing keys.
+    #
+    runKeyList = []
+    for run in run_results:
+        for key in list(run.keys()):
+            if key not in runKeyList:
+                runKeyList.append(key)
+    for run in run_results:
+        for key in runKeyList:
+            if key not in run:
+                print("PAYLOADS DO NOT CONTAIN EQUIVALENT ATTRIBUTES. MISSING ATTRIBUTES WILL BE FILLED WITH -999999999999 PURPOSEFULLY MAKING SUMS AND AVERAGES INCORRECT AS THEY CAN NO LONGER BE CALCULATED PROPERLY.")
+                run[key] = -999999999999
+
+    #
     # Insert runtimeOverlap into runs.  
     #
     if 'startTime' in run_results[0] and 'endTime' in run_results[0]:
@@ -74,7 +88,7 @@ def report(responses, exp):
             run1 = run_results[i]
             start1 = int(run1['startTime'])
             end1 = int(run1['endTime'])
-            length1 = end1 - start1
+            length1 = max(end1 - start1, 1)
             totalDist = 0
             for j in range(len(run_results)):
                 if i == j: continue
@@ -254,7 +268,10 @@ def report(responses, exp):
             output += csv_header + "\n"
 
             # Print out each run of this category.
-            sub_key_list.sort()
+            try:
+                sub_key_list.sort()
+            except Exception as e:
+                print(str(e))
             for i in range(len(sub_key_list)):
                 run_list = key_map[key_value][sub_key_list[i]]
                 uses_of_category = len(run_list)
@@ -277,19 +294,28 @@ def report(responses, exp):
                                 run_dict = run_list[k]
                                 if run_dict[attribute] not in attribute_list:
                                     attribute_list.append(run_dict[attribute])
-                            attribute_list.sort()
+                            try:
+                                attribute_list.sort()
+                            except Exception as e:
+                                print("Could not perform sort... " + str(e))
                             line += str(attribute_list).replace(',', ';') + ","
                         elif attribute in sum_category:
                             total_value = 0
                             for k in range(len(run_list)):
                                 run_dict = run_list[k]
-                                total_value += Decimal(run_dict[attribute])
+                                try:
+                                    total_value += Decimal(run_dict[attribute])
+                                except Exception as e:
+                                    print("Could not perform math... " + str(e))
                             line += str(total_value) + ","
                         else:
                             total_value = 0
                             for k in range(len(run_list)):
                                 run_dict = run_list[k]
-                                total_value += Decimal(run_dict[attribute])
+                                try:
+                                    total_value += Decimal(run_dict[attribute])
+                                except Exception as e:
+                                    print("Could not perform math..." + str(e))
                             line += str(round((total_value /
                                                len(run_list)), 2)) + ","
                 line = line[:-1]
