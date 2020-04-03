@@ -148,7 +148,7 @@ By utilizing default options, you can execute an function on AWS Lambda, using t
 ./faas_runner -e ./experiment.json --function helloWorld
 ```
 
-**WARNING:** Overwritten attributes will be saved as strings with spaces removed. Casting into numbers or JSON objects when appropriate is not implemented yet.
+Overwritten attributes will attempt to be first casted into numbers, then JSON objects, and finally into strings.
 
 # Analyzing Output:
 
