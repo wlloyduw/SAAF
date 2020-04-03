@@ -471,6 +471,11 @@ public class Inspector {
      */
     public void consumeResponse(Response response) {
         Map<String, Object> responseMap = beanProperties(response);
+        if (responseMap == null) {
+            attributes.put("SAAFConsumeReponseError", "There was an error consuming the response object. See logs for details."+             
+            "Response object may have fields that were null or could not be cast.");
+            return;
+        }
         responseMap.keySet().forEach((s) -> {
             attributes.put(s, responseMap.get(s));
         });
@@ -486,6 +491,17 @@ public class Inspector {
         this.addTimeStamp("runtime");
         attributes.put("endTime", System.currentTimeMillis());
         return attributes;
+    }
+
+    /**
+     * Finalize the Inspector. Calculator the total runtime and return the HashMap
+     * object containing all attributes collected and onsume a response object.
+     *
+     * @return Attributes collected by the Inspector.
+     */
+    public HashMap<String, Object> finish(Response response) {
+        consumeResponse(response);
+        return finish();
     }
 
     /**
@@ -570,12 +586,14 @@ public class Inspector {
                             | IllegalArgumentException
                             | InvocationTargetException e) {
                                 // replace this with better error handling
+                                System.out.println(e.toString());
                                 return null;
                             }
                         }));
-        } catch (IntrospectionException e) {
-            // and this, too
-            return Collections.emptyMap();
-        }
+        } catch (Exception e) {
+            // replace this with better error handling
+            System.out.println(e.toString());
+            return null;
+        } 
     }
 }
