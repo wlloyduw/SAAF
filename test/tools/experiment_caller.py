@@ -103,6 +103,9 @@ def callPostProcessor(function, response, thread_id, run_id, payload, roundTripT
                 ',', ';').replace('\t', '\\t').replace('\n', '\\n')
 
         print("Run " + str(thread_id) + "." + str(run_id) + " successful.")
+
+        return dictionary
+
     except Exception as e:
         if (response == None):
             print("Run " + str(thread_id) + "." +
@@ -110,6 +113,7 @@ def callPostProcessor(function, response, thread_id, run_id, payload, roundTripT
         else:
             print("Run " + str(thread_id) + "." +
                 str(run_id) + " Failed with exception: " + str(e) + ".\nRequest Response: " + str(response))
+        return {}
 
 #
 # Define a function to be called by each thread.
@@ -147,7 +151,58 @@ def callThread(thread_id, runs, function, exp, myPayloads):
         callPostProcessor(function, response, thread_id, i, payload, timeSinceStart)
 
 #
-# Run a partest with multiple functions and an experiment
+# Define a pipeline to be called by each thread.
+#
+def callPipelineThread(thread_id, seqIterations, functions, experiments, myPayloads):
+
+    for j in range(0, seqIterations): 
+
+        passOn = {}
+
+        for i in range(0, len(functions)):
+            function = functions[i]
+            exp = experiments[i]
+            callPayload = myPayloads[i + (j * seqIterations)]
+
+            callAsync = exp['callAsync']
+
+            startTime = 0
+            response = None
+
+            # Format payload for pipeline.
+            if (exp['passPayloads']):
+                lastPayload = callPayload
+                for transition in list(exp['transitions'].keys()):
+                    if transition in passOn:
+                        lastPayload[str(exp['transitions'][transition])] = passOn[transition]
+
+                callPayload = {**passOn, **lastPayload}
+                payload = str(json.dumps(callPayload))
+            else:
+                payload = str(json.dumps(callPayload))
+                
+            print("Call Payload: " + str(callPayload))
+
+            startTime = time.time()
+            platform = function['platform']
+            response = ""
+
+            # Make call depending on platform.
+            if (platform == 'HTTP' or platform == 'Azure'):
+                response = callHTTP(function, payload)
+            elif (platform == 'AWS Lambda'):
+                response = callAWS(function, payload, callAsync)
+            elif (platform == 'Google'):
+                response = callGoogle(function, payload)
+            elif (platform == 'IBM'):
+                response = callIBM(function, payload)
+
+            timeSinceStart = round((time.time() - startTime) * 100000) / 100
+
+            passOn = callPostProcessor(function, response, thread_id, j, payload, timeSinceStart)
+
+#
+# Run a partest with multiple functions and an experiment all functions will be called concurrently.
 #
 def callExperiment(functionList, exp):
     threads = exp['threads']
@@ -181,7 +236,6 @@ def callExperiment(functionList, exp):
     if (shufflePayloads):
         random.shuffle(payloadList)
 
-
     #
     # Create threads and distribute payloads to threads.
     #
@@ -199,6 +253,89 @@ def callExperiment(functionList, exp):
                 thread = Thread(target=callThread, args=(i, runs_per_thread, function_calls[j], exp, payloadsForThread))
                 thread.start()
                 threadList.append(thread)
+        for i in range(len(threadList)):
+            threadList[i].join()
+    except Exception as e:
+        print("Error making request: " + str(e))
+
+    #
+    # Print results of each run.
+    #
+    if len(run_results) == 0:
+        print ("ERROR - ALL REQUESTS FAILED")
+        return None
+    
+    return run_results
+
+#
+# Run a pipeline of multiple functions and experiments.
+# The first experiment will be used as the "master" experiment
+# to define number of threads and runs. Payloads and other data
+# will be pulled from each other payload file. 
+#
+# Pipelines can only execute linearly in the order that function
+# and experiment files are provided in the arrays.
+#
+def callPipelineExperiment(functionList, experimentList):
+
+    if (len(functionList) != len(experimentList)):
+        print("ERROR! For pipelines an equal number of experiments and functions must be provided!")
+        return None
+
+    # Get values from master experiment file.
+    threads = experimentList[0]['threads']
+    total_runs = experimentList[0]['runs']
+    useCLI = experimentList[0]['callWithCLI']
+    randomSeed = experimentList[0]['randomSeed']
+    seqIterations = int(total_runs / threads)
+
+    pipelineLength = len(functionList)
+
+    # Preprocess Endpoints...
+    function_calls = []
+    for i in range(0, len(functionList)):
+        func = functionList[i]
+        if useCLI:
+            function_calls.append({
+                'platform': func['platform'],
+                'endpoint': func['function']
+            })
+        else:
+            function_calls.append({
+                'platform': "HTTP",
+                'endpoint': func['endpoint']
+            })
+
+    random.seed(randomSeed)
+
+    #
+    # Create threads and distribute payloads to threads.
+    #
+    payloadIndex = 0
+    try:
+        threadList = []
+        for i in range(0, threads):
+
+            globalPayloadList = []
+
+            for x in range(0, seqIterations):
+                for j in range(0, len(experimentList)):
+                    tempPayloadList = experimentList[j]['payloads']
+                    shufflePayloads = experimentList[j]['shufflePayloads']
+
+                    # Duplicate payloads so that the number of payloads >= number of runs.
+                    # Shuffle if needed.
+                    payloadList = tempPayloadList
+                    while (len(payloadList) < total_runs):
+                        payloadList += tempPayloadList
+                    if (shufflePayloads):
+                        random.shuffle(payloadList)
+
+                    globalPayloadList.append(payloadList[0])
+
+            thread = Thread(target=callPipelineThread, args=(i, seqIterations, function_calls, experimentList, globalPayloadList))
+            thread.start()
+            threadList.append(thread)
         for i in range(len(threadList)):
             threadList[i].join()
     except Exception as e:

@@ -8,6 +8,7 @@ import random
 import subprocess
 import sys
 import time
+import uuid
 from decimal import Decimal
 
 #
@@ -409,7 +410,8 @@ def write_file(baseFileName, data, openFile, runList = []):
             if not os.path.exists(baseFileName):
                 os.makedirs(baseFileName)
                 for i, run in enumerate(runList):
-                    file = open(baseFileName + '/run' + str(i) + '.json', 'w') 
+                    temp = uuid.uuid4()
+                    file = open(baseFileName + '/run' + str(i) + '-' + str(temp) + '.json', 'w') 
                     file.write(json.dumps(run)) 
                     file.close() 
 

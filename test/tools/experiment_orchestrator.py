@@ -15,6 +15,7 @@ from decimal import Decimal
 from enum import Enum
 
 from experiment_caller import callExperiment
+from experiment_caller import callPipelineExperiment
 from report_generator import report
 from report_generator import write_file
 
@@ -182,11 +183,17 @@ def run_experiment(functions, experiments, outDir):
 
         for i in range(iterations):
             print("Running test " + str(i) + ": ")
-            runList.append(callExperiment([func], exp))
+
+            if (len(experiments) > 1 and len(functions) > 1 and len(experiments) == len(functions)):
+                runList.append(callPipelineExperiment(functions, experiments))
+            else:
+                runList.append(callExperiment([func], exp))
 
             if runList[i] != None:
                 print("Test complete! Generating report...")
                 partestResult = report(runList[i], exp)
+
+                print(partestResult)
 
                 baseFileName = outDir + "/" + functionName + "-" + str(
                         expName) + "-" + str(mem) + "MBs-run" + str(i)

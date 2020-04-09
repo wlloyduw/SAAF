@@ -56,7 +56,9 @@ defaultExperiment = {
     'openCSV': True,
     'combineSheets': False,
     'warmupBuffer': 0,
-    'experimentName': "DEFAULT-EXP"
+    'experimentName': "DEFAULT-EXP",
+    'passPayloads': False,
+    'transitions': {}
 }
 
 # Modes for parsing parameters.
