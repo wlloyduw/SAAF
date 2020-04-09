@@ -17,6 +17,7 @@ import sys
 import time
 from decimal import Decimal
 from threading import Thread
+from pipeline_transition import transition_function
 
 # Results of calls will be placed into this array.
 run_results = []
@@ -159,7 +160,8 @@ def callPipelineThread(thread_id, seqIterations, functions, experiments, myPaylo
 
         passOn = {}
 
-        for i in range(0, len(functions)):
+        i = 0
+        while (i >= 0 and i < len(functions) and i is not None):
             function = functions[i]
             exp = experiments[i]
             callPayload = myPayloads[i + (j * seqIterations)]
@@ -200,6 +202,8 @@ def callPipelineThread(thread_id, seqIterations, functions, experiments, myPaylo
             timeSinceStart = round((time.time() - startTime) * 100000) / 100
 
             passOn = callPostProcessor(function, response, thread_id, j, payload, timeSinceStart)
+
+            i = transition_function(i, functions, experiments, myPayloads, passOn)
 
 #
 # Run a partest with multiple functions and an experiment all functions will be called concurrently.
