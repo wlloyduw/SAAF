@@ -126,16 +126,31 @@ if (len(sys.argv) > 1):
         nextExperiment['experimentName'] = os.path.basename(experiment).replace(".json", "")
         expList[index] = nextExperiment
 
-    # Add in default function in the event none are supplied.
+    # Add in default function in the event none are supplied. If parameters have indices add more default functions.
     if (len(functionList) == 0):
-        functionList.append(defaultFunction)
 
-    # Add in default experiment in the event none are supplied.
+        maxFunctions = 1
+        for key in overrides:
+            if '[' in key and ']' in key:
+                subIndex = int(key[key.find('[')+1:key.find(']')]) + 1
+                if subIndex > maxFunctions: maxFunctions = subIndex
+
+        for i in range(0, maxFunctions):
+            functionList.append(defaultFunction)
+
+    # Add in default experiment in the event none are supplied. If parameters have indices add more default experiments.
     if (len(expList) == 0):
-        expList.append(defaultExperiment)
+        maxExperiments = 1
+        for key in overrides:
+            if '[' in key and ']' in key:
+                subIndex = int(key[key.find('[')+1:key.find(']')]) + 1
+                if subIndex > maxExperiments: maxExperiments = subIndex
+
+        for i in range(0, maxExperiments):
+            expList.append(defaultExperiment)
 
     # Apply inheritance to function objects.
-    for function in functionList:
+    for index, function in enumerate(functionList):
         # Set default options if needed.
         for key in defaultFunction:
             if key not in function:
@@ -145,13 +160,22 @@ if (len(sys.argv) > 1):
 
         # Add in overrides for function.
         for key in overrides:
-            function[key] = overrides[key]
+
+            modKey = key
+
+            # If the key has an index skip it if index does not match function index.
+            if '[' in key and ']' in key:
+                subIndex = int(key[key.find('[')+1:key.find(']')])
+                if index != subIndex: continue
+                modKey = key[:key.find('[')]
+
+            function[modKey] = overrides[key]
 
         print("\nLoaded function: " + str(function))
         loadedFunctions.append(function)
 
     # Load in experiment files
-    for experiment in expList:
+    for index, experiment in enumerate(expList):
         # Set default options if needed.
         for key in defaultExperiment:
             if key not in experiment:
@@ -161,18 +185,26 @@ if (len(sys.argv) > 1):
 
         # Add in overrides for experiments.
         for key in overrides:
-            value = overrides[key]
 
+            modKey = key
+
+            # If the key has an index skip it if index does not match experiment index.
+            if '[' in key and ']' in key:
+                subIndex = int(key[key.find('[')+1:key.find(']')])
+                if index != subIndex: continue
+                modKey = key[:key.find('[')]
+
+            value = overrides[key]
             try:
                 # Try to load as an integer
-                experiment[key] = int(overrides[key])
+                experiment[modKey] = int(overrides[key])
             except ValueError:
                 try:
                     # Try to load a JSON
-                    experiment[key] = json.loads(overrides[key])
+                    experiment[modKey] = json.loads(overrides[key])
                 except ValueError as e:
                     # Give up and load a string
-                    experiment[key] = overrides[key]
+                    experiment[modKey] = overrides[key]
 
         print("\nLoaded experiment: " + str(experiment))
         loadedExperiments.append(experiment)

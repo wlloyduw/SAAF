@@ -6,7 +6,7 @@
 # more complex state machines to be created. The order can be changed based on results, functions can
 # be skipped altogether or rerun just by changing the index. 
 #
-# Set the index to -1 or a value greater than the number of functions to break out of the loop.
+# Set the index to -1, None, or a value greater than the number of functions to break out of the loop.
 #
 # @author Robert Cordingly
 #
