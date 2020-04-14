@@ -161,15 +161,15 @@ if (len(sys.argv) > 1):
         # Add in overrides for function.
         for key in overrides:
 
-            modKey = key
+            modifiedKey = key
 
             # If the key has an index skip it if index does not match function index.
             if '[' in key and ']' in key:
                 subIndex = int(key[key.find('[')+1:key.find(']')])
                 if index != subIndex: continue
-                modKey = key[:key.find('[')]
+                modifiedKey = key[:key.find('[')]
 
-            function[modKey] = overrides[key]
+            function[modifiedKey] = overrides[key]
 
         print("\nLoaded function: " + str(function))
         loadedFunctions.append(function)
@@ -186,25 +186,25 @@ if (len(sys.argv) > 1):
         # Add in overrides for experiments.
         for key in overrides:
 
-            modKey = key
+            modifiedKey = key
 
             # If the key has an index skip it if index does not match experiment index.
             if '[' in key and ']' in key:
                 subIndex = int(key[key.find('[')+1:key.find(']')])
                 if index != subIndex: continue
-                modKey = key[:key.find('[')]
+                modifiedKey = key[:key.find('[')]
 
             value = overrides[key]
             try:
                 # Try to load as an integer
-                experiment[modKey] = int(overrides[key])
+                experiment[modifiedKey] = int(overrides[key])
             except ValueError:
                 try:
                     # Try to load a JSON
-                    experiment[modKey] = json.loads(overrides[key])
+                    experiment[modifiedKey] = json.loads(overrides[key])
                 except ValueError as e:
                     # Give up and load a string
-                    experiment[modKey] = overrides[key]
+                    experiment[modifiedKey] = overrides[key]
 
         print("\nLoaded experiment: " + str(experiment))
         loadedExperiments.append(experiment)

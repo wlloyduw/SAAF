@@ -17,7 +17,7 @@ folderName = ''
 experimentfile = './experiments/exampleExperiment.json'
 delete = False
 if (len(sys.argv) != 3):
-    print("Please supply parameteres! Usage:\n./compileResults.py {FOLDER PATH} {PATH TO EXPERIMENT JSON}")
+    print("Please supply parameteres! Usage:\n./compile_results.py {FOLDER PATH} {PATH TO EXPERIMENT JSON}")
 elif (len(sys.argv) == 3):
     folderName = sys.argv[1]
     experimentfile = sys.argv[2]
