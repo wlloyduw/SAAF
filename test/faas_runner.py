@@ -16,6 +16,7 @@ import sys
 import time
 from decimal import Decimal
 from enum import Enum
+import copy
 
 sys.path.append('./tools')
 from report_generator import report
@@ -25,7 +26,7 @@ from experiment_orchestrator import publish, run_experiment
 defaultFunction = {
     'function': 'HELLOWORLD',
     'platform': 'AWS Lambda',
-    'source': '../java_template',
+    'source': '.',
     'endpoint': ''
 }
 
@@ -151,11 +152,13 @@ if (len(sys.argv) > 1):
 
     # Apply inheritance to function objects.
     for index, function in enumerate(functionList):
+        function = copy.deepcopy(function)
+
         # Set default options if needed.
         for key in defaultFunction:
             if key not in function:
                 function[key] = defaultFunction[key]
-                print("\nERROR: " + str(key) + " missing in function file! Using default option of " 
+                print("NOTE: " + str(key) + " missing in function file! Using default option of " 
                     + str(defaultFunction[key]))
 
         # Add in overrides for function.
@@ -171,21 +174,23 @@ if (len(sys.argv) > 1):
 
             function[modifiedKey] = overrides[key]
 
-        print("\nLoaded function: " + str(function))
+        print("Loaded function: " + str(function))
         loadedFunctions.append(function)
+    print("Loaded function list: " + str(loadedFunctions))
 
     # Load in experiment files
     for index, experiment in enumerate(expList):
+        experiment = copy.deepcopy(experiment)
+
         # Set default options if needed.
         for key in defaultExperiment:
             if key not in experiment:
                 experiment[key] = defaultExperiment[key]
-                print("\nERROR: " + str(key) + " missing in experiment file! Using default option of " 
+                print("NOTE: " + str(key) + " missing in experiment file! Using default option of " 
                     + str(defaultExperiment[key]))
 
         # Add in overrides for experiments.
         for key in overrides:
-
             modifiedKey = key
 
             # If the key has an index skip it if index does not match experiment index.
@@ -208,6 +213,8 @@ if (len(sys.argv) > 1):
 
         print("\nLoaded experiment: " + str(experiment))
         loadedExperiments.append(experiment)
+
+    print("Loaded experiment list: " + str(loadedFunctions))
 
     run_experiment(loadedFunctions, loadedExperiments, outDir)
 else:

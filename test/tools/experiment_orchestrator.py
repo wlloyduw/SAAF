@@ -185,6 +185,7 @@ def run_experiment(functions, experiments, outDir):
             print("Running test " + str(i) + ": ")
 
             if (len(experiments) > 1 and len(functions) > 1 and len(experiments) == len(functions)):
+                print("Running in pipeline mode... " + str(functions))
                 runList.append(callPipelineExperiment(functions, experiments))
             else:
                 runList.append(callExperiment([func], exp))

@@ -3,7 +3,7 @@
 # FaaS Programming Languages Comparison Experiment 1
 # @author Robert Cordingly
 
-args="--runs 11 --threads 1 --warmupBuffer 0 --combineSheets 0 --sleepTime 0 --openCSV 0"
+args="--runs 1 --threads 1 --warmupBuffer 0 --combineSheets 0 --sleepTime 0 --openCSV 0"
 
 dataSize=100
 bucket="project.fall19.tcss562.vmp"
