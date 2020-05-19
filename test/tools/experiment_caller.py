@@ -183,6 +183,7 @@ def callPipelineThread(thread_id, seqIterations, functions, experiments, myPaylo
             else:
                 payload = str(json.dumps(callPayload))
                 
+            print("Call Function: " + str(function))
             print("Call Payload: " + str(callPayload))
 
             startTime = time.time()
@@ -209,6 +210,11 @@ def callPipelineThread(thread_id, seqIterations, functions, experiments, myPaylo
 # Run a partest with multiple functions and an experiment all functions will be called concurrently.
 #
 def callExperiment(functionList, exp):
+
+    print("\n-----------------------------------------------------------------")
+    print("CREATING AND RUNNING THREADS FOR EXPERIMENT")
+    print("-----------------------------------------------------------------\n")
+
     threads = exp['threads']
     total_runs = exp['runs']
     runs_per_thread = int(total_runs / threads)
@@ -281,6 +287,10 @@ def callExperiment(functionList, exp):
 # and experiment files are provided in the arrays.
 #
 def callPipelineExperiment(functionList, experimentList):
+
+    print("\n-----------------------------------------------------------------")
+    print("CREATING AND RUNNING THREADS FOR PIPELINE (experiment_caller.py)")
+    print("-----------------------------------------------------------------\n")
 
     if (len(functionList) != len(experimentList)):
         print("ERROR! For pipelines an equal number of experiments and functions must be provided!")

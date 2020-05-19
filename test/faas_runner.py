@@ -75,6 +75,10 @@ class Mode(Enum):
 #
 if (len(sys.argv) > 1):
 
+    print("\n-----------------------------------------------------------------")
+    print("LOADING EXPERIMENTS AND APPLYING OVERRIDES.... (faas_runner.py)")
+    print("-----------------------------------------------------------------\n")
+
     mode = Mode.NONE
 
     outDir = "./history"
@@ -174,9 +178,9 @@ if (len(sys.argv) > 1):
 
             function[modifiedKey] = overrides[key]
 
-        print("Loaded function: " + str(function))
+        print("\nLoaded function: " + str(function))
         loadedFunctions.append(function)
-    print("Loaded function list: " + str(loadedFunctions))
+    print("\n---Loaded function list: " + str(loadedFunctions))
 
     # Load in experiment files
     for index, experiment in enumerate(expList):
@@ -214,7 +218,7 @@ if (len(sys.argv) > 1):
         print("\nLoaded experiment: " + str(experiment))
         loadedExperiments.append(experiment)
 
-    print("Loaded experiment list: " + str(loadedFunctions))
+    print("\n---Loaded experiment list: " + str(loadedFunctions))
 
     run_experiment(loadedFunctions, loadedExperiments, outDir)
 else:

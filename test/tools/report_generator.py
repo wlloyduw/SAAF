@@ -19,6 +19,11 @@ from decimal import Decimal
 # @author Robert Cordingly
 #
 def report(responses, exp):
+    print("\n-----------------------------------------------------------------")    
+    print("GENERATING REPORT... (report_generator.py)")
+    print("-----------------------------------------------------------------\n")
+
+
     output = ""
     threads = exp['threads']
     total_runs = exp['runs']
@@ -374,6 +379,11 @@ def report(responses, exp):
 # Generate a report based off of a folder of payloads.
 #
 def report_from_folder(path, exp):
+    print("\n-----------------------------------------------------------------")    
+    print("GENERATING REPORT FROM FOLDER... (report_generator.py)")
+    print("-----------------------------------------------------------------\n")
+
+
     if (not os.path.isdir(path)):
         print("Directory does not exist!")
         return ""
@@ -397,6 +407,10 @@ def report_from_folder(path, exp):
 # Write the output file of a report, print a folder of runs if needed.
 #
 def write_file(baseFileName, data, openFile, runList = []):
+    print("\n-----------------------------------------------------------------")    
+    print("WRITING REPORT TO FILE... (report_generator.py)")
+    print("-----------------------------------------------------------------\n")
+
     try:
         if (os.path.isfile(baseFileName + ".csv")):
             duplicates = 1

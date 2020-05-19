@@ -81,6 +81,11 @@ def publish(func, memory):
 # payloads in the list will be duplicated to match the size of the payload folder.
 #
 def prepare_payloads(experiments):
+    print("\n-----------------------------------------------------------------")
+    print("PREPARING PAYLOADS... (experiment_orchestrator.py)")
+    print("-----------------------------------------------------------------\n")
+
+
     for i, exp in enumerate(experiments):
 
         # Load payloads from folder.
