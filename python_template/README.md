@@ -73,6 +73,7 @@ The amount of data collected is detemined by which functions are called. If some
 | version | The version of the SAAF Framework. |
 | lang | The language of the function. |
 | runtime | The server-side runtime from when the function is initialized until Inspector.finish() is called. |
+| startTime | The Unix Epoch that the Inspector was initialized in ms. |
 
 ### inspectContainer()
 
@@ -96,6 +97,7 @@ The amount of data collected is detemined by which functions are called. If some
 | cpuIrq | Time spent servicing interrupts. |
 | cpuSoftIrq | Time spent servicing software interrupts. |
 | vmcpusteal | Cycles spent waiting for real CPU while hypervisor is using another virtual CPU. |
+| contextSwitches | The number of context switches that the function instance has done. |
 
 ### inspectCPUDelta()
 
@@ -109,14 +111,36 @@ The amount of data collected is detemined by which functions are called. If some
 | cpuIrqDelta | Change in cpuIrq compared to when inspectCPU was called. |
 | cpuSoftIrqDelta | Change in cpuSoftIrq compared to when inspectCPU was called. |
 | vmcpustealDelta | Change in vmcpusteal compared to when inspectCPU was called. |
+| contextSwitchesDelta | Chance in contextSwitches compared to when inspectCPU was called. |
+
+### inspectMemory()
+
+| **Field** | **Description** |
+| --------- | --------------- |
+| totalMemory | Total memory allocated to the function instance in kB. |
+| freeMemory | Current free memory in kB when inspectMemory is called. |
+| pageFaults | Total number of page faults experiences by the function instance since boot. |
+| majorPageFaults | Total number of major page faults experiences by the function instance since boot. |
+
+### inspectMemoryDelta()
+
+| **Field** | **Description** |
+| --------- | --------------- |
+| pageFaultsDelta | Change in page faults since inspectMemory was called. |
+| majorPageFaultsDelta | Change in major page faults since inspectMemory was called. |
 
 ### inspectPlatform()
+
+These attributes are dependent on the FaaS platform. On some platforms not all metrics will be returned.
 
 | **Field** | **Description** |
 | --------- | --------------- |
 | platform | The FaaS platform hosting this function. |
-| containerID | A platform specific container identifier. Supported on AWS Lambda and Azure Functions. |
-| vmID | A platform specific virtual machine identifier. Supported on AWS Lambda. |
+| containerID | A platform specific container identifier. |
+| vmID | A platform specific virtual machine identifier. |
+| functionName | The name of the function on the FaaS platform. |
+| functionMemory | The configured memory setting on the FaaS Platform. |
+| functionRegion | The cloud platform's region the function is deployed to. |
 
 ### inspectLinux()
 
@@ -132,11 +156,11 @@ This should be the last method called. It will return the final object containin
 
 ### inspectAll()
 
-Calls all inital inspect methods such as inspectPlatform, inspectCPU, ect. Should be called immediately after initalizing the Inspector.
+Calls all initial inspect methods such as inspectPlatform, inspectCPU, ect. Should be called immediately after initializing the Inspector.
 
 ### inspectAllDeltas()
 
-Calls all methods that calculate deltas, such as inspectCPUDelta. This should be called at the end of your function, before calling the finish() method.
+Calls all methods that calculate deltas, such as inspectCPUDelta. This should be called at the end of your function, before calling the finish() method. This will automatically calculate frameworkRuntimeDeltas.
 
 ### addAttribute(key, value)
 
@@ -146,8 +170,8 @@ Add a custom attribute to the data return by SAAF.
 
 Get an attribute already stored in SAAF.
 
-### addTimeStamp(key)
+### addTimeStamp(key, *optional* timeSince)
 
-Add a custom time stamp to SAAF. This will store the time in ms from when SAAF started to when this method was called.
+Add a custom time stamp to SAAF. By default this will store the time in ms from when SAAF started to when this method was called. If a secondary time stamp is supplied the different between the current time and that will be calculated.
 
 &nbsp;
