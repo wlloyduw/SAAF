@@ -22,12 +22,12 @@ module.exports = function(request) {
   
   //Import the module and collect data
   const inspector = new (require('./Inspector'))();
-  inspector.inspectContainer();
-  inspector.inspectCPU();
-  inspector.addTimeStamp("frameworkRuntime");
+  inspector.inspectAll();
 
   //Add custom message and finish the function
   inspector.addAttribute("message", "Hello " + request.name + "!");
+
+  inspector.inspectAllDeltas();
   return inspector.finish();
 };
 ```
@@ -150,13 +150,27 @@ These attributes are dependent on the FaaS platform. On some platforms not all m
 
 This should be the last method called. It will return the final object containing all of the attributes collected.
 
+| **Field** | **Description** |
+| --------- | --------------- |
+| runtime | The overall runtime of the function from start to finish in ms. |
+| endTime | The Unix Epoch in ms at the end of the function invocation. |
+
 ### inspectAll()
 
 Calls all initial inspect methods such as inspectPlatform, inspectCPU, ect. Should be called immediately after initializing the Inspector.
 
+| **Field** | **Description** |
+| --------- | --------------- |
+| frameworkRuntime | The time in ms to calculate all initial metrics. |
+
 ### inspectAllDeltas()
 
 Calls all methods that calculate deltas, such as inspectCPUDelta. This should be called at the end of your function, before calling the finish() method. This will automatically calculate frameworkRuntimeDeltas.
+
+| **Field** | **Description** |
+| --------- | --------------- |
+| userRuntime | The time in ms between when frameworkRuntime is calculated and when inspectAllDeltas is called. This attribute is meant to calculate the time executing user code, not SAAF data collection. |
+| frameworkRuntimeDeltas | The time in ms used to collect metric deltas. |
 
 ### addAttribute(key, value)
 

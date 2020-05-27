@@ -22,12 +22,12 @@ public HashMap<String, Object> handleRequest(Request request, Context context) {
   
   //Collect data
   Inspector inspector = new Inspector();
-  inspector.inspectCPU();
-  inspector.inspectContainer();
-  inspector.addTimeStamp("frameworkRuntime");
+  inspector.inspectAll();
   
   //Add custom message and finish the function
   inspector.addAttribute("message", "Hello " + request.getName() + "!");
+
+  inspector.inspectAllDeltas();
   return inspector.finish();
 }
 ```
@@ -146,17 +146,31 @@ These attributes are dependent on the FaaS platform. On some platforms not all m
 
 # Helper Functions
 
-### finish()
+### finish(*optional* reponse)
 
-This should be the last method called. It will return the final object containing all of the attributes collected.
+This should be the last method called. It will return the final object containing all of the attributes collected. If using a SAAF response object, the object can be passed into this function to be consumed and merged with the attributes map. To match other languages, it is preferred to use the addAttribute method to append to the response rather than using reponse objects.
+
+| **Field** | **Description** |
+| --------- | --------------- |
+| runtime | The overall runtime of the function from start to finish in ms. |
+| endTime | The Unix Epoch in ms at the end of the function invocation. |
 
 ### inspectAll()
 
 Calls all initial inspect methods such as inspectPlatform, inspectCPU, ect. Should be called immediately after initializing the Inspector.
 
+| **Field** | **Description** |
+| --------- | --------------- |
+| frameworkRuntime | The time in ms to calculate all initial metrics. |
+
 ### inspectAllDeltas()
 
 Calls all methods that calculate deltas, such as inspectCPUDelta. This should be called at the end of your function, before calling the finish() method. This will automatically calculate frameworkRuntimeDeltas.
+
+| **Field** | **Description** |
+| --------- | --------------- |
+| userRuntime | The time in ms between when frameworkRuntime is calculated and when inspectAllDeltas is called. This attribute is meant to calculate the time executing user code, not SAAF data collection. |
+| frameworkRuntimeDeltas | The time in ms used to collect metric deltas. |
 
 ### addAttribute(key, value)
 
@@ -172,6 +186,19 @@ Add a custom time stamp to SAAF. By default this will store the time in ms from 
 
 ### consumeResponse(response)
 
-If using a POJO response object, use this method to pull the attributes from the object and add them to SAAF.
+This function has been deprecated. Instead supply the response object through the overloaded finish method: finish(response). If using a POJO response object, use this method to pull the attributes from the object and add them to SAAF.
+
+# Error Messages
+
+In the event of something going wrong, SAAF will append error messages to the response output.
+
+| **Error** | **Description** |
+| --------- | --------------- |
+| SAAFContainerError | inspectContainer was called twice. |
+| SAAFPlatformError | inspectPlatform was called twice. |
+| SAAFLinuxError | inspectLinux was called twice. |
+| SAAFCPUDeltaError | inspectCPU was not called before calling inspectCPUDelta |
+| SAAFMemoryDeltaError | inspectMemory was not called before calling inspectMemoryDelta |
+| SAAFConsumeResponseError | There was an error consuming the response POJO. This can be caused by null values in the Inspector's attributes map. |
 
 &nbsp;

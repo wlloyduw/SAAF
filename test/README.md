@@ -2,6 +2,27 @@
 
 FaaS Runner is a tool used to create, execute, and automate experiments on FaaS platforms using SAAF. FaaS Runner works by defining function and experiment JSON files. This project structure allows for experiments to be reused between many different functions.
 
+### Special Attributes and Attributes Calculated by FaaS Runner
+
+By using FaaS Runner in conjunction with SAAF, many new metrics can be collected that SAAF is unable to find on its own. The table below defines the metrics calculated by FaaS Runner
+
+| **Field** | **Description** |
+| --------- | --------------- |
+| version | This attribute is used to verify that a run is using SAAF. If this is not included FaaS Runner will not consider it a valid run. |
+| 1_run_id | The identifier of a run on a thread.  |
+| 2_thread_id | The identifier of a thread of an experiment.  |
+| X_avg | By default FaaS Runner will calculate the average of any attributes (X) that can be parsed into a number within categories. |
+| X_sum | Using the showAsSum experiment attribute, FaaS Runner will calculate the sum of any attribute (X) that can be parsed into a number within categories. |
+| X_list | Using the showAsList experiment attribute, FaaS Runner will create a list of all attributes within categories. |
+| roundTripTime | The time between the moment before a request is made and when the response is received in ms. Only calculated with synchronous function invocations. |
+| latency | The total runtime attribute subtracted from the roundTripTime in ms. Only calculated with synchronous function invocations. |
+| runtimeOverlap | The percent of runtime overlapping with another concurrent run. If two runs both start and end at the exact same moment they would both have 100% runtimeOverlap. Sequential runs have 0%. This calculation can go over 100% with more than 2 concurrent invocations. With n concurrent invocations, a run can have at maximum (n - 1) * 100% runtimeOverlap. This metric can be used to estimate the tenancy of a function and can be filtered using the overlapFilter experiment attribute. Requires both startTime and endTime attributes. |
+| payload | FaaS Runner will pass the input payload of a function into the output row. |
+| cpuType | The cpuType value returned by SAAF will be concatenated with cpuModel. |
+| zTenancy[vmID] | (Deprecated) The tenancy identifier of the function using the vmID attribute as the identifier of function instance hosts. Generally not used anymore as there is no known method of VM identification on AWS Lambda. |
+| tenants[vmID] | (Deprecated) The number of tenants a function host may have. |
+| zAll | The string "Final Results:" will be appended to all response payloads so that every run can be categorized into one using zAll. |
+
 ### Function Attributes and Example Experiment JSON:
 
 ``` json
