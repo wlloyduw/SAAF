@@ -93,6 +93,7 @@ then
 	# Copy files to build folder.
 	cp -R ../src/* ./build
 	cp -R ../platforms/google/* ./build
+	cp -r ./package/* ./build/
 
 	cd ./build
 	gcloud functions deploy $function --source=. --entry-point hello_world --runtime python37 --timeout 540 --trigger-http --memory $memory
@@ -117,6 +118,7 @@ then
 	# Copy files to build folder.
 	cp -R ../src/* ./build
 	cp -R ../platforms/ibm/* ./build
+	cp -r ./package/* ./build/
 
 	cd ./build
 	zip -X -r ./index.zip *
@@ -145,6 +147,7 @@ then
 
 	
 	cp -R ../platforms/azure/* ./build
+	cp -r ./package/* ./build/
 	mv ./build/function.json ./build/$function/function.json
 	mv ./build/__init__.py ./build/$function/__init__.py
 
