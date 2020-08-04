@@ -16,6 +16,6 @@ Cordingly, R., Shu, W., Lloyd, W., Predicting Performance and Cost of Serverless
 
 ### **Presentation**
 
-<iframe src="https://drive.google.com/file/d/1C1Vau613ehXrctcRSqxVrAwP2WurEG4w/preview" width="640" height="360"></iframe>
+[![Languages Presentation](https://i.imgur.com/yEJKP31.png)](https://drive.google.com/file/d/1C1Vau613ehXrctcRSqxVrAwP2WurEG4w/preview)
 
 Cordingly, R., Yu, H., Hoang, V., Perez, D., Foster, D., Sadeghi, Z., Hatchett, R., Lloyd, W., Implications of Programming Language Selection for Serverless Data Processing Pipelines, 2020 6th IEEE International Conference on Cloud and Big Data Computing (CBDCOM 2020), Aug 17-24, 2020, to appear.
