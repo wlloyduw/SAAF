@@ -6,7 +6,7 @@
 
 ### **Presentation**
 
-<iframe src="https://drive.google.com/file/d/1YrcrkpKskCltJLJ8gdEGlH_XbutAUjnW/preview" width="640" height="360"></iframe>
+[![SAAF Presentation](https://i.imgur.com/1maEN2x.png)](https://drive.google.com/file/d/1YrcrkpKskCltJLJ8gdEGlH_XbutAUjnW/preview)
 
 Cordingly, R., Shu, W., Lloyd, W., Predicting Performance and Cost of Serverless Computing Functions with SAAF, 2020 6th IEEE International Conference on Cloud and Big Data Computing (CBDCOM 2020), Aug 17-24, 2020, to appear.
 
