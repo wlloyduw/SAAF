@@ -204,7 +204,13 @@ def callPipelineThread(thread_id, seqIterations, functions, experiments, myPaylo
 
             passOn = callPostProcessor(function, response, thread_id, j, payload, timeSinceStart)
 
-            i = transition_function(i, functions, experiments, myPayloads, passOn)
+            # Use the transition function.
+            trans = transition_function(i, functions, experiments, myPayloads, passOn)
+            i = trans[0]
+            functions = trans[1]
+            experiments = trans[2]
+            myPayloads = trans[3]
+            passOn = trans[4]
 
 #
 # Run a partest with multiple functions and an experiment all functions will be called concurrently.
@@ -212,8 +218,11 @@ def callPipelineThread(thread_id, seqIterations, functions, experiments, myPaylo
 def callExperiment(functionList, exp):
 
     print("\n-----------------------------------------------------------------")
-    print("CREATING AND RUNNING THREADS FOR EXPERIMENT")
+    print("CREATING AND RUNNING THREADS FOR EXPERIMENT (experiment_caller.py)")
     print("-----------------------------------------------------------------\n")
+
+    global run_results
+    run_results = []
 
     threads = exp['threads']
     total_runs = exp['runs']
@@ -291,6 +300,9 @@ def callPipelineExperiment(functionList, experimentList):
     print("\n-----------------------------------------------------------------")
     print("CREATING AND RUNNING THREADS FOR PIPELINE (experiment_caller.py)")
     print("-----------------------------------------------------------------\n")
+
+    global run_results
+    run_results = []
 
     if (len(functionList) != len(experimentList)):
         print("ERROR! For pipelines an equal number of experiments and functions must be provided!")

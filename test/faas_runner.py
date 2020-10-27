@@ -218,7 +218,7 @@ if (len(sys.argv) > 1):
         print("\nLoaded experiment: " + str(experiment))
         loadedExperiments.append(experiment)
 
-    print("\n---Loaded experiment list: " + str(loadedFunctions))
+    print("\n---Loaded experiment list: " + str(loadedExperiments))
 
     run_experiment(loadedFunctions, loadedExperiments, outDir)
 else:
