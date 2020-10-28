@@ -256,7 +256,7 @@ class Inspector {
      */
     inspectLinux() {
         this.inspectedLinux = true;
-        this.attributes['linuxVersion'] = this.runCommand('uname -v').replace('\n', '');
+        this.attributes['linuxVersion'] = this.runCommand('uname -a').replace('\n', '');
     }
     
     /**

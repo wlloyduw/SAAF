@@ -388,7 +388,7 @@ public class Inspector {
             return;
         }
         inspectedLinux = true;
-        String linuxVersion = runCommand(new String[]{"uname", "-v"}).trim();
+        String linuxVersion = runCommand(new String[]{"uname", "-a"}).trim();
         attributes.put("linuxVersion", linuxVersion);
     }
 

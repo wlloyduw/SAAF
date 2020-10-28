@@ -241,7 +241,7 @@ class Inspector:
     #
     def inspectLinux(self):
         self.__inspectedLinux = True
-        self.__attributes['linuxVersion'] = self.runCommand('uname -v').replace('\n', '')
+        self.__attributes['linuxVersion'] = self.runCommand('uname -a').replace('\n', '')
         
     #
     # Run all data collection methods and record framework runtime.
