@@ -1,22 +1,39 @@
 #!/bin/bash
 
+clear
 echo You are about to install everything needed to use SAAF, FaaS Runner, and their helper tools.
 echo You will have the option to install and configure each supported FaaS platform\'s CLI.
 echo Each installer has some steps to do. This script will pause and give you directions for what you are supposed to do.
+echo
 read -rsp $'Press any key to continue. Use CTRL+Z to quit at any time.\n' -n1 key
 
+clear
 echo
-read -p "Would you like to download SAAF to the current directory? [y/n]" -n 1 -r
+read -p "Would you like to update and upgrade apt? [y/N]" -n 1 -r
+echo
+if [[ $REPLY =~ ^[Yy]$ ]]
+then
+    sudo apt update
+    sudo apt upgrade
+    echo
+    read -rsp $'Finished! Press any key to continue...\n' -n1 key
+fi
+
+clear
+echo
+read -p "Would you like to download SAAF to the current directory? [y/N]" -n 1 -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]
 then
     sudo apt install git
     git clone https://github.com/wlloyduw/SAAF
+    echo
+    read -rsp $'Repository cloned! Press any key to continue...\n' -n1 key
 fi
 
 clear
 echo
-read -p "Would you like to install dependencies for SAAF and FaaS Runner? [y/n]" -n 1 -r
+read -p "Would you like to install dependencies for SAAF and FaaS Runner? [y/N]" -n 1 -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]
 then
@@ -25,16 +42,19 @@ then
     sudo apt upgrade
     sudo apt install parallel bc curl jq python3 python3-pip nodejs npm maven
     pip3 install requests boto3 botocore
+    echo
+    read -rsp $'Dependencies installed! Press any key to continue...\n' -n1 key
 fi
 
 clear
 echo
-read -p "Would you like to install and setup AWS Lambda? [y/n]" -n 1 -r
+read -p "Would you like to install and setup AWS Lambda? [y/N]" -n 1 -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]
 then
     echo Installing AWS CLI...
-    sudo apt install awscli
+    sudo apt install awscli python3 python3-pip
+    pip3 install --upgrade awscli
 
     clear
     echo Setting up AWS CLI! Get your access keys ready!
@@ -44,13 +64,14 @@ then
     read -rsp $'Press any key to continue...\n' -n1 key
 
     aws configure
+    echo
     echo Configuration complete! Functions can now be deployed to AWS Lambda.
     read -rsp $'Press any key to continue...\n' -n1 key
 fi
 
 clear
 echo
-read -p "Would you like to install and setup Google Cloud Functions? [y/n]" -n 1 -r
+read -p "Would you like to install and setup Google Cloud Functions? [y/N]" -n 1 -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]
 then
@@ -76,13 +97,14 @@ then
     read -rsp $'Press any key to continue...\n' -n1 key
     gcloud init
     gcloud functions list
+    echo
     echo Configuration complete! Functions can now be deployed to Google Cloud Functions.
     read -rsp $'Press any key to continue...\n' -n1 key
 fi
 
 clear
 echo
-read -p "Would you like to install and setup IBM Cloud Functions? [y/n]" -n 1 -r
+read -p "Would you like to install and setup IBM Cloud Functions? [y/N]" -n 1 -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]
 then
@@ -95,7 +117,7 @@ then
     echo Setting up IBM Cloud CLI!
     echo
     echo IBM requires you to login through their CLI.
-    echo After logging in, select the us-south region 5.
+    echo After logging in, select the us-south region.
     echo
     read -rsp $'Press any key to continue...\n' -n1 key
 
@@ -104,12 +126,14 @@ then
     ibmcloud target --cf
     ibmcloud target -g Default
 
+    echo
     echo Configuration complete! Functions can now be deployed to IBM Cloud Functions. Your account was configured to use the default Cloud Foundry namespace.
     read -rsp $'Press any key to continue...\n' -n1 key
 fi
 
+clear
 echo
-read -p "Would you like to install and setup Azure Functions? [y/n]" -n 1 -r
+read -p "Would you like to install and setup Azure Functions? [y/N]" -n 1 -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]
 then
@@ -128,6 +152,7 @@ then
     read -rsp $'Press any key to continue...\n' -n1 key
     az login
 
+    echo
     echo Configuration complete! Functions can now be deployed to Azure.
     read -rsp $'Press any key to continue...\n' -n1 key
 fi
