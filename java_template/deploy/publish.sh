@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # Mutli-platform Publisher. Used to publish FaaS Inspector Java functions onto AWS Lambda
+# @author Robert Cordingly
 #
 # Each platform's default function is defined in the platforms folder. These are copied into the source folder
 # and deployed onto each platform accordingly. Developers should write their function in the function.js file. 
@@ -27,24 +28,15 @@ then
 	config=$6
 fi
 
-function=`cat $config | jq '.functionName' | tr -d '"'`
-lambdaHandler=`cat $config | jq '.lambdaHandler' | tr -d '"'`
-lambdaRole=`cat $config | jq '.lambdaRoleARN' | tr -d '"'`
-lambdaSubnets=`cat $config | jq '.lambdaSubnets' | tr -d '"'`
-lambdaSecurityGroups=`cat $config | jq '.lambdaSecurityGroups' | tr -d '"'`
-lambdaEnvironment=`cat $config | jq '.lambdaEnvironment' | tr -d '"'`
-
-json=`cat $config | jq -c -a '.test'`
-
-ibmHandler=`cat $config | jq '.ibmHandler' | tr -d '"'`
-ibmjson=`cat $config | jq '.test' | tr -d '"' | tr -d '{' | tr -d '}' | tr -d ':'`
+# Get function name from config.
+function=$(cat $config | jq '.functionName' | tr -d '"')
 
 echo
 echo Deploying $function....
 echo
 
 #Define the memory value.
-memory=`cat ./config.json | jq '.memorySetting' | tr -d '"'`
+memory=$(cat ./config.json | jq '.memorySetting' | tr -d '"')
 if [[ ! -z $5 ]]
 then
 	memory=$5
@@ -56,6 +48,15 @@ then
 	echo
 	echo "----- Deploying onto AWS Lambda -----"
 	echo
+
+	# Get lambda variables.
+	lambdaHandler=$(cat $config | jq '.lambdaHandler' | tr -d '"')
+	lambdaRole=$(cat $config | jq '.lambdaRoleARN' | tr -d '"')
+	lambdaSubnets=$(cat $config | jq '.lambdaSubnets' | tr -d '"')
+	lambdaSecurityGroups=$(cat $config | jq '.lambdaSecurityGroups' | tr -d '"')
+	lambdaEnvironment=$(cat $config | jq '.lambdaEnvironment' | tr -d '"')
+	lambdaRuntime=$(cat $config | jq '.lambdaRuntime' | tr -d '"')
+	json=$(cat $config | jq -c -a '.test')
 	
 	echo "Building jar with Maven..."
 	mvn clean -f "../pom.xml"
@@ -64,9 +65,9 @@ then
 	# Submit jar to AWS Lambda.
 	cd ..
 	cd target
-	aws lambda create-function --function-name $function --runtime java8 --role $lambdaRole --timeout 900 --handler $lambdaHandler --zip-file fileb://lambda_test-1.0-SNAPSHOT.jar
+	aws lambda create-function --function-name $function --runtime $lambdaRuntime --role $lambdaRole --timeout 900 --handler $lambdaHandler --zip-file fileb://lambda_test-1.0-SNAPSHOT.jar
 	aws lambda update-function-code --function-name $function --zip-file fileb://lambda_test-1.0-SNAPSHOT.jar
-	aws lambda update-function-configuration --function-name $function --memory-size $memory --runtime java8 \
+	aws lambda update-function-configuration --function-name $function --memory-size $memory --runtime $lambdaRuntime \
 	--vpc-config SubnetIds=[$lambdaSubnets],SecurityGroupIds=[$lambdaSecurityGroups] --environment "$lambdaEnvironment"
 	cd ..
 	cd deploy
@@ -82,6 +83,10 @@ then
 	echo
 	echo "----- Deploying onto IBM Cloud Functions -----"
 	echo
+
+	# Get IBM variables.
+	ibmHandler=$(cat $config | jq '.ibmHandler' | tr -d '"')
+	ibmjson=$(cat $config | jq '.test' | tr -d '"' | tr -d '{' | tr -d '}' | tr -d ':')
 	
 	echo "Building jar with Maven..."
 	mvn clean -f "../pom.xml"
@@ -106,7 +111,7 @@ then
 	echo
 	echo "----- Deploying onto Azure Functions -----"
 	echo
-	echo "Java FaaS Inspector does not support AzureFunctions..."
+	echo "Java FaaS Inspector does not support Azure Functions..."
 fi
 
 # Deploy onto Google Cloud Functions

@@ -23,7 +23,7 @@ public class Hello implements RequestHandler<HashMap<String, Object>, HashMap<St
      */
     public HashMap<String, Object> handleRequest(HashMap<String, Object> request, Context context) {
         
-        //Collect inital data.
+        //Collect initial data.
         Inspector inspector = new Inspector();
         inspector.inspectAll();
         

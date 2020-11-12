@@ -7,7 +7,8 @@
 	"lambdaRoleARN": "arn:aws:iam::aws:policy/AWSLambdaFullAccess",
 	"lambdaSubnets": "",
 	"lambdaSecurityGroups": "",
-	"lambdaEnvironment": "Variables={BUCKET=my-bucket,KEY=file.txt}",
+	"lambdaEnvironment": "Variables={EXAMPLEVAR1=VAL1,EXAMPLEVAR2=VAL2}",
+	"lambdaRuntime": "java11",
 
 	"ibmHandler": "ibm.Hello",
 

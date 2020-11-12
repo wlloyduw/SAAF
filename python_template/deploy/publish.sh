@@ -29,22 +29,15 @@ then
 fi
 
 # Get the function name from the config file.
-function=`cat $config | jq '.functionName' | tr -d '"'`
-
-lambdaRole=`cat $config | jq '.lambdaRoleARN' | tr -d '"'`
-lambdaSubnets=`cat $config | jq '.lambdaSubnets' | tr -d '"'`
-lambdaSecurityGroups=`cat $config | jq '.lambdaSecurityGroups' | tr -d '"'`
-lambdaEnvironment=`cat $config | jq '.lambdaEnvironment' | tr -d '"'`
-
-json=`cat $config | jq -c '.test'`
-ibmjson=`cat $config | jq '.test' | tr -d '"' | tr -d '{' | tr -d '}' | tr -d ':'`
+function=$(cat $config | jq '.functionName' | tr -d '"')
+json=$(cat $config | jq -c '.test')
 
 echo
 echo Deploying $function...
 echo
 
 #Define the memory value.
-memory=`cat $config | jq '.memorySetting' | tr -d '"'`
+memory=$(cat $config | jq '.memorySetting' | tr -d '"')
 if [[ ! -z $5 ]]
 then
 	memory=$5
@@ -57,6 +50,13 @@ then
 	echo "----- Deploying onto AWS Lambda -----"
 	echo
 
+	lambdaHandler=$(cat $config | jq '.lambdaHandler' | tr -d '"')
+	lambdaRole=$(cat $config | jq '.lambdaRoleARN' | tr -d '"')
+	lambdaSubnets=$(cat $config | jq '.lambdaSubnets' | tr -d '"')
+	lambdaSecurityGroups=$(cat $config | jq '.lambdaSecurityGroups' | tr -d '"')
+	lambdaEnvironment=$(cat $config | jq '.lambdaEnvironment' | tr -d '"')
+	lambdaRuntime=$(cat $config | jq '.lambdaRuntime' | tr -d '"')
+
 	# Destroy and prepare build folder.
 	rm -rf build
 	mkdir build
@@ -68,9 +68,9 @@ then
 	# Zip and submit to AWS Lambda.
 	cd ./build
 	zip -X -r ./index.zip *
-	aws lambda create-function --function-name $function --runtime python3.7 --role $lambdaRole --timeout 900 --handler lambda_function.lambda_handler --zip-file fileb://index.zip
+	aws lambda create-function --function-name $function --runtime $lambdaRuntime --role $lambdaRole --timeout 900 --handler $lambdaHandler --zip-file fileb://index.zip
 	aws lambda update-function-code --function-name $function --zip-file fileb://index.zip
-	aws lambda update-function-configuration --function-name $function --memory-size $memory --runtime python3.7 \
+	aws lambda update-function-configuration --function-name $function --memory-size $memory --runtime $lambdaRuntime \
 	--vpc-config SubnetIds=[$lambdaSubnets],SecurityGroupIds=[$lambdaSecurityGroups] --environment "$lambdaEnvironment"
 	cd ..
 
@@ -86,6 +86,9 @@ then
 	echo "----- Deploying onto Google Cloud Functions -----"
 	echo
 
+	googleHandler=$(cat $config | jq '.googleHandler' | tr -d '"')
+	googleRuntime=$(cat $config | jq '.googleRuntime' | tr -d '"')
+
 	# Destroy and prepare build folder.
 	rm -rf build
 	mkdir build
@@ -96,7 +99,7 @@ then
 	cp -r ./package/* ./build/
 
 	cd ./build
-	gcloud functions deploy $function --source=. --entry-point hello_world --runtime python37 --timeout 540 --trigger-http --memory $memory
+	gcloud functions deploy $function --source=. --entry-point $googleHandler --runtime $googleRuntime --timeout 540 --trigger-http --memory $memory
 	cd ..
 
 	echo
@@ -110,6 +113,9 @@ then
 	echo
 	echo "----- Deploying onto IBM Cloud Functions -----"
 	echo
+	
+	ibmRuntime=$(cat $config | jq '.ibmRuntime' | tr -d '"')
+	ibmjson=$(cat $config | jq '.test' | tr -d '"' | tr -d '{' | tr -d '}' | tr -d ':')
 
 	# Destroy and prepare build folder.
 	rm -rf build
@@ -122,7 +128,7 @@ then
 
 	cd ./build
 	zip -X -r ./index.zip *
-	ibmcloud fn action update $function --kind python:3 --memory $memory index.zip
+	ibmcloud fn action update $function --kind $ibmRuntime --memory $memory index.zip
 	cd ..
 
 	echo
@@ -136,6 +142,8 @@ then
 	echo
 	echo "----- Deploying onto Azure Functions -----"
 	echo
+
+	azureRuntime=$(cat $config | jq '.azureRuntime' | tr -d '"')
 
 	# Destroy and prepare build folder.
 	rm -rf build
@@ -157,7 +165,7 @@ then
 	az group create --name $function --location eastus
 	az storage account create --name $function --location eastus --resource-group $function --sku Standard_LRS
 	az resource create -g $function -n $function --resource-type "Microsoft.Insights/components" --properties "{\"Application_Type\":\"web\"}"
-	az functionapp create --resource-group $function --consumption-plan-location eastus --name $function --runtime python --os-type Linux --output json --storage-account $function --app-insights $function
+	az functionapp create --resource-group $function --consumption-plan-location eastus --name $function --runtime $azureRuntime --os-type Linux --output json --storage-account $function --app-insights $function
 
 	echo Deploying function... This may fail if the function app is brand new. In that event, please run this script again.
 	python3 -m venv .env
@@ -168,7 +176,7 @@ then
 
 	echo
 	echo Testing function on Azure Functions...
-	endPoint=`func azure functionapp list-functions $function --show-keys | grep Invoke | head -n 1 | tr -d ' ' | cut -c11-`
+	endPoint=$(func azure functionapp list-functions $function --show-keys | grep Invoke | head -n 1 | tr -d ' ' | cut -c11-)
 	curl -H "Content-Type: application/json" -X POST -d $json $endPoint
 	echo
 fi

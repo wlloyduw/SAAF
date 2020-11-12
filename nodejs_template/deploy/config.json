@@ -3,10 +3,19 @@
 
 	"functionName":     "helloWorld",
 
+	"lambdaHandler": "index.handler",
 	"lambdaRoleARN": "arn:aws:iam::616835888336:role/lambda_basic_execution",
 	"lambdaSubnets": "",
 	"lambdaSecurityGroups": "",
 	"lambdaEnvironment": "Variables={EXAMPLEVAR1=VAL1,EXAMPLEVAR2=VAL2}",
+	"lambdaRuntime": "nodejs10.x",
+
+	"googleHandler": "helloWorld",
+	"googleRuntime": "nodejs8",
+
+	"ibmRuntime": "nodejs:8",
+
+	"azureRuntime": "node",
 
 	"test": {
 		"name": "Bob"

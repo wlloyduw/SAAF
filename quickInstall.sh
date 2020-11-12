@@ -1,5 +1,12 @@
 #!/bin/bash
 
+#
+# This script is meant to streamline the process of setting up SAAF and FaaS Runner on
+# EC2 instances. Simply run the script to download all nessessary dependencies and
+# setup each cloud platforms CLI.
+# @author Robert Cordingly
+#
+
 clear
 echo You are about to install everything needed to use SAAF, FaaS Runner, and their helper tools.
 echo You will have the option to install and configure each supported FaaS platform\'s CLI.
