@@ -8,3 +8,4 @@ bash_template/deploy/build
 __pycache__
 bash_template/deploy/build/function.zip
 .s3cache
+SAAF.code-workspace
