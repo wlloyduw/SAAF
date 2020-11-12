@@ -183,7 +183,7 @@ then
 
 	echo
 	echo Testing function on Azure Functions...
-	endPoint=`func azure functionapp list-functions $function --show-keys | grep Invoke | head -n 1 | tr -d ' ' | cut -c11-`
+	endPoint=$(func azure functionapp list-functions $function --show-keys | grep Invoke | head -n 1 | tr -d ' ' | cut -c11-)
 	curl -H "Content-Type: application/json" -X POST -d $json $endPoint
 	echo
 fi
