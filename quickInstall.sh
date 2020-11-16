@@ -18,8 +18,7 @@ clear
 echo
 read -p "Would you like to update and upgrade apt? [y/N]" -n 1 -r
 echo
-if [[ $REPLY =~ ^[Yy]$ ]]
-then
+if [[ $REPLY =~ ^[Yy]$ ]]; then
     sudo apt update
     sudo apt upgrade
     echo
@@ -30,8 +29,7 @@ clear
 echo
 read -p "Would you like to download SAAF to the current directory? [y/N]" -n 1 -r
 echo
-if [[ $REPLY =~ ^[Yy]$ ]]
-then
+if [[ $REPLY =~ ^[Yy]$ ]]; then
     sudo apt install git
     git clone https://github.com/wlloyduw/SAAF
     echo
@@ -42,8 +40,7 @@ clear
 echo
 read -p "Would you like to install dependencies for SAAF and FaaS Runner? [y/N]" -n 1 -r
 echo
-if [[ $REPLY =~ ^[Yy]$ ]]
-then
+if [[ $REPLY =~ ^[Yy]$ ]]; then
     echo Installing neutral dependencies...
     sudo apt update
     sudo apt upgrade
@@ -57,8 +54,7 @@ clear
 echo
 read -p "Would you like to install and setup AWS Lambda? [y/N]" -n 1 -r
 echo
-if [[ $REPLY =~ ^[Yy]$ ]]
-then
+if [[ $REPLY =~ ^[Yy]$ ]]; then
     echo Installing AWS CLI...
     sudo apt install awscli python3 python3-pip
     pip3 install --upgrade awscli
@@ -80,8 +76,7 @@ clear
 echo
 read -p "Would you like to install and setup Google Cloud Functions? [y/N]" -n 1 -r
 echo
-if [[ $REPLY =~ ^[Yy]$ ]]
-then
+if [[ $REPLY =~ ^[Yy]$ ]]; then
     echo Installing GCloud SDK...
     echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
     apt-get install apt-transport-https ca-certificates
@@ -98,7 +93,7 @@ then
     echo If asked to choose a project, create a new project.
     echo Name the project to something like uw-tacoma{STUDENT ID}. Projects must have a unique names!
     echo
-    echo Google will ask to enable the cloudfunctions API, enter y. It will fail. Enter y again and it will say there was an error again. 
+    echo Google will ask to enable the cloudfunctions API, enter y. It will fail. Enter y again and it will say there was an error again.
     echo This is fine, it should have worked.
     echo
     read -rsp $'Press any key to continue...\n' -n1 key
@@ -113,8 +108,7 @@ clear
 echo
 read -p "Would you like to install and setup IBM Cloud Functions? [y/N]" -n 1 -r
 echo
-if [[ $REPLY =~ ^[Yy]$ ]]
-then
+if [[ $REPLY =~ ^[Yy]$ ]]; then
     echo Installing IBM Cloud CLI...
     curl -fsSL https://clis.cloud.ibm.com/install/linux | sh
     ibmcloud update
@@ -142,10 +136,9 @@ clear
 echo
 read -p "Would you like to install and setup Azure Functions? [y/N]" -n 1 -r
 echo
-if [[ $REPLY =~ ^[Yy]$ ]]
-then
+if [[ $REPLY =~ ^[Yy]$ ]]; then
     echo Installing Azure Functions CLI.
-    curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > microsoft.gpg
+    curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor >microsoft.gpg
     sudo mv microsoft.gpg /etc/apt/trusted.gpg.d/microsoft.gpg
     sudo sh -c 'echo "deb [arch=amd64] https://packages.microsoft.com/repos/microsoft-ubuntu-$(lsb_release -cs)-prod $(lsb_release -cs) main" > /etc/apt/sources.list.d/dotnetdev.list'
     sudo apt-get update
@@ -153,7 +146,7 @@ then
     curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
 
     clear
-    echo Setting up Azure CLI. 
+    echo Setting up Azure CLI.
     echo
     echo It is simple, a browser will open, login and you are done.
     read -rsp $'Press any key to continue...\n' -n1 key
@@ -163,5 +156,3 @@ then
     echo Configuration complete! Functions can now be deployed to Azure.
     read -rsp $'Press any key to continue...\n' -n1 key
 fi
-
-
