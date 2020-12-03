@@ -158,7 +158,7 @@ if [[ ! -z $4 && $4 -eq 1 ]]; then
 	az group create --name $function --location eastus
 	az storage account create --name $function --location eastus --resource-group $function --sku Standard_LRS
 	az resource create -g $function -n $function --resource-type "Microsoft.Insights/components" --properties "{\"Application_Type\":\"web\"}"
-	az functionapp create --resource-group $function --consumption-plan-location eastus --name $function --runtime $azureRuntime --os-type Linux --output json --storage-account $function --app-insights $function
+	az functionapp create --resource-group $function --consumption-plan-location eastus --name $function --runtime $azureRuntime --os-type Linux --output json --storage-account $function --app-insights $function --functions-version 2
 
 	echo Deploying function... This may fail if the function app is brand new. In that event, please run this script again.
 	python3 -m venv .env

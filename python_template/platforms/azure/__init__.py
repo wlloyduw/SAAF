@@ -20,7 +20,7 @@ from . import handler
 def main(req: func.HttpRequest) -> func.HttpResponse:
     logging.info('Python HTTP trigger function processed a request.')
 
-    result = handler.yourFunction(req.params, None)
+    result = handler.yourFunction(req.get_json(), None)
     return func.HttpResponse(str(result).replace("'", '"'), status_code=200)
 
 #    name = req.params.get('name')
