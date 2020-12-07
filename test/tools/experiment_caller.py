@@ -68,9 +68,9 @@ def callIBM(function, payload):
 # Make a call using a regular HTTP request
 #
 def callHTTP(function, payload):
-    response = requests.post(function['endpoint'], data=json.dumps(
-        payload), headers={'content-type': 'application/json'})
-    print("Response: " + str(response.text))
+    response = requests.post(function['endpoint'], data=
+        payload, headers={'content-type': 'application/json'})
+    print("Response: " + str(response))
     return response.text
 
 #
@@ -237,10 +237,16 @@ def callExperiment(functionList, exp):
     for i in range(0, len(functionList)):
         func = functionList[i]
         if useCLI:
-            function_calls.append({
-                'platform': func['platform'],
-                'endpoint': func['function']
-            })
+            if (func['platform'] == "HTTP" or func['platform'] == "Azure"):
+                    function_calls.append({
+                    'platform': "HTTP",
+                    'endpoint': func['endpoint']
+                })
+            else:
+                function_calls.append({
+                    'platform': func['platform'],
+                    'endpoint': func['function']
+                })
         else:
             function_calls.append({
                 'platform': "HTTP",
