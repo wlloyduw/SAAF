@@ -164,7 +164,7 @@ def callPipelineThread(thread_id, seqIterations, functions, experiments, myPaylo
         while (i >= 0 and i < len(functions) and i is not None):
             function = functions[i]
             exp = experiments[i]
-            callPayload = myPayloads[i + (j * seqIterations)]
+            callPayload = myPayloads[i + (j * len(functions))]
 
             callAsync = exp['callAsync']
 
