@@ -76,11 +76,13 @@ def callHTTP(function, payload):
 #
 # Called after a request is made, appends extra data to the payload.
 #
-def callPostProcessor(function, response, thread_id, run_id, payload, roundTripTime):
+def callPostProcessor(function, response, thread_id, run_id, payload, roundTripTime, pipelineStage):
     try:
         dictionary = ast.literal_eval(response)
         dictionary['2_thread_id'] = thread_id
         dictionary['1_run_id'] = run_id
+        if pipelineStage != -1:
+            dictionary['3_pipeline_stage'] = pipelineStage
         dictionary['zAll'] = "Final Results:"
         dictionary['roundTripTime'] = roundTripTime
         dictionary['payload'] = str(payload)
@@ -149,7 +151,7 @@ def callThread(thread_id, runs, function, exp, myPayloads):
 
         timeSinceStart = round((time.time() - startTime) * 100000) / 100
 
-        callPostProcessor(function, response, thread_id, i, payload, timeSinceStart)
+        callPostProcessor(function, response, thread_id, i, payload, timeSinceStart, -1)
 
 #
 # Define a pipeline to be called by each thread.
@@ -200,9 +202,10 @@ def callPipelineThread(thread_id, seqIterations, functions, experiments, myPaylo
             elif (platform == 'IBM'):
                 response = callIBM(function, payload)
 
+            # Calculate round trip time
             timeSinceStart = round((time.time() - startTime) * 100000) / 100
 
-            passOn = callPostProcessor(function, response, thread_id, j, payload, timeSinceStart)
+            passOn = callPostProcessor(function, response, thread_id, j, payload, timeSinceStart, i)
 
             # Use the transition function.
             trans = transition_function(i, functions, experiments, myPayloads, passOn)

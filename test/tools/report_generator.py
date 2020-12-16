@@ -111,6 +111,61 @@ def report(responses, exp):
                 totalDist += length2 / length1
             run1['runtimeOverlap'] = str(round(totalDist, 2))
 
+    # Calculate pipline metrics.
+    if '3_pipeline_stage' in run_results[0]:
+        # Create 3D grid datastructure where x = run_id, y = thread_id, and z = 3_pipeline_stage
+        maxX = 0
+        maxY = 0
+        maxZ = 0
+
+        # Find the max values of each dimmension
+        for i in range(len(run_results)):
+            run = run_results[i]
+            x = int(run['1_run_id'])
+            y = int(run['2_thread_id'])
+            z = int(run['3_pipeline_stage'])
+            if (x > maxX): maxX = x
+            if (y > maxY): maxY = y
+            if (z > maxZ): maxZ = z
+
+        # Create 3D lists of size
+        pipelineList = [[[None for col in range(maxZ + 1)] for col in range(maxY + 1)] for row in range(maxX + 1)]
+
+        # Distribute runs into data structure.
+        for i in range(len(run_results)):
+            run = run_results[i]
+            x = int(run['1_run_id'])
+            y = int(run['2_thread_id'])
+            z = int(run['3_pipeline_stage'])
+            run['index'] = i
+            pipelineList[x][y][z] = run
+
+        # Sort Z by pipeline stage.
+        for x in pipelineList:
+            for y in x:
+                y = sorted(y, key=lambda k: k['3_pipeline_stage'])
+                previous = None
+                for z in y:
+                    print(str(z['1_run_id'])+"-"+str(z['2_thread_id']) +"-"+str(z['3_pipeline_stage']))
+                    temp = dict(z)
+                    for key in z:
+                        try:
+                            value = round(float(temp[key]), 2)
+                            if previous != None and key+"Pipeline" in previous:
+                                temp[key + "Pipeline"] = value + previous[key + "Pipeline"]
+                            else:
+                                temp[key + "Pipeline"] = value
+                        except:
+                            pass
+
+                    z = dict(temp)
+                    run_results[z['index']] = dict(z)
+                    print(str(z))
+                    previous = z
+
+
+        
+
     #
     # Print starter information
     #
