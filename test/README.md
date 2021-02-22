@@ -6,11 +6,12 @@ FaaS Runner is a tool used to create, execute, and automate experiments on FaaS 
 
 By using FaaS Runner in conjunction with SAAF, many new metrics can be collected that SAAF is unable to find on its own. The table below defines the metrics calculated by FaaS Runner
 
+
 | **Field** | **Description** |
-| --------- | --------------- |
+| - | - |
 | version | This attribute is used to verify that a run is using SAAF. If this is not included FaaS Runner will not consider it a valid run. |
-| 1_run_id | The identifier of a run on a thread.  |
-| 2_thread_id | The identifier of a thread of an experiment.  |
+| 1_run_id | The identifier of a run on a thread. |
+| 2_thread_id | The identifier of a thread of an experiment. |
 | X_avg | By default FaaS Runner will calculate the average of any attributes (X) that can be parsed into a number within categories. |
 | X_sum | Using the showAsSum experiment attribute, FaaS Runner will calculate the sum of any attribute (X) that can be parsed into a number within categories. |
 | X_list | Using the showAsList experiment attribute, FaaS Runner will create a list of all attributes within categories. |
@@ -25,7 +26,7 @@ By using FaaS Runner in conjunction with SAAF, many new metrics can be collected
 
 ### Function Attributes and Example Experiment JSON:
 
-``` json
+```json
 {
     "function": "helloWorld",
     "platform": "AWS Lambda",
@@ -36,9 +37,9 @@ By using FaaS Runner in conjunction with SAAF, many new metrics can be collected
 
 An example function configuration can be found in [./functions/exampleFunction.json](./functions/exampleFunction.json). Function files provide the core parameters needed to execute and modify a function. Here is a breakdown of the attributes:
 
-* **function:** The name of your function. 
+* **function:** The name of your function.
 * **platform:** The cloud platform your function is deployed to. This is used to choose the correct CLI to invoke your functions with.
-*Accepted options:*
+  *Accepted options:*
   * AWS Lambda
   * Google
   * IBM
@@ -49,7 +50,7 @@ An example function configuration can be found in [./functions/exampleFunction.j
 
 ### Experiment Attributes and Example Experiment JSON:
 
-``` json
+```json
 {
     "callWithCLI": true,
     "memorySettings": [0],
@@ -87,7 +88,7 @@ An example function configuration can be found in [./functions/exampleFunction.j
 }
 ```
 
-Experiment files determine how your function with be executed, what settings to use, and how to display the results. Due to this, there are many more ways to customize your experiments. An example experiment configuration can be found in [./experiments/exampleExperiment.json](./experiments/exampleExperiment.json). Below are all of the attributes used by an experiment: 
+Experiment files determine how your function with be executed, what settings to use, and how to display the results. Due to this, there are many more ways to customize your experiments. An example experiment configuration can be found in [./experiments/exampleExperiment.json](./experiments/exampleExperiment.json). Below are all of the attributes used by an experiment:
 
 ### Test Settings
 
@@ -98,17 +99,17 @@ Experiment files determine how your function with be executed, what settings to 
 * **payloads:** Object List - A list of JSON objects to use as payloads. If more than one is listed, these will be distributed across runs. If a parent payload is defined, attributes from parent will be merged into payloads in this list. Attributes defined in this list will take priority over attributes in the parent.
 * **payloadFolder:** String - A path to a folder containing JSON files to be used as payloads. Files in that folder will be loaded and used as payloads. Payloads from both **parentPayload** and * **payloads** will be merged. Attributes in **payloads** will take priority over attributes from loaded files.
 
-**Payload Inheritance:** Basic inheritance can be implemented using the parentPayload, payloads list, and payloadFolder. Attributes from each of these payloads will be merged together according to this priority order: 
+**Payload Inheritance:** Basic inheritance can be implemented using the parentPayload, payloads list, and payloadFolder. Attributes from each of these payloads will be merged together according to this priority order:
 **payloads > payloadFolder > parentPayload**
 
 ## Execution Settings
 
 * **runs:** Integer - The total number of runs to do per iteration.
 * **threads:** Integer - The total number of threads to use. If threads is less than runs, multiple runs will be assigned to each thread.
-* **iterations:** Integer - The total number of iterations of this experiment to do. 
+* **iterations:** Integer - The total number of iterations of this experiment to do.
 * **sleepTime:** Integer - The time in seconds to sleep between iterations.
 * **randomSeed:** Integer - The seed to use randomly distribute payloads.
-* **shufflePayloads:** Boolean - Whether the payloads will be distributed in a random order or sequentially.
+* **shufflePayloads:** Boolean - Whether the payloads will be distributed in a random order (true) or sequentially (false).
 
 ## Output Settings
 
@@ -147,17 +148,19 @@ In the event that a function or experiment file is missing attributes, default v
 
 # Running an Single-Function Experiment:
 
-After defining your function and experiment JSON files, starting an experiment is as simple as running the faas_runner script. 
+After defining your function and experiment JSON files, starting an experiment is as simple as running the faas_runner script.
 The script takes a few parameters:
 
 ### Example Usage:
-``` bash 
+
+```bash
 # Description of Parameters
 ./faas_runner.py -f {PATH TO FUNCTION JSON} -e {PATH TO EXPERIMENT JSON} -o {OPTIONAL: OUTPUT PATH}
 
 # Run the example:
 ./faas_runner.py -f ./functions/exampleFunction.json -e ./experiments/exampleExperiment.json
 ```
+
 If an output path is not defined, FaaS Runner will save output to the ./history folder.
 
 ## Overwriting Attributes with Command Line Arguments:
@@ -166,14 +169,14 @@ Any attribute defined in an function or experiment files can be overwritten usin
 
 For example, overwritten options allows you to easily change the platform of a function without creating an entirely new function file.
 
-``` bash 
+```bash
 # Overwriting the 'platform' attribute of a function..
 ./faas_runner -f ./function.json -e ./experiment.json --platform IBM
 ```
 
 By utilizing default options, you can execute an function on AWS Lambda, using the CLI, without even entering a function json file.
 
-``` bash 
+```bash
 # Running a function called 'helloWorld' on AWS Lambda using the default function and experiment attributes.
 ./faas_runner -e ./experiment.json --function helloWorld
 ```
@@ -189,7 +192,8 @@ After running an experiment FaaS Runner will automatically generate a report usi
 By default FaaS Runner will save each individual JSON payload to a folder alongside generating the compiled report CSV file. In the event that the final report is generated incorrectly, the report compiler can be used to take a folder of JSON files and generate a new report based off of a experiment file.
 
 ### Example Usage:
-``` bash 
+
+```bash
 # Recompile a report.
 ./compile_results.py {FOLDER PATH} {PATH TO EXPERIMENT JSON}
 ```
@@ -199,17 +203,19 @@ By default FaaS Runner will save each individual JSON payload to a folder alongs
 Many observations can be made from the default CSV report alone. To support importing data into another tool, such as R, you may want to use the provided [./tools/report_splitter.py](./tools/report_splitter.py) script. This tool will break a FaaS Runner report into a folder of smaller, properly formatted, CSV files.
 
 ### Example Usage:
-``` bash 
+
+```bash
 # Split a report.
 ./report_splitter.py {PATH TO LARGE CSV}
 ```
 
 # Asynchronous Experiments:
 
-Functions that run asynchronously can still be used with SAAF. Any data returned must be saved onto some storage service and then pulled later after the experiment has finished. The [./s3pull.py](./s3pull.py) script can be used to automate the process of downloading json output files from S3 and reading them. This script will download all files in an S3 bucket, clear the bucket, and compile the downloaded files into a report like regular FaaS Runner experiments. 
+Functions that run asynchronously can still be used with SAAF. Any data returned must be saved onto some storage service and then pulled later after the experiment has finished. The [./s3pull.py](./s3pull.py) script can be used to automate the process of downloading json output files from S3 and reading them. This script will download all files in an S3 bucket, clear the bucket, and compile the downloaded files into a report like regular FaaS Runner experiments.
 
 ### Example Usage:
-``` bash 
+
+```bash
 # Description of Parameters
 ./s3pull.py {S3 BUCKET NAME} {PATH TO EXPERIMENT JSON} {0/1 CLEAR BUCKET?}
 
@@ -223,7 +229,7 @@ FaaS Runner allows multi-function pipeline experiments by using all the same fea
 
 To create a pipeline, simply supply multiple experiment and function files when calling FaaS Runner. Below shows a three function pipeline made up of 3 function files and 3 experiment files.
 
-``` bash 
+```bash
 # Run a pipeline of 3 functions:
 ./faas_runner.py -f ./func1.json ./func2.json ./func3.json -e ./exp1.json ./exp2.json ./exp3.json
 ```
@@ -234,7 +240,7 @@ By default, pipelines will use the first experiment file as the "master" experim
 
 In the same way that attributes in single-function experiments can be overwritten using command line arguments, attributes in pipelines can be modified in the same way
 
-``` bash 
+```bash
 # Run a pipeline of 3 functions:
 ./faas_runner.py -f ./func1.json ./func2.json-e ./exp1.json ./exp2.json --platform IBM --callWithCLI[0] 0
 ```
@@ -243,7 +249,7 @@ The example above shows two attributes being overwritten using command line argu
 
 Similarly to single-function experiments, overrides allow entire experiments to be created without even needing to use experiment or function JSON files. Pipeline experiments can be defined entirely through command line arguments:
 
-``` bash 
+```bash
 # Run a pipeline of 3 functions:
 ./faas_runner.py --function[0] hello1 --function[1] hello2 --function[2] hello3 --runs 100 --threads 100 --platform Google
 ```
@@ -254,7 +260,7 @@ The example aboves runs a pipeline experiment of 3 functions named hello1, hello
 
 By default, pipelines will run each function and experiment sequentially in the order that they are defined in the command line. FaaS Runner includes a Python file called pipeline_transition.py. This file contains one function that is called each time a function in a pipeline is finished. Below is the default transition function.
 
-``` python
+```python
 #
 # Default function transition.
 #
@@ -270,4 +276,4 @@ def transition_function(index, functions, experiments, payloads, lastPayload):
     return index + 1
 ```
 
-By modifying the index of the next function, complex pipelines that skip or change order of the pipeline can be created based off the results of function responses. The only major limitation to FaaS Runner's pipeline system is that the first function defined in the pipeline will always be the first function called. 
+By modifying the index of the next function, complex pipelines that skip or change order of the pipeline can be created based off the results of function responses. The only major limitation to FaaS Runner's pipeline system is that the first function defined in the pipeline will always be the first function called.
