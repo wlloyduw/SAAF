@@ -10,7 +10,7 @@ This material is made available to enable timely dissemination of scholarly and 
 
 ### **Presentation**
 
-[![SAAF Presentation](https://www.youtube.com/watch?v=oRDkHdapmg4)](https://www.youtube.com/watch?v=oRDkHdapmg4)
+[![SAAF Presentation](http://faculty.washington.edu/wlloyd/images/wosc_saaf_video_splash.png)](https://www.youtube.com/watch?v=oRDkHdapmg4)
 
 Cordingly, R., Yu, H., Hoang, V., Sadeghi, Z., Foster, D., Perez, D., Hatchett, R., Lloyd, W., The Serverless Application Analytics Framework: Enabling Design Trade-off Evaluation for Serverless Software, 2020 21st ACM/IFIP International Middleware Conference: 6th International Workshop on Serverless Computing (WoSC '20), Dec 7-11, 2020, to appear.
 
