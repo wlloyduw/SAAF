@@ -37,16 +37,3 @@ Cordingly, R., Shu, W., Lloyd, W., Predicting Performance and Cost of Serverless
 [![Languages Presentation](https://i.imgur.com/yEJKP31.png)](https://drive.google.com/file/d/1C1Vau613ehXrctcRSqxVrAwP2WurEG4w/preview)
 
 Cordingly, R., Yu, H., Hoang, V., Perez, D., Foster, D., Sadeghi, Z., Hatchett, R., Lloyd, W., Implications of Programming Language Selection for Serverless Data Processing Pipelines, 2020 6th IEEE International Conference on Cloud and Big Data Computing (CBDCOM 2020), Aug 17-24, 2020.
-
-## ** The Serverless Application Analytics Framework: Enabling Design Trade-off Evaluation for Serverless Software **
-
-**Abstract-** To help better understand factors that impact performance on Function-as-a-Service (FaaS) platforms we have developed the Serverless Application Analytics Framework (SAAF). SAAF provides a reusable framework supporting multiple programming languages that developers can integrate into a function’s package for deployment to multiple commercial and open source FaaS platforms. SAAF improves the observability of FaaS function deployments by collecting forty-eight distinct metrics to
-enable developers to profile CPU and memory utilization, monitor infrastructure state, and observe platform scalability. In this paper, we describe SAAF in detail and introduce supporting tools highlighting important features and how to use them. Our client application, FaaS Runner, provides a tool to orchestrate workloads and automate the process of conducting experiments across FaaS platforms. We provide a case study demonstrating the integration of SAAF into an existing open source image processing pipeline built for AWS Lambda. Using FaaS Runner, we automate experiments and acquire metrics from SAAF to profile each function of the pipeline to evaluate performance implications. Finally, we summarize contributions using our tools to evaluate implications of different programming languages for serverless data processing, and to build performance models to predict runtime for serverless workloads.
-
-### [**PDF**](http://faculty.washington.edu/wlloyd/papers/SAAF-Paper24.pdf) [**Slides**](http://faculty.washington.edu/wlloyd/slides/SAAF-WOSC-slides.pdf)
-
-### **Presentation**
-
-[![SAAF Presentation](https://www.youtube.com/watch?v=oRDkHdapmg4)](https://www.youtube.com/watch?v=oRDkHdapmg4)
-
-Cordingly, R., Yu, H., Hoang, V., Sadeghi, Z., Foster, D., Perez, D., Hatchett, R., Lloyd, W., The Serverless Application Analytics Framework: Enabling Design Trade-off Evaluation for Serverless Software, 2020 21st ACM/IFIP International Middleware Conference: 6th International Workshop on Serverless Computing (WoSC '20), Dec 7-11, 2020. 
