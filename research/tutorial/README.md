@@ -38,7 +38,7 @@ FaaS Runner Documentation: ​https://github.com/wlloyduw/SAAF/tree/master/test
 Included in the repository are four functions that need to be deployed to AWS Lambda. To simplify this process, SAAF's built in publish scripts can be used to deploy them automatically. The repository contains three 'Hello World' functions; pello_world, jello_world, and nello_world, and the CalcsService function.
 The Jello/Pello/Nello naming is because these are Hello World functions written in ​J​ava, ​P​ython, and ​N​ode.js respectively. SAAF supports functions written in each of these languages.
 
-To deploy these, we must first configure each config.json file with a role ARN. You should already have an ARN created from Tutorial 4 so you can retrieve that by visiting the AWS webpage, go to IAM -> Roles and select the role you would like to use.
+To deploy these, we must first configure each config.json file with a role ARN. You should already have an ARN created earlier in this tutorial so you can retrieve that by visiting the AWS webpage, go to IAM -> Roles and select the role you would like to use.
 
 ![](./assets/faas_runner_section/1.png)
 
