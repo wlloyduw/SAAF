@@ -4,7 +4,7 @@
 	"functionName":     "helloWorld",
 
 	"lambdaHandler": "lambda.Hello::handleRequest",
-	"lambdaRoleARN": "arn:aws:iam::aws:policy/AWSLambdaFullAccess",
+	"lambdaRoleARN": "",
 	"lambdaSubnets": "",
 	"lambdaSecurityGroups": "",
 	"lambdaEnvironment": "Variables={EXAMPLEVAR1=VAL1,EXAMPLEVAR2=VAL2}",

@@ -4,7 +4,7 @@
 	"functionName":     "helloWorld",
 
 	"lambdaHandler": "index.handler",
-	"lambdaRoleARN": "arn:aws:iam::616835888336:role/lambda_basic_execution",
+	"lambdaRoleARN": "",
 	"lambdaSubnets": "",
 	"lambdaSecurityGroups": "",
 	"lambdaEnvironment": "Variables={EXAMPLEVAR1=VAL1,EXAMPLEVAR2=VAL2}",

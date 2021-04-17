@@ -1,0 +1,6 @@
+{
+	"function": "saafdemo",
+    "platform": "HTTP",
+    "source": "../python_template",
+    "endpoint": "https://saafdemo.azurewebsites.net/api/saafdemo?code=s5UZLNALuUKr/aXiov9fg72yUuVugWxM6QvcWjQVpaVU474KHBgjkA=="
+}

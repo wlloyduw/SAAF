@@ -176,7 +176,10 @@ def run_experiment(functions, experiments, outDir):
             elif platform == "Google":
                 publish(func, mem)
             elif platform == "IBM":
-                publish(func, mem)
+                cmd = ['ibmcloud', 'fn', 'action', 'update', functionName, '--memory', str(mem)]
+                proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                o, e = proc.communicate()
+                print(str(o.decode('ascii')))
             else:
                 print("Platform does not support changing memory values.")
         else:

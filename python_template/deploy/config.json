@@ -2,9 +2,9 @@
 	"README": "See ./deploy/README.md for help!",
 
 	"functionName": "hello",
-	
+
 	"lambdaHandler": "lambda_function.lambda_handler",
-	"lambdaRoleARN": "arn:aws:iam::aws:policy/AWSLambdaFullAccess",
+	"lambdaRoleARN": "",
 	"lambdaSubnets": "",
 	"lambdaSecurityGroups": "",
 	"lambdaEnvironment": "Variables={EXAMPLEVAR1=VAL1,EXAMPLEVAR2=VAL2}",
