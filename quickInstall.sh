@@ -44,7 +44,7 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
     echo Installing neutral dependencies...
     sudo apt update
     sudo apt upgrade
-    sudo apt install parallel bc curl jq python3 python3-pip nodejs npm maven
+    sudo apt install parallel bc curl jq python3 python3-pip nodejs npm maven -y
     pip3 install requests boto3 botocore
     echo
     read -rsp $'Dependencies installed! Press any key to continue...\n' -n1 key
@@ -56,7 +56,7 @@ read -p "Would you like to install and setup AWS Lambda? [y/N]" -n 1 -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]; then
     echo Installing AWS CLI...
-    sudo apt install awscli python3 python3-pip
+    sudo apt install awscli python3 python3-pip -y
     pip3 install --upgrade awscli
 
     clear
@@ -81,8 +81,8 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
     echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
     apt-get install apt-transport-https ca-certificates
     curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -
-    sudo apt-get update && sudo apt-get install google-cloud-sdk
-    sudo apt-get install google-cloud-sdk-app-engine-java
+    sudo apt-get update && sudo apt-get install google-cloud-sdk -y
+    sudo apt-get install google-cloud-sdk-app-engine-java -y
 
     clear
     echo Setting up GCloud CLI!
@@ -142,7 +142,7 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
     sudo mv microsoft.gpg /etc/apt/trusted.gpg.d/microsoft.gpg
     sudo sh -c 'echo "deb [arch=amd64] https://packages.microsoft.com/repos/microsoft-ubuntu-$(lsb_release -cs)-prod $(lsb_release -cs) main" > /etc/apt/sources.list.d/dotnetdev.list'
     sudo apt-get update
-    sudo apt-get install azure-functions-core-tools
+    sudo apt-get install azure-functions-core-tools python3-venv -y
     curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
 
     clear
