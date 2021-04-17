@@ -1,6 +1,8 @@
 # SAAF Tutorial
 
-Overview:
+This tutorial provides a comprehensive introduction to SAAF and FaaS Runner. 
+
+## Overview:
 * [Download SAAF](#download)
 * [Install Dependencies](#install)
 * [Writing a Hello World function](#writeFunc)
@@ -308,6 +310,8 @@ FaaS Runner has the built-in attribute ​**passPayloads** that does just that! 
 ```bash
 ./faas_runner.py -f ./functions/jello.json ./functions/pello.json ./functions/nello.json -e ./experiments/jello.json ./experiments/pello.json ./experiments/nello.json ​--passPayloads true
 ```
+
+![](./assets/faas_runner_section/17.png)
 
 As we can see now ALL attributes returned by previous functions are passed onto the payload of the next function invocation. But our message response is still unchanged.
 
