@@ -108,6 +108,8 @@ def test_on_cloud(platforms, payload, config):
     for key in config:
         defaultConfig[key] = config[key]
         
+    defaultConfig['test'] = payload
+        
     with open('../deploy/interactiveConfig.json', 'w') as json_file:
         json.dump(defaultConfig, json_file)
         
