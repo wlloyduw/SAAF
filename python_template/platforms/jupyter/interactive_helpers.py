@@ -4,11 +4,18 @@ import json
 import os
 import boto3
 import ast
+from enum import Enum
+
+class Platform(Enum):
+    AWS = 1
+    GCF = 2
+    IBM = 3
+    AZURE = 4
 
 lastHash = ""
 client = boto3.client('lambda')
     
-def interactive_preprocess():
+def interactive_preprocess(platforms, memory):
     data = None
     with open("interactive.ipynb") as f_in:
         data = json.load(f_in)
@@ -28,11 +35,26 @@ def interactive_preprocess():
     if (lastHash == test):
         print("No changes detected. Make sure to save the notebook!")
         return None
-    lastHash = test
     
-    print("Deploying function...")
-    os.system("../deploy/publish.sh 1 0 0 0 512")
-    print("Function deployed!")
+    for platform in platforms:
+        if (platform == platform.AWS):
+            print("Deploying function on AWS...")
+            os.system("../deploy/publish.sh 1 0 0 0 " + str(memory) + " > ../deploy/aws-log.txt")
+            print("Function deployed! See ../deploy/aws-log.txt for information.")
+        elif (platform == platform.GCF):
+            print("Deploying function on GCF. This may take a while...")
+            os.system("../deploy/publish.sh 0 1 0 0 " + str(memory) + " > ../deploy/gcf-log.txt")
+            print("Function deployed! See ../deploy/gcf-log.txt for information.")
+        elif (platform == platform.IBM):
+            print("Deploying function on IBM...")
+            os.system("../deploy/publish.sh 0 0 1 0 " + str(memory) + " > ../deploy/ibm-log.txt")
+            print("Function deployed! See ../deploy/ibm-log.txt for information.")
+        elif (platform == platform.AZURE):
+            print("Deploying function on Azure. This may take a while...")
+            os.system("../deploy/publish.sh 0 0 0 1 " + str(memory) + " > ../deploy/azure-log.txt")
+            print("Function deployed! See ../deploy/azure-log.txt for information.")
+            
+    lastHash = test
     
 def run_on_cloud(payload):
     response = client.invoke(
