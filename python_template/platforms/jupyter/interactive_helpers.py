@@ -124,5 +124,3 @@ def test_on_cloud(platforms, payload, config):
         elif (platform == platform.AZURE):
             command = "../deploy/test.sh 0 0 0 1 512 interactiveConfig.json"
             print(subprocess.check_output(command.split()).decode('ascii'))
-    
-    pass
