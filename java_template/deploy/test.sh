@@ -30,10 +30,6 @@ fi
 # Get function name from config.
 function=$(cat $config | jq '.functionName' | tr -d '"')
 
-echo
-echo Deploying $function....
-echo
-
 #Define the memory value.
 memory=$(cat ./config.json | jq '.memorySetting' | tr -d '"')
 if [[ ! -z $5 ]]; then
@@ -43,7 +39,7 @@ fi
 # Deploy onto AWS Lambda.
 if [[ ! -z $1 && $1 -eq 1 ]]; then
 	echo
-	echo "----- Deploying onto AWS Lambda -----"
+	echo "----- Testing on AWS Lambda -----"
 	echo
 
 	# Get lambda variables.
@@ -55,20 +51,6 @@ if [[ ! -z $1 && $1 -eq 1 ]]; then
 	lambdaRuntime=$(cat $config | jq '.lambdaRuntime' | tr -d '"')
 	json=$(cat $config | jq -c -a '.test')
 
-	echo "Building jar with Maven..."
-	mvn clean -f "../pom.xml"
-	mvn verify -f "../pom.xml"
-
-	# Submit jar to AWS Lambda.
-	cd ..
-	cd target
-	aws lambda create-function --function-name $function --runtime $lambdaRuntime --role $lambdaRole --timeout 900 --handler $lambdaHandler --zip-file fileb://lambda_test-1.0-SNAPSHOT.jar
-	aws lambda update-function-code --function-name $function --zip-file fileb://lambda_test-1.0-SNAPSHOT.jar
-	aws lambda update-function-configuration --function-name $function --memory-size $memory --runtime $lambdaRuntime \
-		--vpc-config SubnetIds=[$lambdaSubnets],SecurityGroupIds=[$lambdaSecurityGroups] --environment "$lambdaEnvironment"
-	cd ..
-	cd deploy
-
 	echo
 	echo Testing function on AWS Lambda...
 	aws lambda invoke --invocation-type RequestResponse --cli-read-timeout 900 --function-name $function --payload "$json" /dev/stdout
@@ -77,23 +59,8 @@ fi
 # Deploy onto IBM Cloud Functions
 if [[ ! -z $3 && $3 -eq 1 ]]; then
 	echo
-	echo "----- Deploying onto IBM Cloud Functions -----"
+	echo "----- Testing on IBM Cloud Functions -----"
 	echo
-
-	# Get IBM variables.
-	ibmHandler=$(cat $config | jq '.ibmHandler' | tr -d '"')
-	ibmjson=$(cat $config | jq '.test' | tr -d '"' | tr -d '{' | tr -d '}' | tr -d ':')
-
-	echo "Building jar with Maven..."
-	mvn clean -f "../pom.xml"
-	mvn verify -f "../pom.xml"
-
-	# Submit jar to AWS Lambda.
-	cd ..
-	cd target
-	ibmcloud fn action update $function --kind java --memory $memory --main $ibmHandler lambda_test-1.0-SNAPSHOT.jar
-	cd ..
-	cd deploy
 
 	echo
 	echo Testing function on IBM Cloud Functions...
@@ -104,7 +71,7 @@ fi
 # Deploy onto Azure Functions
 if [[ ! -z $4 && $4 -eq 1 ]]; then
 	echo
-	echo "----- Deploying onto Azure Functions -----"
+	echo "----- Testing on Azure Functions -----"
 	echo
 	echo "Java SAAF does not support Azure Functions..."
 fi
@@ -112,7 +79,7 @@ fi
 # Deploy onto Google Cloud Functions
 if [[ ! -z $2 && $2 -eq 1 ]]; then
 	echo
-	echo "----- Deploying onto Google Cloud Functions -----"
+	echo "----- Testing on Google Cloud Functions -----"
 	echo
 	echo "Java SAAF does not support Google Cloud Functions..."
 fi
