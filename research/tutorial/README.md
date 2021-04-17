@@ -195,12 +195,12 @@ Finally, the calcsService application has the feature to produce memory stress b
 
 Here is the summarized process of what we want the experiment to do:
 
-1. Vary the number of calculations (calcs) calcsService does between 1,000 and 100,000 in steps of 1,000 in each experiment run. (Purple)
-2. Repeat the experiment a second time to measure cold/warm performance. (Red)
-3. Change memory setting between 256 MBs, 1024 MBs and 2048 MBs. (Green)
-4. Repeat all the steps once again with memory stress (arraySize = 1,000,000). (Blue)
+1. Vary the number of calculations (calcs) calcsService does between 1,000 and 100,000 in steps of 1,000 in each experiment run.
+2. Repeat the experiment a second time to measure cold/warm performance.
+3. Change memory setting between 256 MBs, 1024 MBs and 2048 MBs.
+4. Repeat all the steps once again with memory stress (arraySize = 1,000,000).
 
-We can create a bash script to easily create FaaS Runner arguments and execute this experiment. The script is included below, see highlighted sections for the implementation of each step. Review comments to see what arguments are being defined. Save and execute this script as ​**complexTest.sh** in the ​**test** directory. This experiment will take a few minutes to complete.
+We can create a bash script to easily create FaaS Runner arguments and execute this experiment. The script is included below. Review comments to see what arguments are being defined. Save and execute this script as ​**complexTest.sh** in the ​**test** directory. This experiment will take a few minutes to complete.
 
 ```bash
 #!/bin/bash
