@@ -13,11 +13,210 @@ This tutorial provides a comprehensive introduction to SAAF and FaaS Runner.
 
 # <a name="download"></a> Download SAAF
 
+To download and get started using SAAF, simply clone the GitHub repository either using git through the command line or from the webpage:
+
+```bash
+git clone https://github.com/wlloyduw/SAAF.git
+```
+
 # <a name="install"></a> Install Dependencies
+
+If you are using Ubuntu you can easily download all dependencies and configure each FaaS platform's CLI by using our quickInstall script:
+
+```bash
+curl -O https://raw.githubusercontent.com/wlloyduw/SAAF/master/quickInstall.sh
+sudo chmod 777 quickInstall.sh
+./quickInstall.sh
+```
+
+If you would like to manually download SAAF dependencies you can simply run one of the commands below:
+
+```bash
+# Ubuntu (Recommended)
+sudo apt update
+sudo apt install parallel bc curl jq python3 python3-pip nodejs npm maven
+pip3 install requests boto3 botocore
+
+# MacOS with Brew
+brew update
+brew install parallel bc curl jq python3 python3-pip nodejs npm maven
+pip3 install requests boto3 botocore
+```
+## Setting up AWS Lambda
+
+Download the AWS CLI and use aws configure to setup. Enter your AWS access and secret key, set your region (e.g. us-east-1) and finally set the output format to json.
+
+```bash
+# Ubuntu
+sudo apt install awscli python3 python3-pip
+pip3 install --upgrade awscli
+aws configure
+
+# MacOS with Brew
+brew install awscli python3 python3-pip
+pip3 install --upgrade awscli
+aws configure
+```
+
+Other platforms such as Google Cloud Functions, IBM Cloud Functions, and Azure Functions can be setup using the quickInstall.sh script.
+
+## Verify Installation
+
+To check to make sure the AWS CLI has been configured properly run the following command and verify it runs without errors.
+
+```bash
+aws lambda list-functions
+```
 
 # <a name="writeFunc"></a> Writing a Hello World Function
 
+The root directory of the SAAF project contains function templates for Java, Node.JS, Python, and Bash. Each template includes a /src, /deploy, and occasionally a /platforms folder. Each language includes the source code from a simple hello world function with SAAF implemented in the /src directory. The /deploy directory contains our multi-platform publish and test scripts that are able to repackage projects and deploy them to multiple FaaS platforms. Finally, the /platforms folder contains platform specific files, in general nothing in this folder needs to be edited.
+
+For the remainder of the tutorial we will focus on the /python_template directory, as Python is a simple language to run and is supported by all FaaS platforms.
+
+```bash
+# Enter the Python Template and open the handler.py file.
+cd python_template/src
+nano handler.py
+```
+
+The default handler.py contains a bit more than a default function for a FaaS platform. Here we have implemented SAAF's Inspector object, which allows users to collect data about FaaS platforms. At the start of functions with SAAF, the Inspector needs to be instantiated (not in global scope), then initial metrics can be inspected using the inspectCPU, inspectMemory, inspectPlatform, inspectContainer, inspectLinux, or inspectAll functions.
+
+After initial inspection, the workload of the function should be started. In this case, it is simply adding the "Hello World" message to the inspector.
+
+Finally, at the end of functions the final delta metrics need to be inspected. Simply call the inspectCPUDeltas, inspectMemoryDeltas, or inspectAllDeltas functions. Then all the data from SAAF can be finalized and returned with the finish() function.
+
+```python
+# This is just to support Azure.
+# If you are not deploying there this can be removed.
+import os
+import sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__))))
+
+import json
+import logging
+from Inspector import *
+import time
+
+#
+# Define your FaaS Function here. 
+# Each platform handler will call and pass parameters to this function.
+# 
+# @param request A JSON object provided by the platform handler.
+# @param context A platform specific object used to communicate with the cloud platform.
+# @returns A JSON object to use as a response. 
+#
+def yourFunction(request, context):
+    # Import the module and collect data
+    inspector = Inspector()
+    inspector.inspectAll()
+
+    # Add custom message and finish the function
+    if ('name' in request):
+        inspector.addAttribute("message", "Hello " + str(request['name']) + "!")
+    else:
+        inspector.addAttribute("message", "Hello World!")
+    
+    inspector.inspectAllDeltas()
+    return inspector.finish()
+```
+
+Using SAAF in a function is as simple importing the framework and adding a couple lines of code. Attributes collected by SAAF will be appended onto the JSON response. For asynchronous functions, this data could be stored into a database, such as AWS S3, and retrieved after the function is finished.
+
+SAAF functions return data in the json payload of functions. For example here is what the output looks like from inspecting the CPU:
+
+```json
+{
+	"version": 0.2,
+	"lang": "python",
+	"cpuType": "Intel(R) Xeon(R) Processor @ 2.50GHz",
+	"cpuModel": 63,
+	"vmuptime": 1551727835,
+	"uuid": "d241c618-78d8-48e2-9736-997dc1a931d4",
+	"vmID": "tiUCnA",
+	"platform": "AWS Lambda",
+	"newcontainer": 1,
+	"cpuUsrDelta": "904",
+	"cpuNiceDelta": "0",
+	"cpuKrnDelta": "585",
+	"cpuIdleDelta": "82428",
+	"cpuIowaitDelta": "226",
+	"cpuIrqDelta": "0",
+	"cpuSoftIrqDelta": "7",
+	"vmcpustealDelta": "1594",
+	"frameworkRuntime": 35.72,
+	"message": "Hello Fred Smith!",
+	"runtime": 38.94
+}
+```
+The attributes collect can be customized by changing which functions are called. For more detailed descriptions of each variable and the functions that collect them, please see the framework documentation for each language:
+https://github.com/wlloyduw/SAAF/blob/master/python_template 
+
 # <a name="deploy"></a> Deploying Functions
+
+Each language comes with a publish.sh script in that can be used to simplify the process of deploying functions and remove the need to visit each cloud provider's website. This script is located in the /deploy folder of each language template. SAAF's deployment tools allow a function to be written once and then automatically packaged, deployed, and tested on each platform. 
+
+Function deployments are defined by the config.json file in the /deploy folder. Here is an example config.json file:
+
+```json
+{
+	"functionName": "hello",
+
+	"lambdaHandler": "lambda_function.lambda_handler",
+	"lambdaRoleARN": "{REQUIRED FILL THIS IN}",
+	"lambdaSubnets": "",
+	"lambdaSecurityGroups": "",
+	"lambdaEnvironment": "Variables={EXAMPLEVAR1=VAL1,EXAMPLEVAR2=VAL2}",
+	"lambdaRuntime": "python3.7",
+
+	"googleHandler": "hello_world",
+	"googleRuntime": "python37",
+
+	"ibmRuntime": "python:3",
+
+	"azureRuntime": "python",
+
+	"test": {
+		"name": "Bob"
+	}
+}
+```
+
+Config files contain all of the needed information to deploy the function. For AWS Lambda, the only attribute that needs to be modified is the **lambdaRoleARN**. The ARN can be found by editing the Lambda function configuration in the AWS management console web GUI. Scroll down and locate Basic Settings. Click EDIT. Under “Basic Settings” the Execution role. Under existing role, click on the blue link that says “View the <role name> role”.
+
+![](./assets/deploy_section/1.png)
+
+Once clicked, the IAM console should open showing the complete ARN role.
+
+![](./assets/deploy_section/2.png)
+
+Once you have found your roll ARN, copy and paste it into the config.json file in the deploy folder. Congratulations you can now deploy functions using SAAF! This setup process is exactly the same for all languages. For other platforms, you do not need to change any of the default values.
+
+To use the publish script, simply follow the directions below:
+
+1. Install all dependencies and setup each cloud's provider's CLI. This can be done using quickInstall.sh
+2. Configure config.json. Fill in the name of your function, a AWS ARN (if deploying to AWS Lambda), and choose a payload to test your function with.
+3. Run the script. The script takes 5 parameters, the first four are booleans that determine what platforms to deploy to and the final is a memory setting to use on supported platforms.
+
+### Example Usage:
+
+``` bash
+# Description of Parameters
+./publish.sh AWS GOOGLE IBM AZURE Memory
+
+# Deploy to AWS and Azure with 512 MBs memory setting:
+./publish.sh 1 0 0 1 512
+
+# Deploy to Google and IBM with 1GB memory setting:
+./publish.sh 0 1 1 0 1024
+
+# Deploy to all platforms with 128 MBs memory setting:
+./publish.sh 1 1 1 1 128
+
+# Deploy to AWS with 3GBs memory setting:
+./publish.sh 1 0 0 0 3008
+```
+If functions are already deployed the publish script will update the configuration and code of a function.
 
 # <a name="test"></a> Testing Functions
 
@@ -381,3 +580,5 @@ def transition_function(​index,​ ​functions,​ ​experiments,​ ​payl
 		index += 1
 	return (index + 1, functions, experiments, payloads, lastPayload)
 ```
+
+Congratulation you are now a master of SAAF and FaaS Runner! You can deploy functions to a variety of FaaS platforms and can run complex experiments.
