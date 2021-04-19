@@ -1,1 +1,1 @@
-{"function": "SAAFNotebook", "platform": "AWS Lambda", "source": "../python_template", "endpoint": ""}
+{"function": "SAAFNotebook", "platform": "IBM", "source": "../python_template", "endpoint": ""}
