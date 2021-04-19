@@ -3,8 +3,11 @@
 Welcome to our SAAF tutorial! This tutorial will provide a comprehensive introduction to SAAF and FaaS Runner.
 
 ## Presentation Slides
-View the slides for the presentation here:
-[LINK](SAAF_Tutorial_Slides.pdf)
+View the tutorial slides here:
+[**LINK**](SAAF_Tutorial_Slides.pdf)
+
+A pre-recorder SAAF talk is available here:
+[**LINK**](https://www.youtube.com/watch?v=oRDkHdapmg4)
 
 ## Demo Topics
 * SAAF Overview
@@ -15,8 +18,8 @@ View the slides for the presentation here:
 * Working with Results in R
 * Interactive FaaS with Jupyter
 
-A prerecorded SAAF demonstration is available here:
-[LINK](https://youtu.be/479BnWGp2E4)
+A pre-recorded SAAF demonstration is available here:
+[**LINK**](https://youtu.be/479BnWGp2E4)
 
 
 ## Hands-on Tutorial Overview:
