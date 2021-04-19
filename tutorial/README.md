@@ -3,7 +3,7 @@
 Welcome to our SAAF tutorial! This tutorial will provide a comprehensive introduction to SAAF and FaaS Runner.
 
 ## Presentation
-# Introduction to Serverless Computing and SAAF
+### Introduction to Serverless Computing and SAAF
 * Introduction to Serverless Computing
 * Motivation
 * Delivery models and platforms
