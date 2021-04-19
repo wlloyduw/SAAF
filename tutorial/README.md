@@ -47,6 +47,7 @@ pip3 install requests boto3 botocore
 
 Download the AWS CLI and use aws configure to setup. Enter your AWS access and secret key, set your region (e.g. us-east-1) and finally set the output format to json.
 
+<!-- is python3 a dependency of the awscli? should it be installed above with SAAF dependencies? -->
 ```bash
 # Ubuntu
 sudo apt install awscli python3 python3-pip
