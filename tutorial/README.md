@@ -378,23 +378,23 @@ Let's verify our function is working by running a basic experiment: 100 runs wit
 ./faas_runner.py --function primes --payloads [{\"digits\": 1000000}] --runs 100 --threads 100
 ```
 
-The **runtime** of this function should have been around 700ms. Let's see the performance impact of memory setting by creating a new experiment. FaaS Runner can automatically switch memory settings and aggregate results.
+The **runtime** of this function should have been around 700ms. Let's see the performance impact of a function's memory setting by creating a new experiment. FaaS Runner can automatically iterate over a list of memory settings and aggregate the results.
 
 ```bash
 ./faas_runner.py --function primes --memorySettings [256,1024] --payloads [{\"digits\": 1000000}] --runs 100 --threads 100
 ```
 
-Two CSV files should open. How does runtime compare between 256MBs and 1024MBs? You should see a nearly 4X performance improvement! Finally, lets do one final experiment to see the impact of WARM function instances compared to COLD function instances. We can destroy the current infrastructure by changing the memory setting again. We will use FaaS Runner to change the memory setting, call the functions twice and aggregate the results.
+Two CSV files should open. How does the runtime compare between 256MBs and 1024MBs? You should see a nearly 4X performance improvement! Finally, lets do one final experiment to see the impact of WARM function instances compared to COLD function instances. We can destroy the current infrastructure by changing the memory setting again. We will use the FaaS Runner to change the memory setting, call the functions twice, and aggregate the results.
 
 ```bash
 ./faas_runner.py --function primes --memorySettings [2048] --payloads [{\"digits\": 1000000}] --runs 100 --threads 100 --iterations 2 --openCSV false --combineSheets true --outputGroups [\"newcontainer\"]
 ```
 
-Scroll to the bottom of the report. Results should be aggregated by the "newcontainer" attribute. Scroll over to the avg_runtime category and see if there is any performance impact by instances being new or reused. AWS Lambda has gotten pretty fast, before there would be a significant performance impact!
+Scroll to the bottom of the report. Results should be aggregated by the "newcontainer" attribute. Scroll over to the avg_runtime category and see if there is any performance impact as a result of container instances being new or reused. AWS Lambda has gotten pretty fast, before there would be a significant performance impact!
 
 # <a name="exp2"></a> Data Processing
 
-All of the data from FaaS Runner experiments is by default saved in /test/history. At this point you should see there are a lot of folders and CSV files there! The folders contain the raw json data of ever run file the CSV files are the compiled reports. Let's get all of this data into a single report! You can access FaaS Runner's report generator by using the report_compiler.py script. To start, delete all of the .csv files. We do not need them anymore. Also delete any folders for our original "hello" function, we are only interesting in primes.
+All of the data from FaaS Runner experiments is by default saved in /test/history. At this point you should see there are a lot of folders and CSV files there! The folders contain the raw JSON data of every run. The CSV files are the compiled reports. Let's collect all of this data into a single report! You can access FaaS Runner's report generator by using the report_compiler.py script. To start, delete all of the .csv files. We do not need them anymore. Also delete any folders for our original "hello" function, we are only interested in primes.
 
 ```bash
 # From the test directory.
