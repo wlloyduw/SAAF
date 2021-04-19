@@ -6,7 +6,7 @@ Welcome to our SAAF tutorial! This tutorial will provide a comprehensive introdu
 View the tutorial slides here:
 [**LINK**](SAAF_Tutorial_Slides.pdf)
 
-A pre-recorder SAAF talk is available here:
+View a video presentation on SAAF here:
 [**LINK**](https://www.youtube.com/watch?v=oRDkHdapmg4)
 
 ## Demo Topics
@@ -18,7 +18,7 @@ A pre-recorder SAAF talk is available here:
 * Working with Results in R
 * Interactive FaaS with Jupyter
 
-A pre-recorded SAAF demonstration is available here:
+View a video demonstration of SAAF demonstration available here:
 [**LINK**](https://youtu.be/479BnWGp2E4)
 
 
