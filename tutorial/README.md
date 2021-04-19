@@ -1,8 +1,21 @@
 # SAAF Tutorial
 
-This tutorial provides a comprehensive introduction to SAAF and FaaS Runner. 
+Welcome to our SAAF tutorial! This tutorial will provide a comprehensive introduction to SAAF and FaaS Runner.
 
-## Overview:
+## Presentation Slides
+View the slides for the presentation here:
+LINK
+
+## Demo Topics
+* SAAF Overview
+* Writing a Function with SAAF
+* Deploying Functions to all Platforms
+* Running Experiments with FaaS Runner
+* Generating Reports
+* Working with Results in R
+* Interactive FaaS with Jupyter
+
+## Hands-on Tutorial Overview:
 * [Download SAAF](#download)
 * [Install Dependencies](#install)
 * [Writing a Hello World function](#writeFunc)

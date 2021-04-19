@@ -68,23 +68,23 @@ def interactive_preprocess(platforms, memory, config):
         if (platform == platform.AWS):
             print("Starting ../deploy/publish.sh for AWS...")
             command = "../deploy/publish.sh 1 0 0 0 " + str(memory) + " interactiveConfig.json > ../deploy/aws-log.txt"
-            print(subprocess.check_output(command.split()).decode('ascii'))
-            print("Deploy Complete!\n")
+            subprocess.check_output(command.split()).decode('ascii')
+            print("Deployment to AWS Lambda Complete!\n")
         elif (platform == platform.GCF):
             print("Starting ../deploy/publish.sh for GCF..")
             command = "../deploy/publish.sh 0 1 0 0 " + str(memory) + " interactiveConfig.json > ../deploy/aws-log.txt"
-            print(subprocess.check_output(command.split()).decode('ascii'))
-            print("Deploy Complete!\n")
+            subprocess.check_output(command.split()).decode('ascii')
+            print("Deployment to Google Cloud Functions Complete!\n")
         elif (platform == platform.IBM):
             print("Starting ../deploy/publish.sh for IBM..")
             command = "../deploy/publish.sh 0 0 1 0 " + str(memory) + " interactiveConfig.json > ../deploy/aws-log.txt"
-            print(subprocess.check_output(command.split()).decode('ascii'))
-            print("Deploy Complete!\n")
+            subprocess.check_output(command.split()).decode('ascii')
+            print("Deployment to IBM Cloud Functions Complete!\n")
         elif (platform == platform.AZURE):
             print("Starting ../deploy/publish.sh for Azure..")
             command = "../deploy/publish.sh 0 0 0 1 " + str(memory) + " interactiveConfig.json > ../deploy/aws-log.txt"
-            print(subprocess.check_output(command.split()).decode('ascii'))
-            print("Deploy Complete!\n")
+            subprocess.check_output(command.split()).decode('ascii')
+            print("Deployment to Azure Functions Complete!\n")
             
     lastHash = test
     
