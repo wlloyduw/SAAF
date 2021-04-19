@@ -122,7 +122,7 @@ The default handler.py contains a bit more than a default function for a FaaS pl
 
 After initial inspection, the workload of the function should be performed. In this case, the workload is simply to add the "Hello World" message to the inspector.
 
-Finally, at the end of functions the delta metrics need to be inspected. Simply call the inspectCPUDeltas, inspectMemoryDeltas, or inspectAllDeltas functions. This adds the resource utilization delta attibutes to SAAF's output. Then all data from SAAF is finalized and returned with the finish() function.
+At the end of a function, the delta metrics need to be inspected. Simply call the inspectCPUDeltas, inspectMemoryDeltas, or inspectAllDeltas functions. This adds the resource utilization delta attibutes to SAAF's output. The last step is to finalize and return all data from SAAF by calling the finish() function.
 
 ```python
 # This is just to support Azure.
@@ -187,12 +187,12 @@ SAAF functions return data in the json payload of functions. For example here is
 	"runtime": 38.94
 }
 ```
-The attributes collect can be customized by changing which functions are called. For more detailed descriptions of each variable and the functions that collect them, please see the framework documentation for each language:
+The attributes collected can be customized by changing which functions are called. For more detailed descriptions of each variable and the functions that collect them, please see the framework documentation for each language:
 https://github.com/wlloyduw/SAAF/blob/master/python_template 
 
 # <a name="deploy"></a> Deploying Functions
 
-Each language comes with a publish.sh script in that can be used to simplify the process of deploying functions and remove the need to visit each cloud provider's website. This script is located in the /deploy folder of each language template. SAAF's deployment tools allow a function to be written once and then automatically packaged, deployed, and tested on each platform. 
+Each language comes with a publish.sh script that can be used to automate the process of deploying functions eliminating the need to deploy functions using each cloud provider's website. This script is located in the /deploy folder of each language template. SAAF's deployment tools enable a function to be written once and then automatically packaged, deployed, and tested on each platform. 
 
 Function deployments are defined by the config.json file in the /deploy folder. Here is an example config.json file:
 
@@ -234,7 +234,7 @@ To use the publish script, simply follow the directions below:
 
 1. Install all dependencies and setup each cloud's provider's CLI. This can be done using quickInstall.sh
 2. Configure config.json. Fill in the name of your function, a AWS ARN (if deploying to AWS Lambda), and choose a payload to test your function with.
-3. Run the script. The script takes 5 parameters, the first four are booleans that determine what platforms to deploy to and the final is a memory setting to use on supported platforms.
+3. Run the script. The script takes 5 parameters, the first four are booleans that determine what platforms to deploy to, and the final is a memory setting to use on supported platforms.
 
 ### Example Usage:
 
@@ -294,7 +294,7 @@ cd test
 ./faas_runner --function hello --runs 100 --threads 100
 ```
 
-This will run your hello function 100 times in parallels across 100 threads and will automatically open a CSV report. FaaS Runner has dozens of options to customize how experiments are executed and reports are generated.
+This will run your hello function 100 times in parallel using 100 threads and will automatically open a CSV report. FaaS Runner has dozens of options to customize how experiments are executed and reports are generated.
 
 To make our experiments more interesting, let's deploy a new function that actually does some work. Here is the steps to take:
 
@@ -316,7 +316,7 @@ nano prime_numbers/deploy/config.json
 ./prime_numbers/deploy/publish.sh 1 0 0 0 512
 ```
 
-Now that we have a new function directory. Edit **prime_numbers/src/handler.py** to be a new function:
+Now that we have a new function directory, edit **prime_numbers/src/handler.py** to be a new function:
 
 ```python
 # This is just to support Azure.
@@ -364,7 +364,7 @@ def yourFunction(request, context):
     return inspector.finish()
 ```
 
-Run the publish.sh script once again to update your functions source with the new changes:
+Run the publish.sh script once again to update your function's source with the new changes:
 
 ```bash
 # Deploy
@@ -372,7 +372,7 @@ Run the publish.sh script once again to update your functions source with the ne
 ```
 Now that we have a more interesting function deployed, we can use FaaS Runner to make more interesting experiments and aggregate the results. Head back to the /test directory.
 
-Let's verify our function is working by running a basic experiment. 100 runs across 100 threads where we calculate 1,000,000 digits of pi.
+Let's verify our function is working by running a basic experiment: 100 runs with 100 threads where each calculates the first 1,000,000 digits of pi.
 
 ```bash
 ./faas_runner.py --function primes --payloads [{\"digits\": 1000000}] --runs 100 --threads 100
