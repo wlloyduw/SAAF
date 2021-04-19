@@ -118,11 +118,11 @@ cd python_template/src
 nano handler.py
 ```
 
-The default handler.py contains a bit more than a default function for a FaaS platform. Here we have implemented SAAF's Inspector object, which allows users to collect data about FaaS platforms. At the start of functions with SAAF, the Inspector needs to be instantiated (not in global scope), then initial metrics can be inspected using the inspectCPU, inspectMemory, inspectPlatform, inspectContainer, inspectLinux, or inspectAll functions.
+The default handler.py contains a bit more than a default function for a FaaS platform. Here we have implemented SAAF's Inspector object, which allows users to collect data about the FaaS platform. At the start of function with SAAF, the Inspector needs to be instantiated (not in global scope), then initial metrics can be inspected using the inspectCPU, inspectMemory, inspectPlatform, inspectContainer, inspectLinux, or inspectAll functions.
 
-After initial inspection, the workload of the function should be started. In this case, it is simply adding the "Hello World" message to the inspector.
+After initial inspection, the workload of the function should be performed. In this case, the workload is simply to add the "Hello World" message to the inspector.
 
-Finally, at the end of functions the final delta metrics need to be inspected. Simply call the inspectCPUDeltas, inspectMemoryDeltas, or inspectAllDeltas functions. Then all the data from SAAF can be finalized and returned with the finish() function.
+Finally, at the end of functions the delta metrics need to be inspected. Simply call the inspectCPUDeltas, inspectMemoryDeltas, or inspectAllDeltas functions. This adds the resource utilization delta attibutes to SAAF's output. Then all data from SAAF is finalized and returned with the finish() function.
 
 ```python
 # This is just to support Azure.
@@ -159,7 +159,7 @@ def yourFunction(request, context):
     return inspector.finish()
 ```
 
-Using SAAF in a function is as simple importing the framework and adding a couple lines of code. Attributes collected by SAAF will be appended onto the JSON response. For asynchronous functions, this data could be stored into a database, such as AWS S3, and retrieved after the function is finished.
+Using SAAF in a function is as simple as importing the framework and adding a couple lines of code. Attributes collected by SAAF will be appended to the JSON response. For asynchronous functions, this data could be stored into a database, such as AWS S3, and retrieved after the function is finished.
 
 SAAF functions return data in the json payload of functions. For example here is what the output looks like from inspecting the CPU:
 
