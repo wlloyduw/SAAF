@@ -23,6 +23,7 @@ git clone https://github.com/wlloyduw/SAAF.git
 
 If you are using Ubuntu you can easily download all dependencies and configure each FaaS platform's CLI by using our quickInstall script:
 
+<!-- what if curl is not installed ? -->
 ```bash
 curl -O https://raw.githubusercontent.com/wlloyduw/SAAF/master/quickInstall.sh
 sudo chmod 777 quickInstall.sh
@@ -46,6 +47,7 @@ pip3 install requests boto3 botocore
 
 Download the AWS CLI and use aws configure to setup. Enter your AWS access and secret key, set your region (e.g. us-east-1) and finally set the output format to json.
 
+<!-- is python3 a dependency of the awscli? should it be installed above with SAAF dependencies? -->
 ```bash
 # Ubuntu
 sudo apt install awscli python3 python3-pip
@@ -70,7 +72,7 @@ aws lambda list-functions
 
 # <a name="writeFunc"></a> Writing a Hello World Function
 
-The root directory of the SAAF project contains function templates for Java, Node.JS, Python, and Bash. Each template includes a /src, /deploy, and occasionally a /platforms folder. Each language includes the source code from a simple hello world function with SAAF implemented in the /src directory. The /deploy directory contains our multi-platform publish and test scripts that are able to repackage projects and deploy them to multiple FaaS platforms. Finally, the /platforms folder contains platform specific files, in general nothing in this folder needs to be edited.
+The root directory of the SAAF project contains function templates for Java, Node.JS, Python, and Bash. Each template includes a /src, /deploy, and occasionally a /platforms folder. Each language includes the source code from a simple hello world function with SAAF implemented in the /src directory. The /deploy directory contains our multi-platform publish and test scripts that are able to repackage projects and deploy them to multiple FaaS platforms. Finally, the /platforms folder contains platform specific files. In general, nothing in this folder needs to be edited.
 
 For the remainder of the tutorial we will focus on the /python_template directory, as Python is a simple language to run and is supported by all FaaS platforms.
 
