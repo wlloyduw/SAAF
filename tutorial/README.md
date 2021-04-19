@@ -23,8 +23,8 @@ git clone https://github.com/wlloyduw/SAAF.git
 
 If you are using Ubuntu you can easily download all dependencies and configure each FaaS platform's CLI by using our quickInstall script:
 
-```bash
 <!-- what if curl is not installed ? -->
+```bash
 curl -O https://raw.githubusercontent.com/wlloyduw/SAAF/master/quickInstall.sh
 sudo chmod 777 quickInstall.sh
 ./quickInstall.sh
