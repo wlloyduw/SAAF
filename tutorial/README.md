@@ -220,6 +220,26 @@ If functions are already deployed the publish script will update the configurati
 
 # <a name="test"></a> Testing Functions
 
+Similar to how functions are deployed, alongside the publish script there is a second deploy/test.sh script than can be used to run functions once. The scripts take the same parameters but the memory parameter does nothing. The test sript will use the same config.json file as publish, calling the function with the **test** payload.
+
+### Example Usage:
+
+``` bash
+# Description of Parameters
+./test.sh AWS GOOGLE IBM AZURE {Memory NOT USED} 
+
+# Test the function on AWS Lambda and Azure Functions.
+./test.sh 1 0 0 1 128
+
+# Test function on Google and IBM:
+./test.sh 0 1 1 0 128
+
+# Test on all platforms.
+./test.sh 1 1 1 1 128
+```
+
+For more complex experiments, we provide the FaaS Runner application.
+
 # <a name="faas-runner"></a> Introduction to FaaS Runner
 
 To begin, using git, create a new directory and clone the GitHub repository for this tutorial.
