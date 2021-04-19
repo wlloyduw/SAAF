@@ -4,7 +4,7 @@ Welcome to our SAAF tutorial! This tutorial will provide a comprehensive introdu
 
 ## Presentation Slides
 View the slides for the presentation here:
-LINK
+[LINK](SAAF_Tutorial_Slides.pdf)
 
 ## Demo Topics
 * SAAF Overview
