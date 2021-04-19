@@ -81,7 +81,7 @@ pip3 install requests boto3 botocore
 ```
 ## Setting up AWS Lambda
 
-Download the AWS CLI and use aws configure to setup. Enter your AWS access and secret key, set your region (e.g. us-east-1) and finally set the output format to json.
+Download the AWS CLI and use aws configure to setup. Enter your AWS access and secret key, set your region (e.g. us-east-1) and finally set the output format to JSON.
 
 <!-- is python3 a dependency of the awscli? should it be installed above with SAAF dependencies? -->
 ```bash
@@ -406,7 +406,7 @@ find . | grep json | xargs -I{} -n1 cp '{}' ./combined/
 cd ..
 ```
 
-Now that you have all of the json files in a single directory, we can process them all into a report using the report compiler.
+Now that you have all of the JSON files in a single directory, we can process them all into a report using the report compiler.
 
 ```bash
 ./compile_results.py history/combined experiments/exampleExperiment.json
@@ -533,7 +533,7 @@ Just like with the first experiment, if we open the output folder, we can now se
 
 ## Creating a Unified Report
 
-Instead of having 4 different reports for each memory setting, lets combine all the runs into one report. To do this we must first create a folder will all of the json files. This can be easily done through the command line.
+Instead of having 4 different reports for each memory setting, lets combine all the runs into one report. To do this we must first create a folder will all of the JSON files. This can be easily done through the command line.
 
 ```bash
 cd memorySettingExperiment
@@ -542,7 +542,7 @@ cp -R **/*.json ./combined
 cd ..
 ```
 
-Next we can use the ​**compile_results.py** ​script to create a single report with all 40 runs. Simply supply the path to the folder of json files (**​./memorySettingExperiment/combined**​) and then the path to an experiment file (**​./experiments/calcsServiceExp1.json​**).
+Next we can use the ​**compile_results.py** ​script to create a single report with all 40 runs. Simply supply the path to the folder of JSON files (**​./memorySettingExperiment/combined**​) and then the path to an experiment file (**​./experiments/calcsServiceExp1.json​**).
 
 ```bash
 # ./compile_results.py {FOLDER PATH} {PATH TO EXPERIMENT JSON}
@@ -653,7 +653,7 @@ cd ./test
 ./complexTest.sh
 ```
 
-**Task 1:** Create a single report with all data from the complex experiment. In your ​report.json file add "​newcontainer" and ​"arraySize" to the ​outputGroups list just like you did in section 6 for ​functionMemory​. Copy all json files from both the NoMemory and Memory folders into one combined folder. Run the report_compiler.py​ script on the folder to generate the report.
+**Task 1:** Create a single report with all data from the complex experiment. In your ​report.json file add "​newcontainer" and ​"arraySize" to the ​outputGroups list just like you did in section 6 for ​functionMemory​. Copy all JSON files from both the NoMemory and Memory folders into one combined folder. Run the report_compiler.py​ script on the folder to generate the report.
 
 FaaS Runner can aggregate data for any attribute returned by a function. For all data returned by SAAF and their definitions see: ​
 https://github.com/wlloyduw/SAAF/tree/master/java_template
