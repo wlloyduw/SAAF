@@ -157,7 +157,8 @@ def run_experiment(functions, experiments, outDir):
         print("Invalid Experiment! Iterations must be >= 1!")
         return False
 
-    if (combineSheets and (warmupBuffer > iterations or iterations == 1)):
+    sumIterations = iterations * len(memoryList)
+    if (combineSheets and (warmupBuffer > sumIterations or sumIterations == 1)):
         combineSheets = False
         print("Conflicting experiment parameters. CombineSheets has been disabled...\nEither warmupBuffer > iterations or iterations == 1")
 

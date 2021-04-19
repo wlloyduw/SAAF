@@ -8,7 +8,9 @@ This tutorial provides a comprehensive introduction to SAAF and FaaS Runner.
 * [Writing a Hello World function](#writeFunc)
 * [Deploying Functions](#deploy)
 * [Testing Functions](#test)
-* [Introduction to FaaS Runner](#faas-runner)
+* [Simple Experiments with SAAF and FaaS Runner](#exp1)
+* [Data Processing](#exp2)
+* [Going Deeper with FaaS Runner](#faas-runner)
 
 
 # <a name="download"></a> Download SAAF
@@ -55,7 +57,7 @@ pip3 install --upgrade awscli
 aws configure
 
 # MacOS with Brew. If you do not have brew install it here: https://brew.sh
-brew install awscli python3 python3-pip
+brew install awscli python3
 pip3 install --upgrade awscli
 aws configure
 ```
@@ -203,6 +205,9 @@ To use the publish script, simply follow the directions below:
 ### Example Usage:
 
 ``` bash
+# Enter the deploy directory of python_template.
+cd ../deploy
+
 # Description of Parameters
 ./publish.sh AWS GOOGLE IBM AZURE Memory
 
@@ -242,7 +247,142 @@ Similar to how functions are deployed, alongside the publish script there is a s
 
 For more complex experiments, we provide the FaaS Runner application.
 
-# <a name="faas-runner"></a> Introduction to FaaS Runner
+# <a name="exp1"></a> Simple Experiments with SAAF and FaaS Runner
+
+To execute experiments on FaaS platforms we provide the FaaS Runner tool. Now that we have the hello world function deployed, lets use FaaS Runner to create a simple experiment.
+
+FaaS Runner is located in the /test directory. To begin, let's run 100 function invocations of our function using the command line:
+
+```bash
+# Enter the test directory and run FaaS Runner
+cd {ROOT DIRECTORY OF SAAF}
+cd test
+./faas_runner --function hello --runs 100 --threads 100
+```
+
+This will run your hello function 100 times in parallels across 100 threads and will automatically open a CSV report. FaaS Runner has dozens of options to customize how experiments are executed and reports are generated.
+
+To make our experiments more interesting, let's deploy a new function that actually does some work. Here is the steps to take:
+
+1. Duplicate the python_template and rename the copy to prime_numbers
+2. Edit the config.json file in /prime_numbers/deploy/config.json and change the function name to "primes". Modify the "test" object to contain the attribute: "digits": 100
+3. Deploy the new function using the publish script.
+
+```bash
+# Go back to root folder from test.
+cd ..
+
+# Copy function source.
+cp -r ./python_template ./prime_numbers
+
+# Edit config.
+nano prime_numbers/deploy/config.json
+
+# Deploy
+./prime_numbers/deploy/publish.sh 1 0 0 0 512
+```
+
+Now that we have a new function directory. Edit **prime_numbers/src/handler.py** to be a new function:
+
+```python
+# This is just to support Azure.
+# If you are not deploying there this can be removed.
+from Inspector import *
+import time
+import logging
+import json
+import os
+import sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__))))
+
+
+#
+# Define your FaaS Function here.
+# Each platform handler will call and pass parameters to this function.
+#
+# @param request A JSON object provided by the platform handler.
+# @param context A platform specific object used to communicate with the cloud platform.
+# @returns A JSON object to use as a response.
+#
+
+def yourFunction(request, context):
+    # Import the module and collect data
+    inspector = Inspector()
+    inspector.inspectAll()
+
+    # Calculate digits and return
+    digits = int(request["digits"])
+    
+     # Pi Digits function from
+	 # https://www.geeksforgeeks.org/calculate-pi-with-python/
+    k = 1
+    s = 0
+    for i in range(digits):
+        if i % 2 == 0:
+            s += 4 / k
+        else:
+            s -= 4 / k
+        k += 2
+    
+    inspector.addAttribute("digits", s)
+
+    inspector.inspectAllDeltas()
+    return inspector.finish()
+```
+
+Run the publish.sh script once again to update your functions source with the new changes:
+
+```bash
+# Deploy
+./prime_numbers/deploy/publish.sh 1 0 0 0 512
+```
+Now that we have a more interesting function deployed, we can use FaaS Runner to make more interesting experiments and aggregate the results. Head back to the /test directory.
+
+Let's verify our function is working by running a basic experiment. 100 runs across 100 threads where we calculate 1,000,000 digits of pi.
+
+```bash
+./faas_runner.py --function primes --payloads [{\"digits\": 1000000}] --runs 100 --threads 100
+```
+
+The **runtime** of this function should have been around 700ms. Let's see the performance impact of memory setting by creating a new experiment. FaaS Runner can automatically switch memory settings and aggregate results.
+
+```bash
+./faas_runner.py --function primes --memorySettings [256,1024] --payloads [{\"digits\": 1000000}] --runs 100 --threads 100
+```
+
+Two CSV files should open. How does runtime compare between 256MBs and 1024MBs? You should see a nearly 4X performance improvement! Finally, lets do one final experiment to see the impact of WARM function instances compared to COLD function instances. We can destroy the current infrastructure by changing the memory setting again. We will use FaaS Runner to change the memory setting, call the functions twice and aggregate the results.
+
+```bash
+./faas_runner.py --function primes --memorySettings [2048] --payloads [{\"digits\": 1000000}] --runs 100 --threads 100 --iterations 2 --openCSV false --combineSheets true --outputGroups [\"newcontainer\"]
+```
+
+Scroll to the bottom of the report. Results should be aggregated by the "newcontainer" attribute. Scroll over to the avg_runtime category and see if there is any performance impact by instances being new or reused. AWS Lambda has gotten pretty fast, before there would be a significant performance impact!
+
+# <a name="exp2"></a> Data Processing
+
+All of the data from FaaS Runner experiments is by default saved in /test/history. At this point you should see there are a lot of folders and CSV files there! The folders contain the raw json data of ever run file the CSV files are the compiled reports. Let's get all of this data into a single report! You can access FaaS Runner's report generator by using the report_compiler.py script. To start, delete all of the .csv files. We do not need them anymore. Also delete any folders for our original "hello" function, we are only interesting in primes.
+
+```bash
+# From the test directory.
+cd ./history 
+
+# Create a new combined folder and copy all of the JSON data into it.
+mkdir combined
+find . | grep json | xargs -I{} -n1 cp '{}' ./combined/
+cd ..
+```
+
+Now that you have all of the json files in a single directory, we can process them all into a report using the report compiler.
+
+```bash
+./compile_results.py history/combined experiments/exampleExperiment.json
+```
+
+Congratulations! Now all of your data from the primes experiment is in a single report. You can customize the output by editing the exampleExperiment.json experiment file. For more information on FaaS Runner, experiment files, continue onto the next section where we go Deeper into using FaaS Runner.
+
+# <a name="faas-runner"></a> Going Deeper with FaaS Runner
+
+For this section, we will be using precreated functions to demonstrate more features of FaaS Runner, how to implement pipelines, and orchestrate them.
 
 To begin, using git, create a new directory and clone the GitHub repository for this tutorial.
 
