@@ -15,6 +15,10 @@ View the slides for the presentation here:
 * Working with Results in R
 * Interactive FaaS with Jupyter
 
+A prerecorded SAAF demonstration is available here:
+[LINK](https://youtu.be/479BnWGp2E4)
+
+
 ## Hands-on Tutorial Overview:
 * [Download SAAF](#download)
 * [Install Dependencies](#install)
