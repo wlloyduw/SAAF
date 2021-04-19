@@ -37,7 +37,7 @@ sudo apt update
 sudo apt install parallel bc curl jq python3 python3-pip nodejs npm maven
 pip3 install requests boto3 botocore
 
-# MacOS with Brew
+# MacOS with Brew. If you do not have brew install it here: https://brew.sh
 brew update
 brew install parallel bc curl jq python3 python3-pip nodejs npm maven
 pip3 install requests boto3 botocore
@@ -52,7 +52,7 @@ sudo apt install awscli python3 python3-pip
 pip3 install --upgrade awscli
 aws configure
 
-# MacOS with Brew
+# MacOS with Brew. If you do not have brew install it here: https://brew.sh
 brew install awscli python3 python3-pip
 pip3 install --upgrade awscli
 aws configure
@@ -248,9 +248,11 @@ To begin, using git, create a new directory and clone the GitHub repository for 
 git clone ​https://github.com/RCordingly/faas_runner_tutorial
 ```
 
-SAAF Documentation: ​https://github.com/wlloyduw/SAAF/tree/master/java_template 
+SAAF Documentation: ​
+https://github.com/wlloyduw/SAAF/tree/master/java_template 
 
-FaaS Runner Documentation: ​https://github.com/wlloyduw/SAAF/tree/master/test
+FaaS Runner Documentation: ​
+https://github.com/wlloyduw/SAAF/tree/master/test
 
 ## Deploy the Included Functions
 

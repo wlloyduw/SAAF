@@ -85,9 +85,9 @@ def interactive_preprocess(platforms, memory, config):
             
     lastHash = test
     
-def run_on_cloud(payload):
+def run_on_cloud(payload, config):
     response = client.invoke(
-        FunctionName = 'hello',
+        FunctionName = config['functionName'],
         InvocationType='RequestResponse',
         Payload=json.dumps(payload)
     )

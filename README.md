@@ -17,6 +17,7 @@ SAAF also provides tools to automate the process of deploying functions to AWS L
 8. [BASH Deployment Tools](./bash_template/deploy/)
 9. [FaaS Runner](./test/)
 10. [Research with SAAF](./research.md)
+11. [SAAF Tutorial](./tutorial.md)
 
 ### Quick Install:
 
