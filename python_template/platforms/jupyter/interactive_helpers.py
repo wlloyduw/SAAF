@@ -6,6 +6,9 @@ import boto3
 import ast
 from enum import Enum
 import subprocess
+import pathlib
+from glob import glob
+import shutil
 
 class Platform(Enum):
     AWS = 1
@@ -126,3 +129,70 @@ def test_on_cloud(platforms, payload, config):
         elif (platform == platform.AZURE):
             command = "../deploy/test.sh 0 0 0 1 512 interactiveConfig.json"
             print(subprocess.check_output(command.split()).decode('ascii'))
+            
+def run_experiment(experiment, config, platform):
+    
+    data = None
+    
+    if (platform == platform.AWS):
+        function = {
+            "function": config["functionName"],
+            "platform": "AWS Lambda",
+            "source": "../python_template",
+            "endpoint": ""
+        }
+        with open('../../test/functions/interactiveFunction.json', 'w') as json_file:
+            json.dump(function, json_file)
+    elif (platform == platform.IBM):
+        function = {
+            "function": config["functionName"],
+            "platform": "IBM",
+            "source": "../python_template",
+            "endpoint": ""
+        }
+        with open('../../test/functions/interactiveFunction.json', 'w') as json_file:
+            json.dump(function, json_file)
+    elif (platform == platform.GCF):
+        function = {
+            "function": config["functionName"],
+            "platform": "Google",
+            "source": "../python_template",
+            "endpoint": ""
+        }
+        with open('../../test/functions/interactiveFunction.json', 'w') as json_file:
+            json.dump(function, json_file)
+    elif (platform == platform.AZURE):
+        function = {
+            "function": config["functionName"],
+            "platform": "Azure",
+            "source": "../python_template",
+            "endpoint": ""
+        }
+        with open('../../test/functions/interactiveFunction.json', 'w') as json_file:
+            json.dump(function, json_file)
+    
+    with open('../../test/experiments/interactiveExperiment.json', 'w') as json_file:
+        json.dump(experiment, json_file)
+        
+    currentPath = pathlib.Path().absolute()
+    os.chdir("../../test")
+    try:
+        shutil.rmtree("history/interactiveExperiment")
+    except:
+        pass
+    
+    try:
+        command = "./faas_runner.py -f functions/interactiveFunction.json -e experiments/interactiveExperiment.json -o history/interactiveExperiment"
+        data = subprocess.check_output(command.split()).decode('ascii')
+        csvReport = glob("history/interactiveExperiment/*.csv")[0]
+        
+        command = "./tools/report_splitter.py " + csvReport
+        subprocess.check_output(command.split()).decode('ascii')
+        
+        reportPath = csvReport.replace(".csv", "") + " - split"
+        data = pd.read_csv(reportPath + "/Raw results of each run.csv")
+    except Exception as e:
+        print(e)
+    
+    os.chdir(currentPath)
+    return data

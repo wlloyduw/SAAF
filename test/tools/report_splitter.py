@@ -16,7 +16,7 @@ if (len(sys.argv) > 1):
     data = ""
 
     filename = os.path.basename(file)
-    directory = file.replace('.csv', '') + ' - spit'
+    directory = file.replace('.csv', '') + ' - split'
     if not os.path.exists(directory):
         os.makedirs(directory)
 
