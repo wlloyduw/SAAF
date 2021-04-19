@@ -2,7 +2,21 @@
 
 Welcome to our SAAF tutorial! This tutorial will provide a comprehensive introduction to SAAF and FaaS Runner.
 
-## Presentation Slides
+## Presentation
+# Introduction to Serverless Computing and SAAF
+* Introduction to Serverless Computing
+* Motivation
+* Delivery models and platforms
+* Advantages and challenges
+* Serverless Application Analytics Framework (SAAF)
+* Design of SAAF, Supported Languages, Metrics
+* Tools: FaaS Runner, Publish Script
+* Analysis Examples with SAAF
+* Programming language comparison, performance modeling
+* Scalability testing, Resource utilization profiling
+* Tracking infrastructure reuse
+* Conclusions
+
 View the tutorial slides here:
 [**LINK**](SAAF_Tutorial_Slides.pdf)
 
