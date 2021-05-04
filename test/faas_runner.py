@@ -59,7 +59,8 @@ defaultExperiment = {
     'warmupBuffer': 0,
     'experimentName': "DEFAULT-EXP",
     'passPayloads': False,
-    'transitions': {}
+    'transitions': {},
+    'simpleOutput': True
 }
 
 # Modes for parsing parameters.

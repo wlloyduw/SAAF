@@ -29,6 +29,7 @@ fi
 
 # Get the function name from the config file.
 function=$(cat $config | jq '.functionName' | tr -d '"')
+handlerFile=$(cat $config | jq '.handlerFile' | tr -d '"')
 json=$(cat $config | jq -c '.test')
 
 echo
@@ -55,15 +56,16 @@ if [[ ! -z $1 && $1 -eq 1 ]]; then
 	lambdaRuntime=$(cat $config | jq '.lambdaRuntime' | tr -d '"')
 
 	# Destroy and prepare build folder.
-	rm -rf build
-	mkdir build
+	rm -rf ${function}_aws_build
+	mkdir ${function}_aws_build
 
 	# Copy files to build folder.
-	cp -R ../src/* ./build
-	cp -R ../platforms/aws/* ./build
+	cp -R ../src/* ./${function}_aws_build
+	cp -R ../platforms/aws/* ./${function}_aws_build
 
 	# Zip and submit to AWS Lambda.
-	cd ./build
+	cd ./${function}_aws_build
+	mv $handlerFile handler.py
 	zip -X -r ./index.zip *
 	aws lambda create-function --function-name $function --runtime $lambdaRuntime --role $lambdaRole --timeout 900 --handler $lambdaHandler --zip-file fileb://index.zip
 	aws lambda update-function-code --function-name $function --zip-file fileb://index.zip
@@ -72,7 +74,7 @@ if [[ ! -z $1 && $1 -eq 1 ]]; then
 	cd ..
 
 	echo
-	echo Testing function on AWS Lambda...
+	echo Testing $function on AWS Lambda...
 	aws lambda invoke --invocation-type RequestResponse --cli-read-timeout 900 --function-name $function --payload "$json" /dev/stdout
 fi
 
@@ -86,20 +88,21 @@ if [[ ! -z $2 && $2 -eq 1 ]]; then
 	googleRuntime=$(cat $config | jq '.googleRuntime' | tr -d '"')
 
 	# Destroy and prepare build folder.
-	rm -rf build
-	mkdir build
+	rm -rf ${function}_gcf_build
+	mkdir ${function}_gcf_build
 
 	# Copy files to build folder.
-	cp -R ../src/* ./build
-	cp -R ../platforms/google/* ./build
-	cp -r ./package/* ./build/
+	cp -R ../src/* ./${function}_gcf_build
+	cp -R ../platforms/google/* ./${function}_gcf_build
+	cp -r ./package/* ./${function}_gcf_build/
 
-	cd ./build
+	cd ./${function}_gcf_build
+	mv $handlerFile handler.py
 	gcloud functions deploy $function --source=. --entry-point $googleHandler --runtime $googleRuntime --timeout 540 --trigger-http --memory $memory
 	cd ..
 
 	echo
-	echo Testing function on Google Cloud Functions... This may fail. It may take a moment for functions to start working after they are deployed.
+	echo Testing $function on Google Cloud Functions... This may fail. It may take a moment for functions to start working after they are deployed.
 	gcloud functions call $function --data $json
 fi
 
@@ -113,15 +116,16 @@ if [[ ! -z $3 && $3 -eq 1 ]]; then
 	ibmjson=$(cat $config | jq '.test' | tr -d '"' | tr -d '{' | tr -d '}' | tr -d ':')
 
 	# Destroy and prepare build folder.
-	rm -rf build
-	mkdir build
+	rm -rf ${function}_ibm_build
+	mkdir ${function}_ibm_build
 
 	# Copy files to build folder.
-	cp -R ../src/* ./build
-	cp -R ../platforms/ibm/* ./build
-	cp -r ./package/* ./build/
+	cp -R ../src/* ./${function}_ibm_build
+	cp -R ../platforms/ibm/* ./${function}_ibm_build
+	cp -r ./package/* ./${function}_ibm_build/
 
-	cd ./build
+	cd ./${function}_ibm_build
+	mv $handlerFile handler.py
 	zip -X -r ./index.zip *
 	ibmcloud fn action update $function --kind $ibmRuntime --memory $memory index.zip
 	cd ..
@@ -140,19 +144,20 @@ if [[ ! -z $4 && $4 -eq 1 ]]; then
 	azureRuntime=$(cat $config | jq '.azureRuntime' | tr -d '"')
 
 	# Destroy and prepare build folder.
-	rm -rf build
-	mkdir build
-	mkdir build/$function
+	rm -rf ${function}_azure_build
+	mkdir ${function}_azure_build
+	mkdir ${function}_azure_build/$function
 
 	# Copy and position files in the build folder.
-	cp -R ../src/* ./build/$function
+	cp -R ../src/* ./${function}_azure_build/$function
 
-	cp -R ../platforms/azure/* ./build
-	cp -r ./package/* ./build/
-	mv ./build/function.json ./build/$function/function.json
-	mv ./build/__init__.py ./build/$function/__init__.py
+	cp -R ../platforms/azure/* ./${function}_azure_build
+	cp -r ./package/* ./${function}_azure_build/
+	mv ./${function}_azure_build/function.json ./${function}_azure_build/$function/function.json
+	mv ./${function}_azure_build/__init__.py ./${function}_azure_build/$function/__init__.py
 
-	cd ./build
+	cd ./${function}_azure_build
+	mv $handlerFile handler.py
 
 	echo Creating resources...
 	az group create --name $function --location eastus
@@ -168,7 +173,7 @@ if [[ ! -z $4 && $4 -eq 1 ]]; then
 	cd ..
 
 	echo
-	echo Testing function on Azure Functions...
+	echo Testing $function on Azure Functions...
 	endPoint=$(func azure functionapp list-functions $function --show-keys | grep Invoke | head -n 1 | tr -d ' ' | cut -c11-)
 	curl -H "Content-Type: application/json" -X POST -d $json $endPoint
 	echo

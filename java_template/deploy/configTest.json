@@ -1,22 +1,16 @@
 {
 	"README": "See ./deploy/README.md for help!",
 
-	"functionName": "hello",
-	"handlerFile": "handler.py",
+	"functionName":     "BRANDNEWHELLOWORLD",
 
-	"lambdaHandler": "lambda_function.lambda_handler",
+	"lambdaHandler": "lambda.Hello::handleRequest",
 	"lambdaRoleARN": "arn:aws:iam::616835888336:role/service-role/simple_microservice_role",
 	"lambdaSubnets": "",
 	"lambdaSecurityGroups": "",
 	"lambdaEnvironment": "Variables={EXAMPLEVAR1=VAL1,EXAMPLEVAR2=VAL2}",
-	"lambdaRuntime": "python3.7",
+	"lambdaRuntime": "java11",
 
-	"googleHandler": "hello_world",
-	"googleRuntime": "python37",
-
-	"ibmRuntime": "python:3",
-
-	"azureRuntime": "python",
+	"ibmHandler": "ibm.Hello",
 
 	"test": {
 		"name": "Bob"

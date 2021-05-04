@@ -21,6 +21,7 @@ from pipeline_transition import transition_function
 
 # Results of calls will be placed into this array.
 run_results = []
+max_runs = 0
 
 #
 # Make a call using AWS CLI
@@ -62,6 +63,7 @@ def callIBM(function, payload):
     proc = subprocess.Popen(cmd, bufsize=-1, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     o, e = proc.communicate()
     print("STDOUT: " + str(o.decode('ascii')) + "\nSTDERR: " + str(e.decode('ascii')))
+    print("RESULT: " + str(o.decode('ascii')))
     return str(o.decode('ascii'))
 
 #
@@ -98,6 +100,15 @@ def callPostProcessor(function, response, thread_id, run_id, payload, roundTripT
 
         if 'version' in dictionary:
             run_results.append(dictionary)
+            parts = 50
+            progress = len(run_results) / max_runs
+            pieces = round(progress * parts) % (parts + 1)
+            percent = round((len(run_results) / max_runs) * 100)
+            progressString = "[" + ("#" * pieces) + ("-" * (parts - pieces)) + "] " + str(percent) + "%"
+            progressString = str(percent)
+            f = open(".progress.txt", "w")
+            f.write(progressString)
+            f.close()
 
         key_list = list(dictionary.keys())
         for key in key_list:
@@ -229,6 +240,8 @@ def callExperiment(functionList, exp):
 
     threads = exp['threads']
     total_runs = exp['runs']
+    global max_runs
+    max_runs = total_runs
     runs_per_thread = int(total_runs / threads)
     payload = exp['payloads']
     useCLI = exp['callWithCLI']
@@ -293,6 +306,10 @@ def callExperiment(functionList, exp):
         print ("ERROR - ALL REQUESTS FAILED")
         return None
     
+    filePath = '.progress.txt'
+    if os.path.exists(filePath):
+        os.remove(filePath)
+    
     return run_results
 
 #
@@ -320,6 +337,8 @@ def callPipelineExperiment(functionList, experimentList):
     # Get values from master experiment file.
     threads = experimentList[0]['threads']
     total_runs = experimentList[0]['runs']
+    global max_runs
+    max_runs = total_runs
     useCLI = experimentList[0]['callWithCLI']
     randomSeed = experimentList[0]['randomSeed']
     seqIterations = int(total_runs / threads)
@@ -382,5 +401,9 @@ def callPipelineExperiment(functionList, experimentList):
     if len(run_results) == 0:
         print ("ERROR - ALL REQUESTS FAILED")
         return None
+    
+    filePath = '.progress.txt'
+    if os.path.exists(filePath):
+        os.remove(filePath)
     
     return run_results

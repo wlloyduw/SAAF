@@ -39,10 +39,6 @@ fi
 
 # Deploy onto AWS Lambda.
 if [[ ! -z $1 && $1 -eq 1 ]]; then
-	echo
-	echo "----- Testing on AWS Lambda -----"
-	echo
-
 	lambdaHandler=$(cat $config | jq '.lambdaHandler' | tr -d '"')
 	lambdaRole=$(cat $config | jq '.lambdaRoleARN' | tr -d '"')
 	lambdaSubnets=$(cat $config | jq '.lambdaSubnets' | tr -d '"')
@@ -50,49 +46,34 @@ if [[ ! -z $1 && $1 -eq 1 ]]; then
 	lambdaEnvironment=$(cat $config | jq '.lambdaEnvironment' | tr -d '"')
 	lambdaRuntime=$(cat $config | jq '.lambdaRuntime' | tr -d '"')
 
-	echo
-	echo Testing function on AWS Lambda...
+	echo Testing $function on AWS Lambda...
 	aws lambda invoke --invocation-type RequestResponse --cli-read-timeout 900 --function-name $function --payload "$json" /dev/stdout
 fi
 
 # Deploy onto Google Cloud Functions
 if [[ ! -z $2 && $2 -eq 1 ]]; then
-	echo
-	echo "----- Testing on Google Cloud Functions -----"
-	echo
-
 	googleHandler=$(cat $config | jq '.googleHandler' | tr -d '"')
 	googleRuntime=$(cat $config | jq '.googleRuntime' | tr -d '"')
 
-	echo
-	echo Testing function on Google Cloud Functions... This may fail. It may take a moment for functions to start working after they are deployed.
+	echo Testing $function on Google Cloud Functions... This may fail. It may take a moment for functions to start working after they are deployed.
 	gcloud functions call $function --data $json
 fi
 
 # Deploy onto IBM Cloud Functions
 if [[ ! -z $3 && $3 -eq 1 ]]; then
-	echo
-	echo "----- Testing on IBM Cloud Functions -----"
-	echo
 
 	ibmRuntime=$(cat $config | jq '.ibmRuntime' | tr -d '"')
 	ibmjson=$(cat $config | jq '.test' | tr -d '"' | tr -d '{' | tr -d '}' | tr -d ':')
 
-	echo
-	echo Testing function on IBM Cloud Functions...
+	echo Testing $function on IBM Cloud Functions...
 	ibmcloud fn action invoke $function -p $ibmjson --result
 fi
 
 # Deploy onto Azure Functions
 if [[ ! -z $4 && $4 -eq 1 ]]; then
-	echo
-	echo "----- Testing on Azure Functions -----"
-	echo
-
 	azureRuntime=$(cat $config | jq '.azureRuntime' | tr -d '"')
 
-	echo
-	echo Testing function on Azure Functions...
+	echo Testing $function on Azure Functions...
 	endPoint=$(func azure functionapp list-functions $function --show-keys | grep Invoke | head -n 1 | tr -d ' ' | cut -c11-)
 	curl -H "Content-Type: application/json" -X POST -d $json $endPoint
 	echo
