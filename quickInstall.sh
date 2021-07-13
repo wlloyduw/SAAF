@@ -45,7 +45,7 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
     sudo apt update
     sudo apt upgrade
     sudo apt install parallel bc curl jq python3 python3-pip nodejs npm maven -y
-    pip3 install requests boto3 botocore
+    pip3 install requests boto3 botocore tqdm numpy pandas matplotlib ipython jupyter
     echo
     read -rsp $'Dependencies installed! Press any key to continue...\n' -n1 key
 fi
