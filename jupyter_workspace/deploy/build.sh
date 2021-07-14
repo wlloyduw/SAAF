@@ -1,0 +1,112 @@
+#!/bin/bash
+
+# Mutli-platform Publisher. Used to publish FaaS Inspector Python functions onto AWS Lambda, Google Cloud Functions, IBM
+# Cloud Functions, and Azure Functions.
+#
+# Each platform's default function is defined in the platforms folder. These are copied into the source folder as index.js
+# and deployed onto each platform accordingly. Developers should write their function in the function.js file.
+# All source files should be in the src folder and dependencies defined in package.json.
+#
+# This script requires each platform's CLI to be installed and properly configured to update functions.
+# AWS CLI: apt install awscli
+# Google Cloud CLI: https://cloud.google.com/sdk/docs/quickstarts
+# IBM Cloud CLI: https://www.ibm.com/cloud/cli
+# Azure CLI: https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest
+#
+# Choose which platforms to deploy to using command line arguments:
+# ./publish.sh AWS GCF IBM AZURE MEMORY
+# Example to deploy to AWS and Azure: ./publish.sh 1 0 0 1 1024 {PATH TO CONFIG FILE}
+#
+# Get the function name from the config file.
+
+cd "$(dirname "$0")"
+
+# Load config.json if a value is not supplied.
+config="./config.json"
+if [[ ! -z $6 ]]; then
+	config=$6
+fi
+
+# Get the function name from the config file.
+function=$(cat $config | jq '.functionName' | tr -d '"')
+handlerFile=$(cat $config | jq '.handlerFile' | tr -d '"')
+json=$(cat $config | jq -c '.test')
+
+echo
+echo Deploying $function...
+echo
+
+#Define the memory value.
+memory=$(cat $config | jq '.memorySetting' | tr -d '"')
+if [[ ! -z $5 ]]; then
+	memory=$5
+fi
+
+# Deploy onto AWS Lambda.
+if [[ ! -z $1 && $1 -eq 1 ]]; then
+	echo
+	echo "----- Building for AWS Lambda -----"
+	echo
+
+	lambdaHandler=$(cat $config | jq '.lambdaHandler' | tr -d '"')
+	lambdaRole=$(cat $config | jq '.lambdaRoleARN' | tr -d '"')
+	lambdaSubnets=$(cat $config | jq '.lambdaSubnets' | tr -d '"')
+	lambdaSecurityGroups=$(cat $config | jq '.lambdaSecurityGroups' | tr -d '"')
+	lambdaEnvironment=$(cat $config | jq '.lambdaEnvironment' | tr -d '"')
+	lambdaRuntime=$(cat $config | jq '.lambdaRuntime' | tr -d '"')
+
+	# Destroy and prepare build folder.
+	rm -rf ${function}_aws_build
+	mkdir ${function}_aws_build
+	mkdir ${function}_aws_build/includes_${function}
+
+	# Copy files to build folder.
+	# cp -R ../src/* ./${function}_aws_build
+	cp -R ../src/includes_${function}/* ./${function}_aws_build/includes_${function}
+	cp ../src/handler_${function}.py ./${function}_aws_build/handler.py
+	cp ../src/Inspector.py ./${function}_aws_build/Inspector.py
+
+	cp -R ../platforms/aws/* ./${function}_aws_build
+	cp -r ./package/* ./${function}_aws_build
+	cp -r ./${function}_package/* ./${function}_aws_build
+
+	# Zip and submit to AWS Lambda.
+	cd ./${function}_aws_build
+	
+	docker build -t ${function} .
+	aws ecr create-repository --repository-name saaf-functions --image-scanning-configuration scanOnPush=true
+	registryID=$(aws ecr describe-registry | jq '.registryId' | tr -d '"')
+	docker tag ${function}:latest ${registryID}.dkr.ecr.us-east-1.amazonaws.com/saaf-functions:${function}
+	aws ecr get-login-password | docker login --username AWS --password-stdin ${registryID}.dkr.ecr.us-east-1.amazonaws.com
+	docker push ${registryID}.dkr.ecr.us-east-1.amazonaws.com/saaf-functions:${function}
+	docker logout
+
+	code={\"ImageUri\":\"${registryID}.dkr.ecr.us-east-1.amazonaws.com/saaf-functions:${function}\"}
+	aws lambda create-function --function-name $function --role $lambdaRole --timeout 900 --code $code --package-type Image --memory-size $memory
+	aws lambda update-function-code --function-name $function --image-uri ${registryID}.dkr.ecr.us-east-1.amazonaws.com/saaf-functions:${function}
+	aws lambda update-function-configuration --function-name $function --memory-size $memory --vpc-config SubnetIds=[$lambdaSubnets],SecurityGroupIds=[$lambdaSecurityGroups]
+	aws lambda update-function-configuration --function-name $function --memory-size $memory
+
+	cd ..
+fi
+
+# Deploy onto Google Cloud Functions
+if [[ ! -z $2 && $2 -eq 1 ]]; then
+	echo
+	echo "----- Containers not supported on Google Cloud Functions -----"
+	echo
+fi
+
+# Deploy onto IBM Cloud Functions
+if [[ ! -z $3 && $3 -eq 1 ]]; then
+	echo
+	echo "----- Containers not supported on IBM Cloud Functions -----"
+	echo
+fi
+
+# Deploy onto Azure Functions
+if [[ ! -z $4 && $4 -eq 1 ]]; then
+	echo
+	echo "----- Containers not supported on Azure -----"
+	echo
+fi
