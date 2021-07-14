@@ -112,9 +112,9 @@ def test(function, payload, config):
         obj or string: Function response payload, either as a dictionary object or string depending on the platform
     """
     
-    print("Running local test...", end=" ")
+    print("Running local test...")
     function(payload, None)
-    print("Success! Testing on cloud...")
+    print("Testing on cloud...")
     
     functionName = function.__name__
     
@@ -329,12 +329,28 @@ def {childFunctionName}(request, context):
 
 
 def deploy_to(platform, name, memory, containerize):
+    global stop_threads
     if (platform == platform.AWS):
         if (containerize):
-            print("Building " + name + " container for AWS Lambda. Container deployments take longer and do not immediately destroy infrastructure.")
-            command = "../deploy/build.sh 1 0 0 0 " + str(memory) + " " + name + "_config.json > ../deploy/aws-log.txt"
-            print("Running this command:\n" + command)
-            subprocess.check_output(command.split()).decode('ascii')
+            #print("Building " + name + " container for AWS Lambda. Container deployments take longer and do not immediately destroy infrastructure.")
+            
+            filename = "../deploy/" + name + "_aws_build_progress.txt"
+            try:
+                os.remove(filename)
+            except Exception as e:
+                pass
+            
+            buildWatcher = threading.Thread(target=build_watcher, args=(filename,))
+            buildWatcher.start()
+            
+            try:
+                command = "../deploy/build.sh 1 0 0 0 " + str(memory) + " " + name + "_config.json > ../deploy/aws-log.txt"
+                subprocess.check_output(command.split()).decode('ascii')
+            except Exception as e:
+                print(e)
+            
+            stop_threads = True
+            buildWatcher.join()
         else:
             print("Deploying " + name + " to AWS Lambda...")
             command = "../deploy/publish.sh 1 0 0 0 " + str(memory) + " " + name + "_config.json > ../deploy/aws-log.txt"
@@ -382,7 +398,7 @@ def call_on(functionName, platform):
             print(out)
             return out
     except Exception as e:
-        print("FaaS call failed! For container based function it may not be available yet. Error: " + str(e))
+        print("FaaS call failed! For container based functions it may not be available yet. Error: " + str(e))
         return ""
 
 
@@ -411,6 +427,31 @@ def progress_watcher(runs, iterations):
                 currentProgress += diff * runs
                 p_bar.update(n=round(diff * runs))
                 currentPercent = percent
+        except:
+            pass
+        time.sleep(0.5)
+        
+def build_watcher(file_name):
+    consoleContents = ""
+    while(True):
+        global stop_threads
+        if (stop_threads):
+            progress = open(file_name, "r")
+            data = progress.read()
+            progress.close()
+            printData = data.replace(consoleContents, "")
+            if (printData != ""):
+                print(printData, end="")
+            consoleContents = data
+            break
+        try:
+            progress = open(file_name, "r")
+            data = progress.read()
+            progress.close()
+            printData = data.replace(consoleContents, "")
+            if (printData != ""):
+                print(printData, end="")
+            consoleContents = data
         except:
             pass
         time.sleep(0.5)

@@ -55,10 +55,14 @@ if [[ ! -z $1 && $1 -eq 1 ]]; then
 	lambdaEnvironment=$(cat $config | jq '.lambdaEnvironment' | tr -d '"')
 	lambdaRuntime=$(cat $config | jq '.lambdaRuntime' | tr -d '"')
 
+	echo "Cleaning previous build..." > ${function}_aws_build_progress.txt
+
 	# Destroy and prepare build folder.
 	rm -rf ${function}_aws_build
 	mkdir ${function}_aws_build
 	mkdir ${function}_aws_build/includes_${function}
+
+	echo "Copying files..." >> ${function}_aws_build_progress.txt
 
 	# Copy files to build folder.
 	# cp -R ../src/* ./${function}_aws_build
@@ -70,22 +74,25 @@ if [[ ! -z $1 && $1 -eq 1 ]]; then
 	cp -r ./package/* ./${function}_aws_build
 	cp -r ./${function}_package/* ./${function}_aws_build
 
+	echo "Building container..." >> ${function}_aws_build_progress.txt
+
 	# Zip and submit to AWS Lambda.
 	cd ./${function}_aws_build
 	
-	docker build -t ${function} .
+	docker build -t ${function} . >> ../${function}_aws_build_progress.txt
 	aws ecr create-repository --repository-name saaf-functions --image-scanning-configuration scanOnPush=true
 	registryID=$(aws ecr describe-registry | jq '.registryId' | tr -d '"')
 	docker tag ${function}:latest ${registryID}.dkr.ecr.us-east-1.amazonaws.com/saaf-functions:${function}
 	aws ecr get-login-password | docker login --username AWS --password-stdin ${registryID}.dkr.ecr.us-east-1.amazonaws.com
-	docker push ${registryID}.dkr.ecr.us-east-1.amazonaws.com/saaf-functions:${function}
+	docker push ${registryID}.dkr.ecr.us-east-1.amazonaws.com/saaf-functions:${function} >> ../${function}_aws_build_progress.txt
 	docker logout
+
+	echo "Deploying to AWS Lambda..." >> ../${function}_aws_build_progress.txt
 
 	code={\"ImageUri\":\"${registryID}.dkr.ecr.us-east-1.amazonaws.com/saaf-functions:${function}\"}
 	aws lambda create-function --function-name $function --role $lambdaRole --timeout 900 --code $code --package-type Image --memory-size $memory
 	aws lambda update-function-code --function-name $function --image-uri ${registryID}.dkr.ecr.us-east-1.amazonaws.com/saaf-functions:${function}
 	aws lambda update-function-configuration --function-name $function --memory-size $memory --vpc-config SubnetIds=[$lambdaSubnets],SecurityGroupIds=[$lambdaSecurityGroups]
-	aws lambda update-function-configuration --function-name $function --memory-size $memory
 
 	cd ..
 fi
