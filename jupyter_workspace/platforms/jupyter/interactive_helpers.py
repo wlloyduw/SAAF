@@ -430,7 +430,8 @@ def progress_watcher(runs, iterations):
         except:
             pass
         time.sleep(0.5)
-        
+
+
 def build_watcher(file_name):
     consoleContents = ""
     while(True):
