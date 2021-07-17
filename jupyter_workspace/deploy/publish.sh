@@ -55,10 +55,14 @@ if [[ ! -z $1 && $1 -eq 1 ]]; then
 	lambdaEnvironment=$(cat $config | jq '.lambdaEnvironment' | tr -d '"')
 	lambdaRuntime=$(cat $config | jq '.lambdaRuntime' | tr -d '"')
 
+	echo "AWS: Cleaning previous build..." > ${function}_aws_build_progress.txt
+
 	# Destroy and prepare build folder.
 	rm -rf ${function}_aws_build
 	mkdir ${function}_aws_build
 	mkdir ${function}_aws_build/includes_${function}
+
+	echo "AWS: Copying files..." >> ${function}_aws_build_progress.txt
 
 	# Copy files to build folder.
 	# cp -R ../src/* ./${function}_aws_build
@@ -72,15 +76,21 @@ if [[ ! -z $1 && $1 -eq 1 ]]; then
 
 	# Zip and submit to AWS Lambda.
 	cd ./${function}_aws_build
+
+	echo "AWS: Creating Zip..." >> ../${function}_aws_build_progress.txt
+
 	zip -X -r ./index.zip *
+
+	echo "AWS: Deploying function... " >> ../${function}_aws_build_progress.txt
+
 	aws lambda create-function --function-name $function --runtime $lambdaRuntime --role $lambdaRole --timeout 900 --handler $lambdaHandler --zip-file fileb://index.zip
 	aws lambda update-function-code --function-name $function --zip-file fileb://index.zip
 	aws lambda update-function-configuration --function-name $function --memory-size $memory --runtime $lambdaRuntime --vpc-config SubnetIds=[$lambdaSubnets],SecurityGroupIds=[$lambdaSecurityGroups] --environment "$lambdaEnvironment"
 	cd ..
 
-	echo
-	echo Testing $function on AWS Lambda...
-	aws lambda invoke --invocation-type RequestResponse --cli-read-timeout 900 --function-name $function --payload "$json" /dev/stdout
+	#echo
+	#echo Testing $function on AWS Lambda...
+	#aws lambda invoke --invocation-type RequestResponse --cli-read-timeout 900 --function-name $function --payload "$json" /dev/stdout
 fi
 
 # Deploy onto Google Cloud Functions
@@ -92,10 +102,14 @@ if [[ ! -z $2 && $2 -eq 1 ]]; then
 	googleHandler=$(cat $config | jq '.googleHandler' | tr -d '"')
 	googleRuntime=$(cat $config | jq '.googleRuntime' | tr -d '"')
 
+	echo "GCF: Cleaning previous build..." > ${function}_gcf_build_progress.txt
+
 	# Destroy and prepare build folder.
 	rm -rf ${function}_gcf_build
 	mkdir ${function}_gcf_build
 	mkdir ${function}_gcf_build/includes_${function}
+
+	echo "GCF: Copying files..." >> ${function}_gcf_build_progress.txt
 
 	# Copy files to build folder.
 	#cp -R ../src/* ./${function}_gcf_build
@@ -107,12 +121,15 @@ if [[ ! -z $2 && $2 -eq 1 ]]; then
 	cp -r ./package/* ./${function}_gcf_build/
 
 	cd ./${function}_gcf_build
+
+	echo "GCF: Deploying function... This takes a while..." >> ../${function}_gcf_build_progress.txt
+
 	gcloud functions deploy $function --source=. --entry-point $googleHandler --runtime $googleRuntime --timeout 540 --trigger-http --memory $memory
 	cd ..
 
-	echo
-	echo Testing $function on Google Cloud Functions... This may fail. It may take a moment for functions to start working after they are deployed.
-	gcloud functions call $function --data $json
+	#echo
+	#echo Testing $function on Google Cloud Functions... This may fail. It may take a moment for functions to start working after they are deployed.
+	#gcloud functions call $function --data $json
 fi
 
 # Deploy onto IBM Cloud Functions
@@ -124,10 +141,14 @@ if [[ ! -z $3 && $3 -eq 1 ]]; then
 	ibmRuntime=$(cat $config | jq '.ibmRuntime' | tr -d '"')
 	ibmjson=$(cat $config | jq '.test' | tr -d '"' | tr -d '{' | tr -d '}' | tr -d ':')
 
+	echo "IBM: Cleaning previous build..." > ${function}_ibm_build_progress.txt
+
 	# Destroy and prepare build folder.
 	rm -rf ${function}_ibm_build
 	mkdir ${function}_ibm_build
 	mkdir ${function}_ibm_build/includes_${function}
+
+	echo "IBM: Copying files..." >> ${function}_ibm_build_progress.txt
 
 	# Copy files to build folder.
 	#cp -R ../src/* ./${function}_ibm_build
@@ -139,13 +160,19 @@ if [[ ! -z $3 && $3 -eq 1 ]]; then
 	cp -r ./package/* ./${function}_ibm_build/
 
 	cd ./${function}_ibm_build
+
+	echo "IBM: Creating Zip..." >> ../${function}_ibm_build_progress.txt
+
 	zip -X -r ./index.zip *
+
+	echo "IBM: Deploying function..." >> ../${function}_ibm_build_progress.txt
+
 	ibmcloud fn action update $function --kind $ibmRuntime --memory $memory index.zip
 	cd ..
 
-	echo
-	echo Testing function on IBM Cloud Functions...
-	ibmcloud fn action invoke $function -p $ibmjson --result
+	#echo
+	#echo Testing function on IBM Cloud Functions...
+	#ibmcloud fn action invoke $function -p $ibmjson --result
 fi
 
 # Deploy onto Azure Functions
@@ -156,11 +183,15 @@ if [[ ! -z $4 && $4 -eq 1 ]]; then
 
 	azureRuntime=$(cat $config | jq '.azureRuntime' | tr -d '"')
 
+	echo "AZURE: Cleaning previous build..." > ${function}_azure_build_progress.txt
+
 	# Destroy and prepare build folder.
 	rm -rf ${function}_azure_build
 	mkdir ${function}_azure_build
 	mkdir ${function}_azure_build/includes_${function}
 	mkdir ${function}_azure_build/$function
+
+	echo "AZURE: Copying files..." >> ${function}_azure_build_progress.txt
 
 	# Copy and position files in the build folder.
 	#cp -R ../src/* ./${function}_azure_build/$function
@@ -175,11 +206,24 @@ if [[ ! -z $4 && $4 -eq 1 ]]; then
 
 	cd ./${function}_azure_build
 
+	echo "AZURE: Creating group resource..." >> ../${function}_azure_build_progress.txt
+
 	echo Creating resources...
 	az group create --name $function --location eastus
+
+	echo "AZURE: Creating storage resource..." >> ../${function}_azure_build_progress.txt
+
 	az storage account create --name $function --location eastus --resource-group $function --sku Standard_LRS
+	
+	echo "AZURE: Creating insights resource..." >> ../${function}_azure_build_progress.txt
+
 	az resource create -g $function -n $function --resource-type "Microsoft.Insights/components" --properties "{\"Application_Type\":\"web\"}"
+	
+	echo "AZURE: Creating function app resource..." >> ../${function}_azure_build_progress.txt
+
 	az functionapp create --resource-group $function --consumption-plan-location eastus --name $function --runtime $azureRuntime --os-type Linux --output json --storage-account $function --app-insights $function --functions-version 2
+
+	echo "AZURE: Deploying function.. This may fail if the function app is brand new. Deploy the function again if not available." >> ../${function}_azure_build_progress.txt
 
 	echo Deploying function... This may fail if the function app is brand new. In that event, please run this script again.
 	python3 -m venv .env
@@ -188,9 +232,9 @@ if [[ ! -z $4 && $4 -eq 1 ]]; then
 	deactivate
 	cd ..
 
-	echo
-	echo Testing $function on Azure Functions...
-	endPoint=$(func azure functionapp list-functions $function --show-keys | grep Invoke | head -n 1 | tr -d ' ' | cut -c11-)
-	curl -H "Content-Type: application/json" -X POST -d $json $endPoint
-	echo
+	#echo
+	#echo Testing $function on Azure Functions...
+	#endPoint=$(func azure functionapp list-functions $function --show-keys | grep Invoke | head -n 1 | tr -d ' ' | cut -c11-)
+	#curl -H "Content-Type: application/json" -X POST -d $json $endPoint
+	#echo
 fi

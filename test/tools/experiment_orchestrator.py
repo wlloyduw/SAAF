@@ -27,7 +27,14 @@ from report_generator import write_file
 #
 def publish(func, memory):
     sourceDir = func['source']
+    
     deployConfig = sourceDir + "/deploy/config.json"
+    configFilename = "config.json"
+    if '.json' in sourceDir:
+        deployConfig = sourceDir
+        configFilename = os.path.basename(deployConfig)
+        sourceDir = deployConfig.replace("/deploy/" + configFilename, "")
+    
     deployJson = json.load(open(deployConfig))
 
     if (deployJson['functionName'] != func['function']):
@@ -62,7 +69,7 @@ def publish(func, memory):
             print("Unknown platform.")
             return None
 
-        cmd = [sourceDir + "/deploy/publish.sh"] + params
+        cmd = [sourceDir + "/deploy/publish.sh"] + params + [configFilename]
         proc = subprocess.Popen(
             cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         o, e = proc.communicate()
