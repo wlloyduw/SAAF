@@ -14,6 +14,7 @@ import inspect
 import threading
 import time
 import math
+import uuid
 from tqdm.notebook import tqdm, trange
 
 from IPython.display import clear_output, display, HTML, IFrame, FileLink
@@ -24,6 +25,7 @@ class Platform(Enum):
     GCF = 2
     IBM = 3
     AZURE = 4
+    DOCKER = 5
     
 class RunMode(Enum):
     LOCAL = 1
@@ -49,7 +51,7 @@ defaultConfig = {
 	"lambdaSubnets": "",
 	"lambdaSecurityGroups": "",
 	"lambdaEnvironment": "Variables={EXAMPLEVAR1=VAL1,EXAMPLEVAR2=VAL2}",
-	"lambdaRuntime": "python3.7",
+	"lambdaRuntime": "python3.8",
 	"googleHandler": "hello_world",
 	"googleRuntime": "python37",
 	"ibmRuntime": "python:3",
@@ -219,6 +221,12 @@ def run_experiment(function, experiment, platform=Platform.AWS, config=None):
     
     functionName = function.__name__
     
+    exp_id = functionName + "-" + str(uuid.uuid4())
+    if 'name' in experiment:
+        exp_id = functionName + "-" + experiment['name'] + "-" + str(uuid.uuid4())
+
+    print("Running experiment: " + exp_id)
+    
     if (platform == platform.AWS):
         function = {
             "function": functionName,
@@ -255,6 +263,9 @@ def run_experiment(function, experiment, platform=Platform.AWS, config=None):
         }
         with open('../../test/functions/interactiveFunction.json', 'w') as json_file:
             json.dump(function, json_file)
+    elif (platform == platform.DOCKER):
+        print("Experiments are not supported on the docker platform.")
+        return False
     
     # Set default values
     experiment["outputGroups"] = []
@@ -267,23 +278,47 @@ def run_experiment(function, experiment, platform=Platform.AWS, config=None):
         
     currentPath = pathlib.Path().absolute()
     os.chdir("../../test")
-    try:
-        shutil.rmtree("history/interactiveExperiment")
-    except:
-        pass
+    # try:
+    #     shutil.rmtree("history/interactiveExperiment")
+    # except:
+    #     pass
     
-    progressWatcher = threading.Thread(target=progress_watcher, args=(experiment['runs'], experiment['iterations'], "experiment",))
+    progressWatcher = threading.Thread(target=progress_watcher, 
+        args=(experiment['runs'], experiment['iterations'], len(experiment['memorySettings']), "experiment",))
     progressWatcher.start()
     
     try:
-        command = "./faas_runner.py -f functions/interactiveFunction.json -e experiments/interactiveExperiment.json -o history/interactiveExperiment"
-        data = subprocess.check_output(command.split()).decode('ascii')
-        csvReport = glob("history/interactiveExperiment/*.csv")[0]
         
-        command = "./tools/report_splitter.py " + csvReport
+        historyPath = "history/interactiveExperiment/" + exp_id +"/"
+        command = "./faas_runner.py -f functions/interactiveFunction.json -e experiments/interactiveExperiment.json -o " + historyPath
+        data = subprocess.check_output(command.split()).decode('ascii')
+        #csvReport = glob("history/interactiveExperiment/" + exp_id +"/*.csv")[0]
+        #command = "./tools/report_splitter.py " + csvReport
+        #subprocess.check_output(command.split()).decode('ascii')
+        
+        # Copy all json files into combined folder
+        try:
+            os.mkdir(os.path.join(historyPath, "combined"))
+        except:
+            pass
+        for folder in os.listdir(historyPath):
+            if os.path.isdir(os.path.join(historyPath, folder)):
+                for file in os.listdir(os.path.join(historyPath, folder)):
+                    os.system("mv {} {}".format(os.path.join(historyPath, folder, file), os.path.join(historyPath, "combined")))
+                try:
+                    os.rmdir(os.path.join(historyPath, folder))
+                except:
+                    pass
+        
+        # Compile results from combined folder
+        command = "./compile_results.py " +  historyPath + "combined" + " " + "experiments/interactiveExperiment.json"
         subprocess.check_output(command.split()).decode('ascii')
         
-        reportPath = csvReport.replace(".csv", "") + " - split"
+        command = "./tools/report_splitter.py " + historyPath + "combined/compiled-results-interactiveExperiment.csv"
+        subprocess.check_output(command.split()).decode('ascii')
+        
+        # Generate resport
+        reportPath = historyPath + "combined/compiled-results-interactiveExperiment - split"
         data = pd.read_csv(reportPath + "/Raw results of each run.csv")
     except Exception as e:
         print(e)
@@ -397,7 +432,9 @@ def deploy_to(platform, name, memory, containerize):
         
         if (containerize):
             try:
-                command = "../deploy/build.sh 1 0 0 0 " + str(memory) + " " + name + "_config.json > ../deploy/aws-log.txt"
+                command = "../deploy/containerBuild.sh 1 0 0 0 " + str(memory) + " " + name + "_config.json > ../deploy/aws-log.txt"
+                subprocess.check_output(command.split()).decode('ascii')
+                command = "../deploy/containerPublish.sh 1 0 0 0 " + str(memory) + " " + name + "_config.json > ../deploy/aws-log.txt"
                 subprocess.check_output(command.split()).decode('ascii')
             except Exception as e:
                 print(e)
@@ -472,6 +509,25 @@ def deploy_to(platform, name, memory, containerize):
         stop_threads["azure_build"] = True
         buildWatcher.join()
         print("Deployment to Azure Functions Complete!")
+    elif (platform == platform.DOCKER):
+        filename = "../deploy/" + name + "_aws_build_progress.txt"
+        try:
+            os.remove(filename)
+        except Exception as e:
+            pass
+        stop_threads["docker_build"] = False
+        buildWatcher = threading.Thread(target=build_watcher, args=(filename, "docker_build"))
+        buildWatcher.start()
+        
+        try:
+            command = "../deploy/containerBuild.sh 1 0 0 0 " + str(memory) + " " + name + "_config.json > ../deploy/aws-log.txt"
+            subprocess.check_output(command.split()).decode('ascii')
+        except Exception as e:
+            print(e)
+
+        stop_threads["docker_build"] = True
+        buildWatcher.join()
+        print("Deployment to local Docker instance complete!")
 
 def call_on(functionName, platform, quiet=False):
     try:
@@ -515,14 +571,24 @@ def call_on(functionName, platform, quiet=False):
             except Exception as e:
                 print("Exception occurred calling function on Azure Cloud Functions: " + str(e))
                 return None
+        elif (platform == platform.DOCKER):
+            command = "../deploy/containerTest.sh 1 0 0 0 512 " + functionName + "_config.json"
+            try:
+                out = subprocess.check_output(command.split()).decode('ascii')
+                obj = json.loads(out[out.index('{'):])
+                if not quiet: print(out)
+                return obj
+            except Exception as e:
+                print("Exception occurred calling function on local Docker: " + str(e))
+                return None
     except Exception as e:
         print("FaaS call failed! For container based functions it may not be available yet. Error: " + str(e))
         return {"Error": "An error occurred calling the function."}
 
 
-def progress_watcher(runs, iterations, name):
-    maxValues = runs * iterations
-    p_bar = tqdm(total=runs * iterations, smoothing=True)
+def progress_watcher(runs, iterations, memSettings, name):
+    maxValues = runs * iterations * memSettings
+    p_bar = tqdm(total=maxValues, smoothing=True)
     currentPercent = 0
     currentProgress = 0
     while(True):

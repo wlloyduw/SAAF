@@ -12,6 +12,38 @@ sys.path.append('./tools')
 from report_generator import report_from_folder
 from report_generator import write_file
 
+defaultExperiment = {
+    'callWithCLI': True,
+    'callAsync': False,
+    'memorySettings': [],
+    'parentPayload': {},
+    'payloads': [{}],
+    'payloadFolder': '',
+    'shufflePayloads': False,
+    'runs': 10,
+    'threads': 10,
+    'iterations': 1,
+    'sleepTime': 0,
+    'randomSeed': 42,
+    'outputGroups': [],
+    'outputRawOfGroup': [],
+    'showAsList': [],
+    'showAsSum': [],
+    'ignoreFromAll': [],
+    'ignoreFromGroups': [],
+    'ignoreByGroup': [],
+    'invalidators': {},
+    'removeDuplicateContainers': False,
+    'overlapFilter': "",
+    'openCSV': True,
+    'combineSheets': False,
+    'warmupBuffer': 0,
+    'experimentName': "DEFAULT-EXP",
+    'passPayloads': False,
+    'transitions': {},
+    'simpleOutput': True
+}
+
 #Input parameteres
 folderName = ''
 experimentfile = './experiments/exampleExperiment.json'
@@ -26,7 +58,14 @@ elif (len(sys.argv) == 3):
     print("Generating Report...")
     expName = os.path.basename(experimentfile)
     expName = expName.replace(".json", "")
-    partestResult = report_from_folder(folderName, json.load(open(experimentfile)))
+    
+    experiment = json.load(open(experimentfile))
+    
+    for key in defaultExperiment:
+        if key not in experiment:
+            experiment[key] = defaultExperiment[key]
+    
+    partestResult = report_from_folder(folderName, experiment)
 
     baseFileName = folderName + "/" + "compiled-results-" + str(expName)
 

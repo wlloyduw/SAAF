@@ -111,5 +111,6 @@
             ]
         }
     ],
-    "serverlessConsole.autoRefreshInterval": 0
+    "serverlessConsole.autoRefreshInterval": 0,
+    "jupyter.jupyterServerType": "local"
 }
