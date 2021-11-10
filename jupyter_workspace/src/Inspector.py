@@ -104,28 +104,38 @@ class Inspector:
         
         cpu_info = {}
         core_list = []
+        cpu_count = 0
         for line in lines:
             try:
                 keyValue = line.split(':')
                 key = keyValue[0].strip().replace(" ", "_")
 
-                if key == 'power_management':
+                if key == 'processor':
+                    cpu_count += 1
+                elif key == 'power_management' or key == 'CPU_revision':
                     core_list.append(cpu_info)
                     cpu_info = {}
                     continue
                 
                 value = keyValue[1].strip()
                 
-                if (key == "flags" or key == "bugs"):
+                if (key == "flags" or key == "bugs" or key == "Features"):
                     value = value.split(" ")
                 
                 cpu_info[key] = value
             except Exception as e:
                 pass
             
-        self.__attributes['cpuType'] = core_list[0]['model_name']
-        self.__attributes['cpuModel'] = core_list[0]['model']
-        self.__attributes['cpuCores'] = int(core_list[0]['cpu_cores'])
+        if 'model_name' in core_list[0]:
+            self.__attributes['cpuType'] = core_list[0]['model_name']
+            self.__attributes['cpuModel'] = core_list[0]['model']
+            self.__attributes['architecture'] = "x86"
+        else:
+            list_len = len(core_list) - 1
+            if 'Model' in core_list[list_len]:
+                self.__attributes['cpuModel'] = core_list[list_len]['Model']
+            self.__attributes['architecture'] = "arm64"
+        self.__attributes['cpuCores'] = int(cpu_count)
         self.__attributes['cpuInfo'] = core_list
         
     #
