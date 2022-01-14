@@ -23,7 +23,8 @@ SAAF also provides tools to automate the process of deploying functions to AWS L
 
 SAAF's tools support running in Jupyter notebook to streamline the development and testing of serverless functions. We provide a notebook hosted in Google Colaboratory to make it simple to try out our tools:
 
-https://colab.research.google.com/drive/161YVl-oyW22j9Rp3zH-YjU_34AW4eVej?usp=sharing
+[Open in Google Colaboratory](https://colab.research.google.com/drive/161YVl-oyW22j9Rp3zH-YjU_34AW4eVej?usp=sharing)
+[Download ipynb](https://raw.githubusercontent.com/wlloyduw/SAAF/master/jupyter_workspace/src/interactive_workspace.ipynb)
 
 ### Quick Install:
 
