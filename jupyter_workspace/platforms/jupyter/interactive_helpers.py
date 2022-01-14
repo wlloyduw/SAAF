@@ -43,6 +43,8 @@ globalConfig = None
 
 startPath = pathlib.Path().absolute()
 
+pythonPipVersion = "python3.8"
+
 defaultConfig = {
 	"README": "See ./deploy/README.md for help!",
 	"lambdaHandler": "lambda_function.lambda_handler",
@@ -136,6 +138,10 @@ def setGlobalDeploy(deploy):
 def setGlobalConfig(config):
     global globalConfig
     globalConfig = config
+    
+def setPythonPipVersion(pip):
+    global pythonPipVersion
+    pythonPipVersion = pip
     
 def test(function, payload, config=None, quiet=False, skipLocal=False):
     """ Executes a function locally and then executes it on the cloud. If the function is deployed to multiple 
@@ -382,7 +388,7 @@ def deploy_function(name, source, platforms, memory, config, requirements, conta
             f.write(requirements)
         
         # Download dependencies
-        command = "python3 -m pip install -r ../deploy/" + name + "_package/requirements.txt --target=../deploy/" + name + "_package"
+        command = pythonPipVersion + " -m pip install -r ../deploy/" + name + "_package/requirements.txt --target=../deploy/" + name + "_package"
         subprocess.check_output(command.split()).decode('ascii')
 
     # Run publish.sh
