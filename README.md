@@ -19,6 +19,12 @@ SAAF also provides tools to automate the process of deploying functions to AWS L
 10. [Research with SAAF](./research.md)
 11. [SAAF Tutorial](./tutorial/)
 
+### Interactive Jupyter Workspace:
+
+SAAF's tools support running in Jupyter notebook to streamline the development and testing of serverless functions. We provide a notebook hosted in Google Colaboratory to make it simple to try out our tools:
+
+https://colab.research.google.com/drive/161YVl-oyW22j9Rp3zH-YjU_34AW4eVej?usp=sharing
+
 ### Quick Install:
 
 Install and setup all of the dependencies, SAAF templates, cloud CLI's, FaaS Runner, and all other tools with one script:
