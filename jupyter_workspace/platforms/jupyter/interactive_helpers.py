@@ -310,9 +310,10 @@ def run_experiment(function, experiment, platform=Platform.AWS, config=None):
         for folder in os.listdir(historyPath):
             if os.path.isdir(os.path.join(historyPath, folder)):
                 for file in os.listdir(os.path.join(historyPath, folder)):
-                    os.system("mv {} {}".format(os.path.join(historyPath, folder, file), os.path.join(historyPath, "combined")))
+                    os.system("mv {} {}".format(os.path.join(historyPath, folder, file), os.path.join(historyPath, "combined", file)))
                 try:
-                    os.rmdir(os.path.join(historyPath, folder))
+                    if (folder != "combined"):
+                        os.rmdir(os.path.join(historyPath, folder))
                 except:
                     pass
         
