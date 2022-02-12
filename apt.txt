@@ -1,0 +1,8 @@
+git
+jq
+zip
+awscli
+parallel
+bc
+curl
+python3.8
