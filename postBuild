@@ -1,4 +1,5 @@
 #!/bin/bash
-sudo groupadd docker
-sudo gpasswd -a $USER docker
-newgrp docker
+su
+groupadd docker
+gpasswd -a $USER docker
+chmod 777 /var/run/docker.sock
