@@ -1,5 +1,0 @@
-#!/bin/bash
-su
-groupadd docker
-gpasswd -a $USER docker
-chmod 777 /var/run/docker.sock
