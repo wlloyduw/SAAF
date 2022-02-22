@@ -25,6 +25,8 @@ SAAF's tools support running in Jupyter notebook to streamline the development a
 
 [Open in Google Colaboratory](https://colab.research.google.com/drive/161YVl-oyW22j9Rp3zH-YjU_34AW4eVej?usp=sharing)
 
+Open with Binder: [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/wlloyduw/SAAF/HEAD?labpath=jupyter_workspace%2Fsrc%2Finteractive_workspace.ipynb)
+
 [Download ipynb](https://raw.githubusercontent.com/wlloyduw/SAAF/master/jupyter_workspace/src/interactive_workspace.ipynb)
 
 ### Quick Install:

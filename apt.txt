@@ -6,3 +6,4 @@ parallel
 bc
 curl
 python3.8
+docker.io
