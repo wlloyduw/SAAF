@@ -484,7 +484,13 @@ def deploy_to(platform, name, memory, containerize):
         buildWatcher.start()
         
         if (containerize):
-            print("Building containers is currently not supported on IBM Cloud Functions.")
+            try:
+                command = "../deploy/containerBuild.sh 0 0 1 0 " + str(memory) + " " + name + "_config.json > ../deploy/ibm-log.txt"
+                subprocess.check_output(command.split()).decode('ascii')
+                command = "../deploy/containerPublish.sh 0 0 1 0 " + str(memory) + " " + name + "_config.json > ../deploy/ibm-log.txt"
+                subprocess.check_output(command.split()).decode('ascii')
+            except Exception as e:
+                print(e)
         else:
             try:
                 command = "../deploy/publish.sh 0 0 1 0 " + str(memory) + " " + name + "_config.json > ../deploy/ibm-log.txt"

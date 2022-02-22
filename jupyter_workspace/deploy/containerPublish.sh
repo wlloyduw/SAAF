@@ -81,9 +81,18 @@ fi
 
 # Deploy onto IBM Cloud Functions
 if [[ ! -z $3 && $3 -eq 1 ]]; then
-	echo
-	echo "----- Containers not supported on IBM Cloud Functions -----"
-	echo
+
+	dockerHubUsername=$(docker info | sed '/Username:/!d;s/.* //'); 
+
+	cd ./${function}_ibm_build
+	docker tag ${function}:latest ${dockerHubUsername}/saaf-functions:${function}
+	docker push ${dockerHubUsername}/saaf-functions:${function} >> ../${function}_ibm_build_progress.txt
+
+	echo "Deploying to IBM Cloud Functions..." >> ../${function}_ibm_build_progress.txt
+	#ibmcloud fn action create ${function} --docker ${dockerHubUsername}/saaf-functions:${function} --web true  index.zip
+	ibmcloud fn action update $function --docker ${dockerHubUsername}/saaf-functions:${function} --memory $memory index.zip
+
+	cd ..
 fi
 
 # Deploy onto Azure Functions

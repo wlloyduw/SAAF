@@ -100,8 +100,46 @@ fi
 # Deploy onto IBM Cloud Functions
 if [[ ! -z $3 && $3 -eq 1 ]]; then
 	echo
-	echo "----- Containers not supported on IBM Cloud Functions -----"
+	echo "----- Deploying onto IBM Cloud Functions -----"
 	echo
+
+	ibmRuntime=$(cat $config | jq '.ibmRuntime' | tr -d '"')
+	ibmjson=$(cat $config | jq '.test' | tr -d '"' | tr -d '{' | tr -d '}' | tr -d ':')
+
+	echo "IBM: Cleaning previous build..." > ${function}_ibm_build_progress.txt
+
+	# Destroy and prepare build folder.
+	rm -rf ${function}_ibm_build
+	mkdir ${function}_ibm_build
+	mkdir ${function}_ibm_build/includes_${function}
+
+	echo "IBM: Copying files..." >> ${function}_ibm_build_progress.txt
+
+	# Copy files to build folder.
+	#cp -R ../src/* ./${function}_ibm_build
+	cp -R ../src/includes_${function}/* ./${function}_ibm_build/includes_${function}
+	cp ../src/handler_${function}.py ./${function}_ibm_build/handler.py
+	cp ../src/Inspector.py ./${function}_ibm_build/Inspector.py
+
+	cp -R ../platforms/ibm/* ./${function}_ibm_build
+	cp -r ./package/* ./${function}_ibm_build/
+
+	# Check if custom docker file exists, and copy it to root of build folder/
+	FILE=./${function}_ibm_build/includes_${function}/Dockerfile
+	if [ -f "$FILE" ]; then
+		mv ./${function}_ibm_build/includes_${function}/Dockerfile ./${function}_ibm_build/Dockerfile
+	fi
+
+	cd ./${function}_ibm_build
+	echo "IBM: Building Docker container..." >> ../${function}_ibm_build_progress.txt
+
+	docker build -t ${function} . >> ../${function}_ibm_build_progress.txt
+
+	echo "IBM: Creating Function Zip..." >> ../${function}_ibm_build_progress.txt
+
+	zip -X -r ./index.zip *
+
+	cd ..
 fi
 
 # Deploy onto Azure Functions
