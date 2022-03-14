@@ -93,8 +93,38 @@ fi
 # Deploy onto Google Cloud Functions
 if [[ ! -z $2 && $2 -eq 1 ]]; then
 	echo
-	echo "----- Containers not supported on Google Cloud Functions -----"
+	echo "----- Deploying onto Google Cloud Functions -----"
 	echo
+
+	googleHandler=$(cat $config | jq '.googleHandler' | tr -d '"')
+	googleRuntime=$(cat $config | jq '.googleRuntime' | tr -d '"')
+
+	echo "GCF: Cleaning previous build..." > ${function}_gcf_build_progress.txt
+
+	# Destroy and prepare build folder.
+	rm -rf ${function}_gcf_build
+	mkdir ${function}_gcf_build
+	mkdir ${function}_gcf_build/includes_${function}
+
+	echo "GCF: Copying files..." >> ${function}_gcf_build_progress.txt
+
+	# Copy files to build folder.
+	#cp -R ../src/* ./${function}_gcf_build
+	cp -R ../src/includes_${function}/* ./${function}_gcf_build/includes_${function}
+	cp ../src/handler_${function}.py ./${function}_gcf_build/handler.py
+	cp ../src/Inspector.py ./${function}_gcf_build/Inspector.py
+
+	cp -R ../platforms/google/* ./${function}_gcf_build
+	cp ../platforms/google/main_gen2.py ./${function}_gcf_build/main.py
+	cp -r ./package/* ./${function}_gcf_build/
+
+	cd ./${function}_gcf_build
+
+	echo "GCF: Building container with Buildpack" >> ../${function}_gcf_build_progress.txt
+
+	pack build --builder gcr.io/buildpacks/builder:v1 --env GOOGLE_RUNTIME=python --env GOOGLE_FUNCTION_SIGNATURE_TYPE=http --env GOOGLE_FUNCTION_TARGET=$googleHandler ${function}
+	#gcloud functions deploy $function --source=. --entry-point $googleHandler --runtime $googleRuntime --timeout 540 --trigger-http --memory $memory
+	cd ..
 fi
 
 # Deploy onto IBM Cloud Functions

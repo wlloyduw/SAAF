@@ -83,6 +83,9 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
     curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -
     sudo apt-get update && sudo apt-get install google-cloud-sdk -y
     sudo apt-get install google-cloud-sdk-app-engine-java -y
+    sudo add-apt-repository ppa:cncf-buildpacks/pack-cli
+    sudo apt-get update
+    sudo apt-get install pack-cli
 
     clear
     echo Setting up GCloud CLI!
@@ -99,6 +102,7 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
     read -rsp $'Press any key to continue...\n' -n1 key
     gcloud init
     gcloud functions list
+    gcloud auth configure-docker us-central1-docker.pkg.dev
     echo
     echo Configuration complete! Functions can now be deployed to Google Cloud Functions.
     read -rsp $'Press any key to continue...\n' -n1 key

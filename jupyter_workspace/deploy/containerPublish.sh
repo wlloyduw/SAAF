@@ -74,9 +74,18 @@ fi
 
 # Deploy onto Google Cloud Functions
 if [[ ! -z $2 && $2 -eq 1 ]]; then
+
 	echo
-	echo "----- Containers not supported on Google Cloud Functions -----"
+	echo "----- Building for Google Cloud Functions -----"
 	echo
+
+	cd ./${function}_gcf_build
+	region=$(gcloud info --format json | jq '.config.properties.compute.region' | tr -d '"')
+	projectID=$(gcloud info --format json | jq '.config.project' | tr -d '"')
+	gcloud auth print-access-token | docker login -u oauth2accesstoken --password-stdin https://${region}-docker.pkg.dev
+	docker tag ${function}:latest ${region}-docker.pkg.dev/${projectID}/gcf-artifacts/${function}
+	docker push ${region}-docker.pkg.dev/${projectID}/gcf-artifacts/${function} >> ../${function}_gcf_build_progress.txt
+	docker logout
 fi
 
 # Deploy onto IBM Cloud Functions
