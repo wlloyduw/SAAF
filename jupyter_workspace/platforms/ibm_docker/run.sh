@@ -4,6 +4,7 @@ location=$1
 cd "$location" || exit
 
 function=$(jq '.function_name' < ./config.json | tr -d '"')
-json=$(jq '.test_payload' < ./config.json | tr -d '"' | tr -d '{' | tr -d '}' | tr -d ':')
+json=$2
 
-ibmcloud fn action invoke $function -b -p $json --result | tail -n +2 | jq -r -c '.response.result'
+response=$(ibmcloud fn action invoke $function -b -P /dev/stdin --result <<< $json)
+echo $response
