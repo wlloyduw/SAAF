@@ -3,6 +3,9 @@
 location=$1
 cd "$location" || exit
 
+echo "Build: Loading config..."
+function=$(jq '.function_name' < ./config.json | tr -d '"')
+
 echo "Build: Purging previous build..."
 rm -rf ./.build
 mkdir ./.build
@@ -19,8 +22,10 @@ rm ./.build/config.json
 rm ./.build/build.log
 rm -rf ./.build/experiments || true
 
+cd ./.build || exit
+
 echo "Build: Building Docker Image..."
-docker build -t ${function} . >> ../${function}_ibm_build_progress.txt
+docker build -t ${function} .
 
 echo "Build: Creating Zip..."
 zip -X -r ./index.zip ./*

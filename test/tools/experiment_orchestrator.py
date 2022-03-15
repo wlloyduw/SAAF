@@ -224,17 +224,20 @@ def run_experiment(functions, experiments, outDir):
             finalRunList = []
             for i in range(iterations):
                 if (i > warmupBuffer - 1):
+                    if runList[i] == None:
+                        continue
                     for run in runList[i]:
                         run['iteration'] = i
                         if 'vmID' in run:
                             run['vmID[iteration]'] = run['vmID'] + "[" + str(i) + "]"
                     finalRunList.extend(runList[i])
             print(str(finalRunList))
-            partestResult = report(finalRunList, exp)
+            if (len(finalRunList) > 0):
+                partestResult = report(finalRunList, exp)
 
-            baseFileName = outDir + "/" + functionName + "-" + str(
-                    expName) + "-" + str(mem) + "MBs-COMBINED"
-            write_file(baseFileName, partestResult, True)
+                baseFileName = outDir + "/" + functionName + "-" + str(
+                        expName) + "-" + str(mem) + "MBs-COMBINED"
+                write_file(baseFileName, partestResult, openCSV)
 
 
 
