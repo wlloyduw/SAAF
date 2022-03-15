@@ -21,14 +21,6 @@ import base64
 from IPython.display import clear_output, display, HTML, IFrame, FileLink
 from IPython.display import JSON
 
-# Load json file platforms.json
-platformData = json.load(open("platforms.json", "r"))
-
-stop_threads = {}
-globalConfig = None
-
-startPath = pathlib.Path().absolute()
-
 print("------------------------------------------------------")
 print("Welcome to FaaSET v2.0! Some things have changed when")
 print("compared to v1.0. RunModes and the Containerize arguments")
@@ -38,6 +30,30 @@ print("only be deployed to a single platform at a time.")
 print("If you are using a older notebook that has not been")
 print("updated things will be broken. Please fix them. ")
 print("------------------------------------------------------")
+
+# Load json file platforms.json
+platformData = {}
+platforms_directory = os.scandir("../platforms")
+print("Loaded platforms: ", end=" ")
+for platform in platforms_directory:
+    try:
+        if platform.is_dir():
+            platform = json.load(open("../platforms/" + platform.name + "/.default_config.json", "r"))
+            platformID = platform['id']
+            platformData[platformID] = platform
+            print(platformID, end=". ")
+    except:
+        pass
+print("")
+
+
+
+#platformData = json.load(open("platforms.json", "r"))
+
+stop_threads = {}
+globalConfig = None
+
+startPath = pathlib.Path().absolute()
 
 def cloud_function(platform="AWS", 
                    config={}, 
@@ -163,7 +179,7 @@ def run_experiment(function, experiment, platform="AWS", config={}):
     
     # Create function file...
     function = {}
-    function['platform'] = platformData['FaaSRunnerPlatform']
+    function['platform'] = platformData['faas_runner_platform']
     function['function'] = functionName
     function['source'] = "../jupyter_workspace/src/functions/" + functionName + "/config.json"
     function['endpoint'] = ""

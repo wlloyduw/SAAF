@@ -1,0 +1,11 @@
+{
+	"id": "AWS Docker",
+	"faas_runner_platform": "AWS Lambda",
+	"location": "../platforms/aws_docker",
+	"role": "arn:aws:iam::616835888336:role/service-role/simple_microservice_role",
+	"subnets": "",
+	"security_groups": "",
+	"timeout": 900,
+	"profile": "default",
+	"memory": 512
+}

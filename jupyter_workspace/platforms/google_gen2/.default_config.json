@@ -1,0 +1,8 @@
+{
+	"id": "GCF Gen2",
+	"faas_runner_platform": "NOT COMPATIBLE",
+	"location": "../platforms/google_gen2",
+	"handler": "hello_world",
+	"runtime": "python37",
+	"memory": 512
+}
