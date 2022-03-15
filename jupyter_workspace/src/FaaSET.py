@@ -1,9 +1,11 @@
-
+#
+# @author Robert Cordingly
+# @author Wes Lloyd
+#
 import pandas as pd
 import numpy as np
 import json
 import os
-import ast
 from enum import Enum
 import subprocess
 import pathlib
@@ -12,7 +14,6 @@ import shutil
 import inspect
 import threading
 import time
-import math
 import uuid
 from tqdm.notebook import tqdm, trange
 import traceback
@@ -46,10 +47,6 @@ for platform in platforms_directory:
         pass
 print("")
 
-
-
-#platformData = json.load(open("platforms.json", "r"))
-
 stop_threads = {}
 globalConfig = None
 
@@ -57,8 +54,7 @@ startPath = pathlib.Path().absolute()
 
 def cloud_function(platform="AWS", 
                    config={}, 
-                   references=[], 
-                   requirements=None, 
+                   references=[],
                    deploy=True):
     
     def decorated(f):
@@ -70,7 +66,7 @@ def cloud_function(platform="AWS",
             
             if deploy:
                 source = source_processor(inspect.getsource(f), functionName, references)
-                deploy_function(functionName, source, platform, config, requirements)
+                deploy_function(functionName, source, platform, config)
             results = test(function=f, payload=args[0], quiet=True)
             return results
         return wrapper
@@ -111,7 +107,7 @@ def test(function, payload, quiet=False, outPath="default"):
                     os.mkdir("./functions/" + name + "/experiments") 
                 if not os.path.isdir("./functions/" + name + "/experiments/" + outPath):
                     os.mkdir("./functions/" + name + "/experiments/" + outPath)
-                json.dump(obj, open("./functions/" + name + "/experiments/" + str(uuid.uuid4()), "w"), indent=4)
+                json.dump(obj, open("./functions/" + name + "/experiments/" + outPath + "/" + str(uuid.uuid4()), "w"), indent=4)
             
             # save json file
             json.dump(functionData, open("./functions/" + name + "/.faaset.json", "w"), indent=4)
@@ -129,20 +125,6 @@ def test(function, payload, quiet=False, outPath="default"):
         print("An exception occurred: " + str(e))
         traceback.print_exc()
         return None
-
-def experiment(function, payload={}, threads=1, runs_per_thread=1, name="default"):
-    name = function.__name__
-    
-    results = []
-    
-    def thread_task(function, payload, runs_per_thread, name):
-        test(function, payload, quiet=True, outPath=name)
-    
-    thread_list = []
-    for i in range(threads):
-        pass
-    
-    pass
 
 def run_experiment(function, experiment, platform="AWS", config={}):
     """Execute complex experiments using this function. This function leverages the FaaS Runner application
@@ -162,7 +144,7 @@ def run_experiment(function, experiment, platform="AWS", config={}):
     functionName = function.__name__
     
     if config == None:
-        config = platformData[platform] # BAD TODO MAKE THIS LOAD THE FUNCTION'S CONFIG
+        config = platformData[platform]
     
     global startPath
     os.chdir(startPath)
@@ -260,7 +242,7 @@ def run_experiment(function, experiment, platform="AWS", config={}):
 #                                                                       #
 #########################################################################
 
-def deploy_function(name, source, platform, config, requirements):
+def deploy_function(name, source, platform, config):
     # Create functions folder...
     if not os.path.isdir("./functions"):
         os.mkdir("./functions")
@@ -278,8 +260,13 @@ def deploy_function(name, source, platform, config, requirements):
             print("Platform changed! Please move or delete ./function/" + name + " folder to continue. Previous platform: Platform." + functionData['platform'])
             return None
     
-    # Load default values if missing...
+    # Load default config if exists in function folder.
+    # Otherwise use the platform one.
     defaultConfig = platformData[platform]    
+    if os.path.exists("./functions/" + name + "/.default_config.json"):
+        defaultConfig = json.load(open("./functions/" + name + "/.default_config.json"))
+    
+    # Override default values if config is provided.
     for key in defaultConfig.keys():
         if key not in config:
             config[key] = defaultConfig[key]
@@ -304,21 +291,8 @@ def deploy_function(name, source, platform, config, requirements):
     textfile.write(source)
     textfile.close()
     
-    #functionConfig = platformData[platform]
-
-    # Write the config
-    #for key in config:
-    #    functionConfig[key] = config[key]
-    #functionConfig['handlerFile'] = "handler.py"
-    
-    #print(str(config))
-    
     with open("./functions/" + name + "/config.json", 'w') as json_file:
         json.dump(config, json_file, indent=4)
-        
-    if (requirements is not None):
-        with open("./functions/" + name + "/requirements.txt", "w") as f:
-            f.write(requirements)
     
     folder = config['location']
     destination = "./functions/" + name + "/"
@@ -341,15 +315,57 @@ def deploy_function(name, source, platform, config, requirements):
         with open("./functions/" + name + "/build.log",'w+') as f:
             proc = subprocess.Popen( command.split(), bufsize=-1, stdout=f, stderr=subprocess.PIPE)
         o, e = proc.communicate()
-        #out = str(o.decode('ascii'))
-        #print(out)
-        
+
         command = "./functions/" + name + "/publish.sh ./functions/" + name + "/"
         with open("./functions/" + name + "/build.log",'w+') as f:
             proc = subprocess.Popen( command.split(), bufsize=-1, stdout=f, stderr=subprocess.PIPE)
         o, e = proc.communicate()
-        #out = str(o.decode('ascii'))
-        #print(out)
+
+    except Exception as e:
+        print("An exception occurred: " + str(e))
+    
+    stop_threads[name] = True
+    
+    
+def reconfigure(function, config):
+    name = function.__name__
+    functionData = {}
+    if os.path.exists("./functions/" + name + "/.faaset.json"):
+        functionData = json.load(open("./functions/" + name + "/.faaset.json"))
+    else:
+        print("Unknown function!")
+        
+    # Use previous config as default
+    defaultConfig = functionData["config"]    
+    
+    # Override default values if config is provided.
+    for key in defaultConfig.keys():
+        if key not in config:
+            config[key] = defaultConfig[key]
+    config['function_name'] = name
+
+    # Update function file...
+    functionData["config"] = config
+    
+    # save json file
+    json.dump(functionData, open("./functions/" + name + "/.faaset.json", "w"), indent=4)
+    
+    with open("./functions/" + name + "/config.json", 'w') as json_file:
+        json.dump(config, json_file, indent=4)
+    
+    # Run publish.sh
+    global stop_threads
+    
+    stop_threads[name] = False
+    buildWatcher = threading.Thread(target=build_watcher, args=("./functions/" + name + "/build.log", name))
+    buildWatcher.start()
+    
+    try:
+        command = "./functions/" + name + "/publish.sh ./functions/" + name + "/"
+        with open("./functions/" + name + "/build.log",'w+') as f:
+            proc = subprocess.Popen( command.split(), bufsize=-1, stdout=f, stderr=subprocess.PIPE)
+        o, e = proc.communicate()
+
     except Exception as e:
         print("An exception occurred: " + str(e))
     
