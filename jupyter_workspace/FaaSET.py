@@ -34,12 +34,12 @@ print("------------------------------------------------------")
 
 # Load json file platforms.json
 platformData = {}
-platforms_directory = os.scandir("../platforms")
+platforms_directory = os.scandir("./platforms")
 print("Loaded platforms: ", end=" ")
 for platform in platforms_directory:
     try:
         if platform.is_dir():
-            platform = json.load(open("../platforms/" + platform.name + "/.default_config.json", "r"))
+            platform = json.load(open("./platforms/" + platform.name + "/.default_config.json", "r"))
             platformID = platform['id']
             platformData[platformID] = platform
             print(platformID, end=". ")
@@ -377,6 +377,7 @@ def source_processor(source, functionName, references):
     source = source.replace(functionName + "(", "yourFunction(")
     source = source.replace("INCLUDESPATH", "includes_" + functionName)
     source = source.replace("@cloud_function", "\n\"\"\"AUTOMATICALLY COMMENTED OUT \ncloud_function")
+    source = source.replace("@FaaSET.cloud_function", "\n\"\"\"AUTOMATICALLY COMMENTED OUT \ncloud_function")
     
     if (len(references) > 0):
         source = "# AUTOMATICALLY ADDED:\nimport json\nimport boto3\nclient=boto3.client(\'lambda\')\n" + source

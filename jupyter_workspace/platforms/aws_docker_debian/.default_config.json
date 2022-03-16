@@ -1,7 +1,7 @@
 {
 	"id": "AWS Docker Debian",
 	"faas_runner_platform": "AWS Lambda",
-	"location": "../platforms/aws_docker_debian",
+	"location": "./platforms/aws_docker_debian",
 	"role": "arn:aws:iam::616835888336:role/service-role/simple_microservice_role",
 	"subnets": "",
 	"security_groups": "",

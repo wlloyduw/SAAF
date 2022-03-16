@@ -1,7 +1,7 @@
 {
 	"id": "IBM",
 	"faas_runner_platform": "IBM",
-	"location": "../platforms/ibm",
+	"location": "./platforms/ibm",
 	"runtime": "python:3",
 	"memory": 512
 }

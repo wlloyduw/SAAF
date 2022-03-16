@@ -1,5 +1,5 @@
 {
 	"id": "OpenFaaS",
 	"faas_runner_platform": "NOT COMPATIBLE",
-	"location": "../platforms/local"
+	"location": "./platforms/openfaas"
 }
