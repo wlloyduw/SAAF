@@ -36,7 +36,8 @@ if [ 0 -eq $? ]; then
 		--function-name $function \
 		--timeout $timeout \
 		--memory-size $memory \
-		--vpc-config SubnetIds=[$subnets],SecurityGroupIds=[$security_groups]
+		--vpc-config SubnetIds=[$subnets],SecurityGroupIds=[$security_groups] \
+		--architectures arm64
 	aws lambda wait function-updated --function-name "$function"
 
 	echo "Publish: Updating function code..."
@@ -52,7 +53,8 @@ else
 		--timeout $timeout \
 		--code $code \
 		--package-type Image \
-		--memory-size $memory
+		--memory-size $memory \
+		--architectures arm64
 	aws lambda wait function-exists --function-name "$function"
 fi
 
