@@ -29,7 +29,7 @@ Open with Binder: [![Binder](https://mybinder.org/badge_logo.svg)](https://mybin
 
 [Download ipynb](https://raw.githubusercontent.com/wlloyduw/SAAF/master/jupyter_workspace/src/interactive_workspace.ipynb)
 
-### SAAF Toolset Quick Install:
+### SAAF Toolset - Quick Install:
 
 Install and setup all of the dependencies, SAAF templates, cloud CLI's, FaaS Runner, and all other tools with one script:
 ```
