@@ -3,5 +3,6 @@
 	"faas_runner_platform": "IBM",
 	"location": "./platforms/ibm",
 	"runtime": "python:3",
-	"memory": 512
+	"memory": 512,
+	"timeout": 300
 }

@@ -9,6 +9,8 @@ import time
 from decimal import Decimal
 from threading import Thread
 import FaaSET
+import pandas as pd
+import numpy as np
 
 # Results of calls will be placed into this array.
 run_results = []
@@ -18,9 +20,8 @@ run_results = []
 #
 def callPostProcessor(response, thread_id, run_id, payload, roundTripTime):
     try:
-        response['2_thread_id'] = thread_id
-        response['1_run_id'] = run_id
-        response['zAll'] = "Final Results:"
+        response['threadID'] = thread_id
+        response['runID'] = run_id
         response['roundTripTime'] = roundTripTime
         response['payload'] = payload
 
@@ -55,7 +56,7 @@ def callThread(thread_id, runs, function, myPayloads, experiment_name):
         print("Call Payload: " + str(payload))
         response = None
         startTime = time.time()
-        response = FaaSET.test(function=function, payload=payload, outPath=experiment_name, quiet=True)
+        response = FaaSET.test(function=function, payload=payload, outPath=experiment_name, quiet=True, updateStats=False)
         timeSinceStart = round((time.time() - startTime) * 100000) / 100
         callPostProcessor(response, thread_id, i, payload, timeSinceStart)
 
@@ -98,4 +99,8 @@ def experiment(function, threads=1, runs_per_thread=1, payloads=[{}], experiment
     if len(run_results) == 0:
         print ("ERROR - ALL REQUESTS FAILED")
         return None
-    return run_results
+    
+    try:
+        return pd.DataFrame(run_results)
+    except Exception:
+        return run_results

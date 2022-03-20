@@ -72,9 +72,8 @@ def cloud_function(platform="AWS",
         return wrapper
     return decorated
     
-def test(function, payload, quiet=False, outPath="default"):
+def test(function, payload, quiet=False, updateStats=True, outPath="default"):
     name = function.__name__
-    functionData = json.load(open("./functions/" + name + "/.faaset.json"))
     
     try:
         cmd = ["./functions/" + name + "/run.sh", "./functions/" + name + "/", str(json.dumps(payload))]
@@ -89,17 +88,20 @@ def test(function, payload, quiet=False, outPath="default"):
             if not quiet:
                 print(json.dumps(obj, indent=4))
                 
-            if 'stats' in functionData:
-                functionData['stats']['invocations'] += 1
-                if 'runtime' in obj:
-                    functionData['stats']['total_runtime'] += obj['runtime']
-            else:
-                functionData['stats'] = {}
-                functionData['stats']['invocations'] = 1
-                if 'runtime' in obj:
-                    functionData['stats']['total_runtime'] = obj['runtime']
+            if updateStats:
+                functionData = json.load(open("./functions/" + name + "/.faaset.json"))
+                if 'stats' in functionData:
+                    functionData['stats']['invocations'] += 1
+                    if 'runtime' in obj:
+                        functionData['stats']['total_runtime'] += obj['runtime']
                 else:
-                    functionData['stats']['total_runtime'] = 0
+                    functionData['stats'] = {}
+                    functionData['stats']['invocations'] = 1
+                    if 'runtime' in obj:
+                        functionData['stats']['total_runtime'] = obj['runtime']
+                    else:
+                        functionData['stats']['total_runtime'] = 0
+                json.dump(functionData, open("./functions/" + name + "/.faaset.json", "w"), indent=4)
             
             # Write output json if outpath is supplied.
             if outPath is not None:
@@ -109,15 +111,12 @@ def test(function, payload, quiet=False, outPath="default"):
                     os.mkdir("./functions/" + name + "/experiments/" + outPath)
                 json.dump(obj, open("./functions/" + name + "/experiments/" + outPath + "/" + str(uuid.uuid4()), "w"), indent=4)
             
-            # save json file
-            json.dump(functionData, open("./functions/" + name + "/.faaset.json", "w"), indent=4)
-            
         except Exception as e:
             print("An exception occurred reading the response:\n--->" + str(e))
             print("---> Command: " + str(cmd))
             print("---> Response: " + out)
             print("---> Error: " + error)
-            print("---> Stack Track:")
+            print("---> Stack Trace:")
             traceback.print_exc()
             
         return obj
@@ -317,7 +316,7 @@ def deploy_function(name, source, platform, config):
         o, e = proc.communicate()
 
         command = "./functions/" + name + "/publish.sh ./functions/" + name + "/"
-        with open("./functions/" + name + "/build.log",'w+') as f:
+        with open("./functions/" + name + "/build.log",'a') as f:
             proc = subprocess.Popen( command.split(), bufsize=-1, stdout=f, stderr=subprocess.PIPE)
         o, e = proc.communicate()
 
@@ -372,12 +371,9 @@ def reconfigure(function, config):
     stop_threads[name] = True
 
 def source_processor(source, functionName, references):
-    source = source.replace("includes_" + functionName, "INCLUDESPATH")
     source = source.replace("def " + functionName, "\"\"\"\n\ndef yourFunction")
     source = source.replace(functionName + "(", "yourFunction(")
-    source = source.replace("INCLUDESPATH", "includes_" + functionName)
-    source = source.replace("@cloud_function", "\n\"\"\"AUTOMATICALLY COMMENTED OUT \ncloud_function")
-    source = source.replace("@FaaSET.cloud_function", "\n\"\"\"AUTOMATICALLY COMMENTED OUT \ncloud_function")
+    source = "\"\"\" AUTOMATICALLY COMMENTED OUT BY FaaSET \n" + source
     
     if (len(references) > 0):
         source = "# AUTOMATICALLY ADDED:\nimport json\nimport boto3\nclient=boto3.client(\'lambda\')\n" + source
