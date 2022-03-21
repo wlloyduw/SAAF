@@ -18,7 +18,7 @@ run_results = []
 #
 # Called after a request is made, appends extra data to the payload.
 #
-def callPostProcessor(response, thread_id, run_id, payload, roundTripTime):
+def callPostProcessor(response, thread_id, run_id, payload, roundTripTime, tag):
     try:
         response['threadID'] = thread_id
         response['runID'] = run_id
@@ -33,6 +33,9 @@ def callPostProcessor(response, thread_id, run_id, payload, roundTripTime):
 
         if 'version' in response:
             run_results.append(response)
+            
+        if tag is not None:
+            response['tag'] = tag
 
         print("Run " + str(thread_id) + "." + str(run_id) + " successful.")
 
@@ -50,7 +53,7 @@ def callPostProcessor(response, thread_id, run_id, payload, roundTripTime):
 #
 # Define a function to be called by each thread.
 #
-def callThread(thread_id, runs, function, myPayloads, experiment_name):
+def callThread(thread_id, runs, function, myPayloads, experiment_name, tag):
     for i in range(0, runs): 
         payload = myPayloads[i]
         print("Call Payload: " + str(payload))
@@ -58,12 +61,12 @@ def callThread(thread_id, runs, function, myPayloads, experiment_name):
         startTime = time.time()
         response = FaaSET.test(function=function, payload=payload, outPath=experiment_name, quiet=True, updateStats=False)
         timeSinceStart = round((time.time() - startTime) * 100000) / 100
-        callPostProcessor(response, thread_id, i, payload, timeSinceStart)
+        callPostProcessor(response, thread_id, i, payload, timeSinceStart, tag)
 
 #
 # Run a partest with multiple functions and an experiment all functions will be called concurrently.
 #
-def experiment(function, threads=1, runs_per_thread=1, payloads=[{}], experiment_name="default"):
+def experiment(function, threads=1, runs_per_thread=1, payloads=[{}], experiment_name="default", tag=None):
 
     global run_results
     run_results = []
@@ -88,7 +91,7 @@ def experiment(function, threads=1, runs_per_thread=1, payloads=[{}], experiment
                 payloadsForThread.append(payloadList[payloadIndex])
                 payloadIndex += 1
 
-            thread = Thread(target=callThread, args=(i, runs_per_thread, function, payloadsForThread, experiment_name))
+            thread = Thread(target=callThread, args=(i, runs_per_thread, function, payloadsForThread, experiment_name, tag))
             thread.start()
             threadList.append(thread)
         for i in range(len(threadList)):

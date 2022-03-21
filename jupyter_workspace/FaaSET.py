@@ -109,7 +109,7 @@ def test(function, payload, quiet=False, updateStats=True, outPath="default"):
                     os.mkdir("./functions/" + name + "/experiments") 
                 if not os.path.isdir("./functions/" + name + "/experiments/" + outPath):
                     os.mkdir("./functions/" + name + "/experiments/" + outPath)
-                json.dump(obj, open("./functions/" + name + "/experiments/" + outPath + "/" + str(uuid.uuid4()), "w"), indent=4)
+                json.dump(obj, open("./functions/" + name + "/experiments/" + outPath + "/" + str(uuid.uuid4()) + ".json", "w"), indent=4)
             
         except Exception as e:
             print("An exception occurred reading the response:\n--->" + str(e))
