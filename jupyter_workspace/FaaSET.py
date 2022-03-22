@@ -2,6 +2,7 @@
 # @author Robert Cordingly
 # @author Wes Lloyd
 #
+from math import fabs
 import pandas as pd
 import numpy as np
 import json
@@ -46,9 +47,7 @@ for platform in platforms_directory:
     except:
         pass
 print("")
-
-stop_threads = {}
-globalConfig = None
+print("------------------------------------------------------")
 
 startPath = pathlib.Path().absolute()
 
@@ -72,7 +71,27 @@ def cloud_function(platform="AWS",
         return wrapper
     return decorated
     
-def test(function, payload, quiet=False, updateStats=True, outPath="default"):
+    
+# Load existing functions...
+f_data = {}
+f_directory = os.scandir("./functions")
+print("Loaded functions: ", end=" ")
+for func in f_directory:
+    try:
+        if func.is_dir():
+            f = json.load(open("./functions/" + func.name + "/.faaset.json", "r"))
+            source = "@cloud_function(platform='" + f['platform'] + "', deploy=False)\ndef " + func.name + "(request, context):\n    pass"
+            exec(source)
+            print(func.name, end=". ")
+    except Exception as e:
+        print(str(e))
+        pass
+print("")
+
+stop_threads = {}
+globalConfig = None
+    
+def test(function, payload, quiet=False, updateStats=True, outPath="default", tags={}):
     name = function.__name__
     
     try:
@@ -84,6 +103,10 @@ def test(function, payload, quiet=False, updateStats=True, outPath="default"):
         obj = {}
         try:
             obj = json.loads(out)
+            
+            # Apply tags
+            for key in tags:
+                obj[key] = tags[key]
             
             if not quiet:
                 print(json.dumps(obj, indent=4))

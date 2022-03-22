@@ -11,6 +11,8 @@ from threading import Thread
 import FaaSET
 import pandas as pd
 import numpy as np
+import os
+import json
 
 # Results of calls will be placed into this array.
 run_results = []
@@ -18,7 +20,7 @@ run_results = []
 #
 # Called after a request is made, appends extra data to the payload.
 #
-def callPostProcessor(response, thread_id, run_id, payload, roundTripTime, tag):
+def callPostProcessor(response, thread_id, run_id, payload, roundTripTime):
     try:
         response['threadID'] = thread_id
         response['runID'] = run_id
@@ -33,9 +35,6 @@ def callPostProcessor(response, thread_id, run_id, payload, roundTripTime, tag):
 
         if 'version' in response:
             run_results.append(response)
-            
-        if tag is not None:
-            response['tag'] = tag
 
         print("Run " + str(thread_id) + "." + str(run_id) + " successful.")
 
@@ -53,20 +52,20 @@ def callPostProcessor(response, thread_id, run_id, payload, roundTripTime, tag):
 #
 # Define a function to be called by each thread.
 #
-def callThread(thread_id, runs, function, myPayloads, experiment_name, tag):
+def callThread(thread_id, runs, function, myPayloads, experiment_name, tags):
     for i in range(0, runs): 
         payload = myPayloads[i]
         print("Call Payload: " + str(payload))
         response = None
         startTime = time.time()
-        response = FaaSET.test(function=function, payload=payload, outPath=experiment_name, quiet=True, updateStats=False)
+        response = FaaSET.test(function=function, payload=payload, outPath=experiment_name, quiet=True, updateStats=False, tags=tags)
         timeSinceStart = round((time.time() - startTime) * 100000) / 100
-        callPostProcessor(response, thread_id, i, payload, timeSinceStart, tag)
+        callPostProcessor(response, thread_id, i, payload, timeSinceStart)
 
 #
 # Run a partest with multiple functions and an experiment all functions will be called concurrently.
 #
-def experiment(function, threads=1, runs_per_thread=1, payloads=[{}], experiment_name="default", tag=None):
+def experiment(function, threads=1, runs_per_thread=1, payloads=[{}], experiment_name="default", tags={}):
 
     global run_results
     run_results = []
@@ -91,7 +90,7 @@ def experiment(function, threads=1, runs_per_thread=1, payloads=[{}], experiment
                 payloadsForThread.append(payloadList[payloadIndex])
                 payloadIndex += 1
 
-            thread = Thread(target=callThread, args=(i, runs_per_thread, function, payloadsForThread, experiment_name, tag))
+            thread = Thread(target=callThread, args=(i, runs_per_thread, function, payloadsForThread, experiment_name, tags))
             thread.start()
             threadList.append(thread)
         for i in range(len(threadList)):
@@ -107,3 +106,23 @@ def experiment(function, threads=1, runs_per_thread=1, payloads=[{}], experiment
         return pd.DataFrame(run_results)
     except Exception:
         return run_results
+
+
+def load(function, experiment, tags={}):
+    name = function.__name__
+    
+    path = "./functions/" + name + "/experiments/" + experiment + "/"
+    jsonList = []
+    
+    # loop through each json file in path
+    folder = os.scandir(path)
+    for file in folder:
+        with open(path + file.name) as json_file:
+            data = json.load(json_file)
+            
+            # Apply tags
+            for key in tags:
+                data[key] = tags[key]
+            
+            jsonList.append(data)
+    return pd.DataFrame(jsonList)
