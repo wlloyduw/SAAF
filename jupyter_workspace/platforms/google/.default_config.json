@@ -3,7 +3,7 @@
 	"faas_runner_platform": "Google",
 	"location": "./platforms/google",
 	"handler": "hello_world",
-	"runtime": "python37",
+	"runtime": "python39",
 	"timeout": "540",
 	"memory": 512
 }

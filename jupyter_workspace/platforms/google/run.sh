@@ -4,6 +4,6 @@ location=$1
 cd "$location" || exit
 
 function=$(jq '.function_name' < ./config.json | tr -d '"')
-json=$(jq -c '.test_payload' < ./config.json)
+json=$2
 
-gcloud functions call $function --data $json --format json | jq -r -c '.result'
+gcloud functions call $function --data="$json" --format json | jq -r -c '.result'

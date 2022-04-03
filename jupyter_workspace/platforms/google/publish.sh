@@ -13,4 +13,4 @@ timeout=$(jq '.timeout' < ./config.json | tr -d '"')
 cd ./.build || exit
 
 echo "Publish: Deploying function..."
-printf "y\n" | gcloud functions deploy $function --source=. --entry-point $handler --runtime $runtime --timeout $timeout --trigger-http --memory $memory >> ../build.log
+printf "y\n" | gcloud functions deploy $function --source=. --entry-point $handler --runtime $runtime --timeout $timeout --trigger-http --memory $memory

@@ -68,6 +68,7 @@ def cloud_function(platform="AWS",
                 deploy_function(functionName, source, platform, config)
             results = test(function=f, payload=args[0], quiet=True)
             return results
+        wrapper.__name__ = f.__name__
         return wrapper
     return decorated
     
@@ -355,7 +356,7 @@ def reconfigure(function, config):
     if os.path.exists("./functions/" + name + "/.faaset.json"):
         functionData = json.load(open("./functions/" + name + "/.faaset.json"))
     else:
-        print("Unknown function!")
+        print("Unknown function! " + name)
         
     # Use previous config as default
     defaultConfig = functionData["config"]    
