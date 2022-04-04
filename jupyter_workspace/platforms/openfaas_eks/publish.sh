@@ -15,5 +15,6 @@ export OPENFAAS_URL=$gateway
 cd ./.build || exit
 
 echo $password | faas-cli login --username admin --password-stdin
+faas-cli remove -f $function.yml || echo "Function not deployed..."
 faas-cli up -f $function.yml
 
