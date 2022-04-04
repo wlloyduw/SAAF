@@ -54,7 +54,8 @@ startPath = pathlib.Path().absolute()
 def cloud_function(platform="AWS", 
                    config={}, 
                    references=[],
-                   deploy=True):
+                   deploy=True,
+                   force_deploy=False):
     
     def decorated(f):
         def wrapper(*args, **kwargs):
@@ -65,7 +66,7 @@ def cloud_function(platform="AWS",
             
             if deploy:
                 source = source_processor(inspect.getsource(f), functionName, references)
-                deploy_function(functionName, source, platform, config)
+                deploy_function(functionName, source, platform, config, force_deploy)
             results = test(function=f, payload=args[0], quiet=True)
             return results
         wrapper.__name__ = f.__name__
@@ -265,7 +266,7 @@ def run_experiment(function, experiment, platform="AWS", config={}):
 #                                                                       #
 #########################################################################
 
-def deploy_function(name, source, platform, config):
+def deploy_function(name, source, platform, config, force_deploy):
     # Create functions folder...
     if not os.path.isdir("./functions"):
         os.mkdir("./functions")
@@ -297,8 +298,9 @@ def deploy_function(name, source, platform, config):
 
     sourceHash = base64.b64encode(source.encode('utf-8')).decode('utf-8')
     
-    if sourceHash == functionData["source_hash"]:
-        return None
+    if not force_deploy:
+        if sourceHash == functionData["source_hash"]:
+            return None
 
     # Update function file...
     functionData["source_hash"] = sourceHash
