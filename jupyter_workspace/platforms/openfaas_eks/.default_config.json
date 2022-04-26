@@ -6,5 +6,8 @@
 	"image_repo": "rcordingly/saaf-functions",
 	"aws_profile": "personal",
 	"cluster_name": "FILL IN",
-	"open_faas_password": "saaf_open_faas_password"
+	"open_faas_password": "saaf_open_faas_password",
+	"memory": 256,
+	"cpu": 250,
+	"timeout": 60
 }

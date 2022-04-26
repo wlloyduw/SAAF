@@ -2,7 +2,7 @@
 
 export AWS_PROFILE=personal
 
-name=openfaas-eks
+name=openfaas-eks-5
 
 # Create cluster
 eksctl create cluster --name=$name --nodes=2 --auto-kubeconfig --region=us-west-2
@@ -33,6 +33,8 @@ kubectl -n openfaas create secret generic basic-auth \
 helm repo add openfaas https://openfaas.github.io/faas-netes/
 helm repo update
 
+export TIMEOUT=3m
+
 helm upgrade openfaas --install openfaas/openfaas \
     --namespace openfaas  \
     --set functionNamespace=openfaas-fn \
@@ -40,7 +42,14 @@ helm upgrade openfaas --install openfaas/openfaas \
     --set basic_auth=true \
     --set operator.create=true \
     --set gateway.replicas=2 \
-    --set queueWorker.replicas=2
+    --set queueWorker.replicas=2 \
+    --set gateway.upstreamTimeout=$TIMEOUT \
+    --set gateway.writeTimeout=$TIMEOUT \
+    --set gateway.readTimeout=$TIMEOUT \
+    --set faasnetes.writeTimeout=$TIMEOUT \
+    --set faasnetes.readTimeout=$TIMEOUT \
+    --set queueWorker.ackWait=$TIMEOUT
+
 
 # Check if deployed:
 echo "Check if deployed, repeat until all is 1"
