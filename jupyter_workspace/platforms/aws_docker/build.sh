@@ -3,15 +3,18 @@
 location=$1
 cd "$location" || exit
 
-echo "1/4 Purging previous build..." >> ./build.log
+echo "Build: Loading config..."
+function=$(jq '.function_name' < ./config.json | tr -d '"')
+
+echo "Build: Purging previous build..."
 rm -rf ./.build
 mkdir ./.build
 
-echo "2/4 Copying files..." >> ./build.log
+echo "Build: Copying files..."
 cp ../../SAAF.py ./SAAF.py
 cp -R ./* ./.build/
 
-echo "3/4 Cleaning up..." >> ./build.log
+echo "Build: Cleaning up..."
 rm ./.build/build.sh
 rm ./.build/publish.sh
 rm ./.build/run.sh
@@ -19,6 +22,6 @@ rm ./.build/config.json
 rm ./.build/build.log
 rm -rf ./.build/experiments || true
 
-echo "4/4 Building Docker Image..." >> ./build.log
+echo "Build: Building Docker Image..."
 cd .build
 docker build -t ${function} . >> ../build.log
