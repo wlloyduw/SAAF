@@ -11,8 +11,8 @@ FROM python:3.8-slim-buster
 # deal with port forwarding, and having multiple containers 
 # running at the same time fighting for ports.
 #RUN add-apt-repository -y http://archive.ubuntu.com/ubuntu
-RUN apt-get update
-RUN apt-get install -y curl
+RUN apt update
+RUN apt install -y curl
 #RUN apt-get install -y curl speedtest-cli wget stress software-properties-common
 
 # Download sysbench
