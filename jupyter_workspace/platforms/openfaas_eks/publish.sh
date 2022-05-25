@@ -12,6 +12,7 @@ image_repo=$(jq '.image_repo' < ./config.json | tr -d '"')
 memory=$(jq '.memory' < ./config.json | tr -d '"')
 cpu=$(jq '.cpu' < ./config.json | tr -d '"')
 timeout=$(jq '.timeout' < ./config.json | tr -d '"')
+replicas=$(jq '.replicas' < ./config.json | tr -d '"')
 
 echo "Publish: Creating yaml file..."
 
@@ -31,6 +32,9 @@ echo "    environment:" >> ./.build/$function.yml
 echo "      read_timeout: \"$(echo $timeout)s\"" >> ./.build/$function.yml
 echo "      write_timeout: \"$(echo $timeout)s\"" >> ./.build/$function.yml
 echo "      exec_timeout: \"$(echo $timeout)s\"" >> ./.build/$function.yml
+echo "    labels:" >> ./.build/$function.yml
+echo "      com.openfaas.scale.min: $replicas" >> ./.build/$function.yml
+echo "      com.openfaas.scale.max: $replicas" >> ./.build/$function.yml
 
 export KUBECONFIG=~/.kube/eksctl/clusters/$cluster
 export OPENFAAS_URL=$gateway

@@ -45,7 +45,7 @@ class Inspector:
         
         self.__startTime = int(round(time.time() * 1000))
         self.__attributes = {
-            "version": 0.6, 
+            "version": 0.61, 
             "lang": "python", 
             "startTime": self.__startTime,
             "invocations": invocations,
