@@ -333,7 +333,15 @@ class Inspector:
                         self.__attributes['functionName'] = os.environ.get('WEBSITE_SITE_NAME', None)
                         self.__attributes['functionRegion'] = os.environ.get('Location', None)
                     else:
-                        self.__attributes['platform'] = "Unknown Platform"
+                        key = os.environ.get('KUBERNETES_SERVICE_PORT_HTTPS', None)
+                        if (key != None):
+                            self.__attributes['platform'] = "OpenFaaS EKS"
+                            self.__attributes['http_host'] = os.environ.get('Http_Host', None)
+                            self.__attributes['http_foward'] = os.environ.get('Http_X_Forwarded_For', None)
+                            self.__attributes['http_start_time'] = os.environ.get('Http_X_Start_Time', None)
+                            self.__attributes['host_name'] = os.environ.get('HOSTNAME', None)
+                        else:
+                            self.__attributes['platform'] = "Unknown Platform"
         
     #
     # Collect information about the linux kernel.

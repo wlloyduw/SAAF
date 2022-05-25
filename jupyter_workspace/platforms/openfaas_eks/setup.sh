@@ -2,10 +2,11 @@
 
 export AWS_PROFILE=personal
 
-name=openfaas-eks-5
+name=openfaas-eks
+nodes=10
 
 # Create cluster
-eksctl create cluster --name=$name --nodes=2 --auto-kubeconfig --region=us-west-2
+eksctl create cluster --name=$name --nodes=$nodes --auto-kubeconfig --region=us-east-2 --instance-types=m5.xlarge --spot
 
 # Check that it is created
 export KUBECONFIG=~/.kube/eksctl/clusters/$name
@@ -41,8 +42,8 @@ helm upgrade openfaas --install openfaas/openfaas \
     --set serviceType=LoadBalancer \
     --set basic_auth=true \
     --set operator.create=true \
-    --set gateway.replicas=2 \
-    --set queueWorker.replicas=2 \
+    --set gateway.replicas=$nodes \
+    --set queueWorker.replicas=$nodes \
     --set gateway.upstreamTimeout=$TIMEOUT \
     --set gateway.writeTimeout=$TIMEOUT \
     --set gateway.readTimeout=$TIMEOUT \
