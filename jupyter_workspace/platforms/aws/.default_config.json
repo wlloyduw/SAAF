@@ -9,6 +9,7 @@
 	"env": "Variables={}",
 	"runtime": "python3.8",
 	"timeout": 900,
+	"storage": 512,
 	"profile": "default",
 	"memory": 512
 }

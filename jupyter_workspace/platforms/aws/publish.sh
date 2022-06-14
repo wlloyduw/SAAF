@@ -12,6 +12,7 @@ subnets=$(jq '.subnets' < ./config.json | tr -d '"')
 security_groups=$(jq '.security_groups' < ./config.json | tr -d '"')
 env=$(jq '.env' < ./config.json | tr -d '"')
 runtime=$(jq '.runtime' < ./config.json | tr -d '"')
+storage=$(jq '.storage' < ./config.json | tr -d '"')
 timeout=$(jq '.timeout' < ./config.json | tr -d '"')
 profile=$(jq '.profile' < ./config.json | tr -d '"')
 export AWS_PROFILE=$profile
@@ -31,6 +32,7 @@ if [ 0 -eq $? ]; then
 		--vpc-config SubnetIds=["$subnets"],SecurityGroupIds=["$security_groups"] \
 		--environment "$env" \
 		--timeout "$timeout" \
+		--ephemeral-storage '{"Size": '$storage'}' \
 		--handler "$handler"
 	aws lambda wait function-updated --function-name "$function"
 
@@ -47,6 +49,7 @@ else
 		--vpc-config SubnetIds=["$subnets"],SecurityGroupIds=["$security_groups"] \
 		--environment "$env" \
 		--timeout "$timeout" \
+		--ephemeral-storage '{"Size": '$storage'}' \
 		--handler "$handler" \
 		--zip-file fileb://index.zip
 	aws lambda wait function-exists --function-name "$function"

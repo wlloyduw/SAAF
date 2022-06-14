@@ -3,7 +3,7 @@
 export AWS_PROFILE=personal
 
 name=openfaas-eks
-nodes=10
+nodes=5
 
 # Create cluster
 eksctl create cluster --name=$name --nodes=$nodes --auto-kubeconfig --region=us-east-2 --instance-types=m5.xlarge --spot
@@ -22,9 +22,6 @@ helm init --upgrade --service-account tiller
 
 # Create kubernetes namespaces
 kubectl apply -f https://raw.githubusercontent.com/openfaas/faas-netes/master/namespaces.yml
-
-# Setup authentication
-echo "Password: saaf_open_faas_password"
 
 kubectl -n openfaas create secret generic basic-auth \
     --from-literal=basic-auth-user=admin \
@@ -56,14 +53,6 @@ helm upgrade openfaas --install openfaas/openfaas \
 echo "Check if deployed, repeat until all is 1"
 echo "Command: kubectl --namespace=openfaas get deployments -l \"release=openfaas, app=openfaas\""
 kubectl --namespace=openfaas get deployments -l "release=openfaas, app=openfaas"
-
-
-
-
-
-
-
-
 
 echo "Waiting 5 minutes... Hopefully that is enough time."
 sleep 300

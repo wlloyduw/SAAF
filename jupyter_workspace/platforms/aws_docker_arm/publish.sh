@@ -10,6 +10,7 @@ role=$(jq '.role' < ./config.json | tr -d '"')
 subnets=$(jq '.subnets' < ./config.json | tr -d '"')
 security_groups=$(jq '.security_groups' < ./config.json | tr -d '"')
 timeout=$(jq '.timeout' < ./config.json | tr -d '"')
+storage=$(jq '.storage' < ./config.json | tr -d '"')
 profile=$(jq '.profile' < ./config.json | tr -d '"')
 export AWS_PROFILE=$profile
 
@@ -36,6 +37,7 @@ if [ 0 -eq $? ]; then
 		--function-name $function \
 		--timeout $timeout \
 		--memory-size $memory \
+		--ephemeral-storage '{"Size": '$storage'}' \
 		--vpc-config SubnetIds=[$subnets],SecurityGroupIds=[$security_groups] \
 		--architectures arm64
 	aws lambda wait function-updated --function-name "$function"
@@ -51,6 +53,7 @@ else
 		--function-name $function \
 		--role $role \
 		--timeout $timeout \
+		--ephemeral-storage '{"Size": '$storage'}' \
 		--code $code \
 		--package-type Image \
 		--memory-size $memory \

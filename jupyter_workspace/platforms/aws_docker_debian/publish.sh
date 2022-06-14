@@ -10,6 +10,7 @@ role=$(jq '.role' < ./config.json | tr -d '"')
 subnets=$(jq '.subnets' < ./config.json | tr -d '"')
 security_groups=$(jq '.security_groups' < ./config.json | tr -d '"')
 timeout=$(jq '.timeout' < ./config.json | tr -d '"')
+storage=$(jq '.storage' < ./config.json | tr -d '"')
 profile=$(jq '.profile' < ./config.json | tr -d '"')
 export AWS_PROFILE=$profile
 
@@ -28,6 +29,32 @@ docker logout
 
 echo "Deploying function..."
 code={\"ImageUri\":\"${registryID}.dkr.ecr.${region}.amazonaws.com/saaf-functions:${function}\"}
-aws lambda create-function --function-name $function --role $role --timeout $timeout --code $code --package-type Image --memory-size $memory
-aws lambda update-function-code --function-name $function --image-uri ${registryID}.dkr.ecr.${region}.amazonaws.com/saaf-functions:${function}
-aws lambda update-function-configuration --function-name $function --memory-size $memory --vpc-config SubnetIds=[$subnets],SecurityGroupIds=[$security_groups]
+
+aws lambda get-function --function-name $function > /dev/null 2>&1
+if [ 0 -eq $? ]; then
+	echo "Publish: Updating function configuration..."
+	aws lambda update-function-configuration \
+		--function-name $function \
+		--timeout $timeout \
+		--memory-size $memory \
+		--ephemeral-storage '{"Size": '$storage'}' \
+		--vpc-config SubnetIds=[$subnets],SecurityGroupIds=[$security_groups]
+	aws lambda wait function-updated --function-name "$function"
+
+	echo "Publish: Updating function code..."
+	aws lambda update-function-code \
+		--function-name $function \
+		--image-uri ${registryID}.dkr.ecr.${region}.amazonaws.com/saaf-functions:${function}
+	aws lambda wait function-updated --function-name "$function"
+else
+	echo "Publish: Creating new function..."
+	aws lambda create-function \
+		--function-name $function \
+		--role $role \
+		--timeout $timeout \
+		--ephemeral-storage '{"Size": '$storage'}' \
+		--code $code \
+		--package-type Image \
+		--memory-size $memory
+	aws lambda wait function-exists --function-name "$function"
+fi

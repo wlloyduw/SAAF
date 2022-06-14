@@ -6,6 +6,7 @@
 	"subnets": "",
 	"security_groups": "",
 	"timeout": 900,
+	"storage": 512,
 	"profile": "default",
 	"memory": 512
 }
