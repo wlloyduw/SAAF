@@ -196,7 +196,7 @@ class Inspector:
         for metric in CPUMetrics:
             self.__attributes[metric] = self.__cpuPolls[0]['cpuTotal'][metric]
 
-        self.__attributes['vmcpusteal'] = self.__cpuPolls[0]['btime']
+        self.__attributes['bootTime'] = self.__cpuPolls[0]['btime']
     #
     # Compare information gained from inspectCPU to the current CPU metrics.
     #
