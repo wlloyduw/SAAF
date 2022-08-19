@@ -1,0 +1,22 @@
+environment: {}
+parameters: {}
+packages:
+  - name: sample
+    environment: {}
+    parameters: {}
+    annotations: {}
+    functions:
+      - name: hello
+        binary: false
+        main: ''
+        runtime: 'python:default'
+        web: true
+        parameters: {}
+        environment: {}zw
+        annotations: {}
+        limits: {
+          "concurrency": 1,
+          "logs": 16,
+          "memory": 256,
+          "timeout": 3000
+        }
