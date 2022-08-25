@@ -76,6 +76,10 @@ def cloud_function(platform="AWS",
     
 # Load existing functions...
 f_data = {}
+
+if not os.path.exists("./functions"):
+    os.mkdir("./functions")
+
 f_directory = os.scandir("./functions")
 print("Loaded functions: ", end=" ")
 for func in f_directory:
