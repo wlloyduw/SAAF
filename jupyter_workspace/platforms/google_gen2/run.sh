@@ -8,4 +8,4 @@ region=$(jq -c '.region' < ./config.json)
 
 json=$2
 
-gcloud beta functions call $function --gen2 --data="$json" --format json | jq -r '.'
+gcloud beta functions call $function --gen2 --region $region --data="$json" --format json | jq -r '.'
