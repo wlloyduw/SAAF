@@ -2,5 +2,5 @@
 	"id": "DEMO",
 	"faas_runner_platform": "NOT SUPPORTED",
 	"location": "./platforms/demo",
-	"dynamic_url": "ENTER URL"
+	"dynamic_url": "https://s6d5a4cg88.execute-api.us-east-1.amazonaws.com/prod"
 }

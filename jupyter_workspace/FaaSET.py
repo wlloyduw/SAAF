@@ -310,7 +310,7 @@ def deploy_function(name, source, platform, config, force_deploy):
     functionData["source_hash"] = sourceHash
     functionData["name"] = name
     functionData["platform"] = platform
-    functionData["config"] = config
+    #functionData["config"] = config
     
     # save json file
     json.dump(functionData, open("./functions/" + name + "/.faaset.json", "w"), indent=4)
@@ -364,8 +364,10 @@ def reconfigure(function, config):
     else:
         print("Unknown function! " + name)
         
-    # Use previous config as default
-    defaultConfig = functionData["config"]    
+    # Load
+    defaultConfig = platformData[functionData["platform"] ]    
+    if os.path.exists("./functions/" + name + "/.default_config.json"):
+        defaultConfig = json.load(open("./functions/" + name + "/.default_config.json"))
     
     # Override default values if config is provided.
     for key in defaultConfig.keys():
@@ -374,7 +376,7 @@ def reconfigure(function, config):
     config['function_name'] = name
 
     # Update function file...
-    functionData["config"] = config
+    #functionData["config"] = config
     
     # save json file
     json.dump(functionData, open("./functions/" + name + "/.faaset.json", "w"), indent=4)
