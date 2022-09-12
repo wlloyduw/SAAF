@@ -1,0 +1,6 @@
+{
+	"id": "DEMO",
+	"faas_runner_platform": "NOT SUPPORTED",
+	"location": "./platforms/demo",
+	"dynamic_url": "ENTER URL"
+}
