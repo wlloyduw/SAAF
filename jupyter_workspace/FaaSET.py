@@ -365,7 +365,7 @@ def reconfigure(function, config):
         print("Unknown function! " + name)
         
     # Load
-    defaultConfig = platformData[functionData["platform"] ]    
+    defaultConfig = platformData[functionData["platform"]]    
     if os.path.exists("./functions/" + name + "/.default_config.json"):
         defaultConfig = json.load(open("./functions/" + name + "/.default_config.json"))
     
