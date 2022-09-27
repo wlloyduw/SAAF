@@ -24,7 +24,11 @@ This tutorial will cover the following topics:
 
 ## 0. Setting up FaaSET
 
-At it's core, FaaSET is a Python framework that can be used inside regular Python scripts or Jupyter Notebooks. To create a consistent and streamlined workspace we used Google Colaboratory to host a Notebook to use FaaSET with. The Google Colab notebook can be used to deploy functions to AWS Lambda, Google Cloud Functions, or IBM Cloud Functions. FaaSET is not dependent on Google Colab and can instead be hosted a variety of different ways. This includes using cloud VMs or simply running Jupyter locally. If you would like to host FaaSET locally, you can install the following dependencies:
+At it's core, FaaSET is a Python framework that can be used inside regular Python scripts or Jupyter Notebooks. To create a consistent and streamlined workspace we used Google Colaboratory to host a Notebook to use FaaSET with. The Google Colab notebook can be used to deploy functions to AWS Lambda, Google Cloud Functions, or IBM Cloud Functions. 
+
+Try FaaSET on Google Colab: https://colab.research.google.com/drive/1RL_rt7Z43dFrpWVcocaZz-UgpdHoGA99?usp=sharing
+
+FaaSET is not dependent on Google Colab and can instead be hosted a variety of different ways. This includes using cloud VMs or simply running Jupyter locally. If you would like to host FaaSET locally, you can install the following dependencies:
 
 ### FaaSET Generally Dependencies
 
