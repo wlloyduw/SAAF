@@ -1,0 +1,15 @@
+{
+	"id": "AWS",
+	"faas_runner_platform": "AWS Lambda",
+	"location": "./platforms/aws",
+	"role": "arn:aws:iam::616835888336:role/service-role/simple_microservice_role",
+	"handler": "lambda_function.lambda_handler",
+	"subnets": "",
+	"security_groups": "",
+	"env": "Variables={}",
+	"runtime": "python3.8",
+	"timeout": 900,
+	"storage": 512,
+	"profile": "default",
+	"memory": 512
+}

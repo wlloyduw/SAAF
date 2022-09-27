@@ -1,0 +1,5 @@
+{
+	"id": "Local",
+	"faas_runner_platform": "NOT COMPATIBLE",
+	"location": "./platforms/local"
+}

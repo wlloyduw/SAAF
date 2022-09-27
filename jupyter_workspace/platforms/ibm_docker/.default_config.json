@@ -1,0 +1,8 @@
+{
+	"id": "IBM Docker",
+	"faas_runner_platform": "IBM",
+	"location": "./platforms/ibm_docker",
+	"runtime": "python:3.9",
+	"memory": 512,
+	"timeout": 300000
+}
