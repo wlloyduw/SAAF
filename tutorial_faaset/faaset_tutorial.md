@@ -35,7 +35,7 @@ pip install requests tqdm numpy pandas matplotlib ipython jupyter kaleido plotly
 curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
 python3.8 get-pip.py
 
-git clone -b FaaSET2-beta https://www.github.com/wlloyduw/SAAF 
+git clone https://www.github.com/wlloyduw/SAAF 
 ```
 
 ### Utilizing the Demo Platform
@@ -65,6 +65,10 @@ sudo apt update && apt install google-cloud-cli -y
 ``` bash
 !curl -fsSL https://clis.cloud.ibm.com/install/linux | sh
 ```
+
+### Defining Default Configurations
+
+Each platform in the /platforms folder contains a JSON file called .default_config.json. This file is incredibly important is it contains all the default values needed to deploy functions. For example, if you were to use AWS Lambda and want all of your functions to use the same role ARN you would define it here. After setting up your desired platform, it is suggested to edit .default_config.json to your liking.
 
 ## 1. Creating functions with FaaSET
 
@@ -229,7 +233,11 @@ results = FaaSRunner.load(function=hello_world, experiment="hello_experiment")
 
 This function reads the files saved by FaaS Runner and loads them back into a Pandas dataframe for data processing and analysis.
 
-# Interactive Activities
+# 5. Data Analysis in FaaSET 
+
+Since FaaSET is built around Jupyter Notebooks all results from experiments can easily be edited with all your favorite Python data analysis tools. The tutorial notebook on Google Colab contains a few examples of generating graphs with plotly and general statistics. Pandas, Numpy, Scikit Learn, and even advanced machine learning libraries like Tensorflow can be used in FaaSET's Notebook. 
+
+# Activities
 
 ## Activity 1: Deploy a CPU bound function.
 
@@ -241,7 +249,7 @@ Next, change the memory setting using the reconfigure function in FaaSET and rep
 
 ## Activity 2: Writing Experiments
 
-Deploy 2 CPU bound functions, the Google Colab notebook provides two examples, calc_service and the page_rank function. Then create an experiment with FaaS Runner to run them each 30 time across 30 threads (30 threads, 1 run per thread), name this experiment t_test_demo. Repeat this experiment once with each function. Make sure the results are loaded into the Notebook, either saving the results to a variable when they are run or using FaaSET's load function. Once both experiments are complete print general runtime statistics and run a T-test.
+Deploy 2 CPU bound functions, the Google Colab notebook provides two examples, calc_service and the page_rank function. Then create an experiment with FaaS Runner to run them each 30 time across 30 threads (30 threads, 1 run per thread), name this experiment t_test_demo. Repeat this experiment once with each function. Make sure the results are loaded into the Notebook, either saving the results to a variable when they are run or using FaaSET's load function. Once both experiments are complete print general runtime st.
 
 
 
