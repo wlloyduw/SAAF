@@ -212,8 +212,13 @@ def _deploy_function(name, source, platform, override_config, force_deploy):
     source_hash = base64.b64encode(source.encode('utf-8')).decode('utf-8')
 
     if not force_deploy:
-        if source_hash == function_data["source_hash"][platform]:
-            return None
+        if platform in function_data["source_hash"]:
+            if source_hash == function_data["source_hash"][platform]:
+                if platform != function_data["platform"]:
+                    # Platform swap no source change...
+                    function_data["platform"] = platform
+                    json.dump(function_data, open(faaset_path, "w"), indent=4)
+                return None
 
     # Update function file
     function_data["source_hash"][platform] = source_hash
