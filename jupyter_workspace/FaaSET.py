@@ -267,15 +267,19 @@ def _run_script(source_folder, script_name):
     except Exception as e:
         print("An exception occurred running " + script_name + " script: " + str(e))
 
-def reconfigure(function, config):
+def reconfigure(function, config={}, platform=None):
     """_summary_
 
     Args:
         function (_type_): _description_
-        config (_type_): _description_
+        config (dict, optional): _description_. Defaults to {}.
+        platform (_type_, optional): _description_. Defaults to None.
 
     Raises:
         Exception: _description_
+
+    Returns:
+        _type_: None
     """
 
     name = function.__name__
@@ -287,7 +291,16 @@ def reconfigure(function, config):
     else:
         raise Exception("Unknown function: " + name)
 
-    platform = function_data["platform"]
+    if platform is None:
+        platform = function_data["platform"]
+    else:
+        function_data["platform"] = platform
+        json.dump(function_data, open(faaset_path, "w"), indent=4)
+        print("Platform changed to: " + platform)
+        
+    if config == {}:
+        return None
+        
     source_folder = "./functions/" + name + "/" + platform + "/"
 
     # Load
