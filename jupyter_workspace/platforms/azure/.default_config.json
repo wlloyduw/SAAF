@@ -1,6 +1,0 @@
-{
-	"id": "Azure",
-	"faas_runner_platform": "Azure",
-	"location": "./platforms/azure",
-	"runtime": "python"
-}

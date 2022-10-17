@@ -1,7 +1,4 @@
 {
-	"id": "GCF",
-	"faas_runner_platform": "Google",
-	"location": "./platforms/google",
 	"handler": "hello_world",
 	"runtime": "python39",
 	"timeout": "540",

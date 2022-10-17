@@ -11,7 +11,7 @@ mkdir ./.build
 mkdir ./.build/$function
 
 echo "Build: Copying files..."
-cp ../../SAAF.py ./SAAF.py
+cp ../../../SAAF.py ./SAAF.py
 cp -R ./* ./.build/$function
 
 echo "Build: Swapping some files around..."

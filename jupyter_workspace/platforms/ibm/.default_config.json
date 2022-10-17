@@ -1,8 +1,0 @@
-{
-	"id": "IBM",
-	"faas_runner_platform": "IBM",
-	"location": "./platforms/ibm",
-	"runtime": "python:3.9",
-	"memory": 512,
-	"timeout": 300000
-}

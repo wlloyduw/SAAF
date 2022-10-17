@@ -11,7 +11,7 @@ rm -rf ./.build
 mkdir ./.build
 
 echo "Build: Copying files..."
-cp ../../SAAF.py ./SAAF.py
+cp ../../../SAAF.py ./SAAF.py
 cp -R ./* ./.build/
 
 echo "Build: Cleaning up..."

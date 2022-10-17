@@ -2,80 +2,361 @@
 # @author Robert Cordingly
 # @author Wes Lloyd
 #
-from math import fabs
-import pandas as pd
-import numpy as np
+
+import base64
+import inspect
 import json
 import os
-from enum import Enum
-import subprocess
-import pathlib
-from glob import glob
 import shutil
-import inspect
+import subprocess
 import threading
 import time
-import uuid
-from tqdm.notebook import tqdm, trange
 import traceback
-import base64
+import uuid
 
-from IPython.display import clear_output, display, HTML, IFrame, FileLink
-from IPython.display import JSON
+STOP_THREADS = {}
 
-print("------------------------------------------------------")
-print("Welcome to FaaSET v2.0! Some things have changed when")
-print("compared to v1.0. RunModes and the Containerize arguments")
-print("have been removed in favor of more available Platforms.")
-print("Platforms is no longer a list and now functions can")
-print("only be deployed to a single platform at a time.")
-print("If you are using a older notebook that has not been")
-print("updated things will be broken. Please fix them. ")
-print("------------------------------------------------------")
+def cloud_function(platform="aws", config={}, deploy=True, force_deploy=False):
+    """_summary_
 
-# Load json file platforms.json
-platformData = {}
-platforms_directory = os.scandir("./platforms")
-print("Loaded platforms: ", end=" ")
-for platform in platforms_directory:
-    try:
-        if platform.is_dir():
-            platform = json.load(open("./platforms/" + platform.name + "/.default_config.json", "r"))
-            platformID = platform['id']
-            platformData[platformID] = platform
-            print(platformID, end=". ")
-    except:
-        pass
-print("")
-print("------------------------------------------------------")
+    Args:
+        platform (str, optional): _description_. Defaults to "aws".
+        config (dict, optional): _description_. Defaults to {}.
+        deploy (bool, optional): _description_. Defaults to True.
+        force_deploy (bool, optional): _description_. Defaults to False.
+    """
 
-startPath = pathlib.Path().absolute()
-
-def cloud_function(platform="AWS", 
-                   config={}, 
-                   references=[],
-                   deploy=True,
-                   force_deploy=False):
-    
     def decorated(f):
         def wrapper(*args, **kwargs):
             results = None
-                
+
             functionName = f.__name__
             wrapper.__name__ = functionName
-            
+
             if deploy:
-                source = source_processor(inspect.getsource(f), functionName, references)
-                deploy_function(functionName, source, platform, config, force_deploy)
+                source = _source_processor(
+                    inspect.getsource(f), functionName)
+                _deploy_function(functionName, source,
+                                platform, config, force_deploy)
             results = test(function=f, payload=args[0], quiet=True)
             return results
         wrapper.__name__ = f.__name__
         return wrapper
     return decorated
+
+
+def test(function, payload, quiet=False, outPath="default", tags={}):
+    """Runs a function and returns the response object.
+
+    Args:
+        function (func): _description_
+        payload (obj): _description_
+        quiet (bool, optional): _description_. Defaults to False.
+        outPath (str, optional): _description_. Defaults to "default".
+        tags (dict, optional): _description_. Defaults to {}.
+
+    Returns:
+        _type_: _description_
+    """
+    name = function.__name__
+    faaset_path = "./functions/" + name + "/FAASET.json"
+    function_data = json.load(open(faaset_path))
+    platform = function_data["platform"]
+    source_folder = "./functions/" + name + "/" + platform + "/"
+
+    try:
+        cmd = [source_folder + "run.sh",
+               source_folder, str(json.dumps(payload))]
+        proc = subprocess.Popen(
+            cmd, bufsize=-1, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        o, e = proc.communicate()
+        out = str(o.decode('ascii'))
+        error = str(e.decode('ascii'))
+        obj = {}
+        try:
+            obj = json.loads(out)
+
+            # Apply tags
+            for key in tags:
+                obj[key] = tags[key]
+
+            if not quiet:
+                print(json.dumps(obj, indent=4))
+
+            # Write output json if outpath is supplied.
+            if outPath is not None:
+                experiment_path = "./functions/" + name + "/experiments"
+                if not os.path.isdir(experiment_path):
+                    os.mkdir(experiment_path)
+                if not os.path.isdir(experiment_path + "/" + outPath):
+                    os.mkdir(experiment_path + "/" + outPath)
+                json.dump(obj, open(experiment_path + "/" +
+                          outPath + "/" + str(uuid.uuid4()) + ".json", "w"), indent=4)
+
+        except Exception as e:
+            print("An exception occurred reading the response:\n--->" + str(e))
+            print("---> Command: " + str(cmd))
+            print("---> Response: " + out)
+            print("---> Error: " + error)
+            print("---> Stack Trace:")
+            traceback.print_exc()
+
+        return obj
+    except Exception as e:
+        print("An exception occurred: " + str(e))
+        traceback.print_exc()
+        return None
+
+def get_config(platform, quiet=False):
+    """_summary_
+
+    Args:
+        platform (_type_): _description_
+        quiet (bool, optional): _description_. Defaults to False.
+
+    Raises:
+        Exception: _description_
+
+    Returns:
+        _type_: _description_
+    """
     
+    platform_config = {}
+    if os.path.exists("./platforms/" + platform + "/default_config.json"):
+        platform_config = json.load(
+            open("./platforms/" + platform + "/default_config.json"))
+    else:
+        raise Exception("No default_config.json file found for platform: " +
+                        platform + ". \n Unknown platform.")
+    if (not quiet):
+        print("Config parameters for " + platform + ":\n" + json.dumps(platform_config, indent=4))
+    return platform_config
+
+def _load_config(name, platform, override_config):
+    """_summary_
+
+    Args:
+        name (_type_): _description_
+        platform (_type_): _description_
+        override_config (_type_): _description_
+
+    Raises:
+        Exception: _description_
+
+    Returns:
+        _type_: _description_
+    """
+
+    # Load the initial platform config file
+    platform_config = get_config(platform, quiet=True)
+
+    # Override with function config
+    if os.path.exists("./functions/" + name + "/default_config.json"):
+        function_config = json.load(
+            open("./functions/" + name + "/default_config.json"))
+        for key in function_config.keys():
+            platform_config[key] = function_config[key]
+
+    # Override with user supplied config
+    for key in override_config.keys():
+        platform_config[key] = override_config[key]
+    platform_config['function_name'] = name
+
+    # Check for required parameters
+    required_parameters = []
+    for key in platform_config:
+        if platform_config[key] == "FAASET_REQUIREMENT":
+            required_parameters.append(key)
+    if len(required_parameters) > 0:
+        raise Exception("Missing required parameters: " + str(required_parameters) + "\n Either pass parameters in through the config object parameter or modify default_config.json of the platform or function.")
+
+    return platform_config
+
+def _deploy_function(name, source, platform, override_config, force_deploy):
+    """_summary_
+
+    Args:
+        name (_type_): _description_
+        source (_type_): _description_
+        platform (_type_): _description_
+        override_config (_type_): _description_
+        force_deploy (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
     
-# Load existing functions...
-f_data = {}
+    # Paths
+    faaset_path = "./functions/" + name + "/FAASET.json"
+    platform_folder = "./platforms/" + platform
+    source_folder = "./functions/" + name + "/" + platform + "/"
+
+    # Create folders...
+    if not os.path.isdir("./functions"):
+        os.mkdir("./functions")
+    if not os.path.isdir("./functions/" + name):
+        os.mkdir("./functions/" + name)
+    if not os.path.isdir("./functions/" + name + "/" + platform):
+        os.mkdir("./functions/" + name + "/" + platform)
+
+    config = _load_config(name, platform, override_config)
+
+    function_data = {
+        "source_hash": {platform: ""},
+        "platform": platform
+    }
+
+    if os.path.exists(faaset_path):
+        function_data = json.load(open(faaset_path))
+
+    source_hash = base64.b64encode(source.encode('utf-8')).decode('utf-8')
+
+    if not force_deploy:
+        if source_hash == function_data["source_hash"][platform]:
+            return None
+
+    # Update function file
+    function_data["source_hash"][platform] = source_hash
+    function_data["name"] = name
+    function_data["platform"] = platform
+
+    # Save function file
+    json.dump(function_data, open(faaset_path, "w"), indent=4)
+
+    # Write the handler
+    handler = open(source_folder + "handler.py", "w")
+    handler.write(source)
+    handler.close()
+
+    with open(source_folder + "config.json", 'w') as json_file:
+        json.dump(config, json_file, indent=4)
+
+    # loop through all files in folder and copy them to destination if they do not already exist
+    for file in os.listdir(platform_folder):
+        if os.path.isfile(os.path.join(platform_folder, file)):
+            if not (os.path.isfile(os.path.join(source_folder, file))):
+                shutil.copy(os.path.join(platform_folder, file), source_folder)
+
+    # Run publish.sh
+    global STOP_THREADS
+
+    STOP_THREADS[name + platform] = False
+    build_watcher = threading.Thread(target=_build_watcher, args=(
+        source_folder + "build.log", name, platform,))
+    build_watcher.start()
+
+    # Run the build and publih script....
+    _run_script(source_folder, "build.sh")
+    _run_script(source_folder, "publish.sh")
+
+    STOP_THREADS[name + platform] = True
+
+def _run_script(source_folder, script_name):
+    try:
+        command = source_folder + script_name + " " + source_folder
+        with open(source_folder + "build.log", 'w+') as f:
+            proc = subprocess.Popen(
+                command.split(), bufsize=-1, stdout=f, stderr=subprocess.PIPE)
+        o, e = proc.communicate()
+        time.sleep(0.2) # Make sure the build watcher catches any final output..
+    except Exception as e:
+        print("An exception occurred running " + script_name + " script: " + str(e))
+
+def reconfigure(function, config):
+    """_summary_
+
+    Args:
+        function (_type_): _description_
+        config (_type_): _description_
+
+    Raises:
+        Exception: _description_
+    """
+
+    name = function.__name__
+    faaset_path = "./functions/" + name + "/FAASET.json"
+    
+    function_data = {}
+    if os.path.exists(faaset_path):
+        function_data = json.load(open(faaset_path))
+    else:
+        raise Exception("Unknown function: " + name)
+
+    platform = function_data["platform"]
+    source_folder = "./functions/" + name + "/" + platform + "/"
+
+    # Load
+    config = _load_config(name, platform, config)
+
+    with open(source_folder + "config.json", 'w') as json_file:
+        json.dump(config, json_file, indent=4)
+
+    # Run publish.sh
+    global STOP_THREADS
+
+    STOP_THREADS[name + platform] = False
+    build_watcher = threading.Thread(target=_build_watcher, args=(
+        source_folder + "build.log", name, platform,))
+    build_watcher.start()
+
+    _run_script(source_folder, "publish.sh")
+
+    STOP_THREADS[name + platform] = True
+
+
+def _source_processor(source, functionName):
+    source = source.replace("def " + functionName,
+                            "\"\"\"\n\ndef yourFunction")
+    source = source.replace(functionName + "(", "yourFunction(")
+    source = "\"\"\" AUTOMATICALLY COMMENTED OUT BY FaaSET \n" + source
+    return source
+
+
+def _build_watcher(file_name, name, platform):
+    """_summary_
+
+    Args:
+        file_name (_type_): _description_
+        name (_type_): _description_
+        platform (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
+
+    console_contents = ""
+    while (True):
+        global STOP_THREADS
+        try:
+            progress = open(file_name, "r")
+            data = progress.read()
+            progress.close()
+            print_data = data.replace(console_contents, "")
+            if (print_data != ""):
+                print(print_data, end="")
+            console_contents = data
+        except:
+            pass
+        if (STOP_THREADS[name + platform]):
+            break
+        time.sleep(0.1)
+    return None
+
+
+print("------------------------------------------------------")
+print("             Welcome to FaaSET v3.0!")
+print("------------------------------------------------------")
+
+platforms_directory = os.scandir("./platforms")
+print("Available platforms: ", end=" ")
+for platform in platforms_directory:
+    try:
+        if platform.is_dir():
+            print(platform.name, end=". ")
+    except:
+        pass
+print("")
+print("------------------------------------------------------")
 
 if not os.path.exists("./functions"):
     os.mkdir("./functions")
@@ -85,395 +366,22 @@ print("Loaded functions: ", end=" ")
 for func in f_directory:
     try:
         if func.is_dir():
-            f = json.load(open("./functions/" + func.name + "/.faaset.json", "r"))
-            source = "@cloud_function(platform='" + f['platform'] + "', deploy=False)\ndef " + func.name + "(request, context):\n    pass"
-            exec(source)
-            print(func.name, end=". ")
+            if (os.path.exists("./functions/" + func.name + "/FAASET.json")):
+                f = json.load(
+                    open("./functions/" + func.name + "/FAASET.json", "r"))
+                source = "@cloud_function(platform='" + f['platform'] + \
+                    "', deploy=False)\ndef " + func.name + \
+                    "(request, context):\n    pass"
+                exec(source)
+                print(func.name, end=". ")
+            elif (os.path.exists("./functions/" + func.name + "/.faaset.json")):
+                print(func.name + " (Incompatible)", end=". ")
+            else:
+                print(func.name + " (Unknown)", end=". ")
     except Exception as e:
         print(str(e))
         pass
 print("")
 
-stop_threads = {}
-globalConfig = None
-    
-def test(function, payload, quiet=False, updateStats=True, outPath="default", tags={}):
-    name = function.__name__
-    
-    try:
-        cmd = ["./functions/" + name + "/run.sh", "./functions/" + name + "/", str(json.dumps(payload))]
-        proc = subprocess.Popen( cmd, bufsize=-1, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        o, e = proc.communicate()
-        out = str(o.decode('ascii'))
-        error = str(e.decode('ascii'))
-        obj = {}
-        try:
-            obj = json.loads(out)
-            
-            # Apply tags
-            for key in tags:
-                obj[key] = tags[key]
-            
-            if not quiet:
-                print(json.dumps(obj, indent=4))
-                
-            if updateStats:
-                functionData = json.load(open("./functions/" + name + "/.faaset.json"))
-                if 'stats' in functionData:
-                    functionData['stats']['invocations'] += 1
-                    if 'runtime' in obj:
-                        functionData['stats']['total_runtime'] += obj['runtime']
-                else:
-                    functionData['stats'] = {}
-                    functionData['stats']['invocations'] = 1
-                    if 'runtime' in obj:
-                        functionData['stats']['total_runtime'] = obj['runtime']
-                    else:
-                        functionData['stats']['total_runtime'] = 0
-                json.dump(functionData, open("./functions/" + name + "/.faaset.json", "w"), indent=4)
-            
-            # Write output json if outpath is supplied.
-            if outPath is not None:
-                if not os.path.isdir("./functions/" + name + "/experiments"):
-                    os.mkdir("./functions/" + name + "/experiments") 
-                if not os.path.isdir("./functions/" + name + "/experiments/" + outPath):
-                    os.mkdir("./functions/" + name + "/experiments/" + outPath)
-                json.dump(obj, open("./functions/" + name + "/experiments/" + outPath + "/" + str(uuid.uuid4()) + ".json", "w"), indent=4)
-            
-        except Exception as e:
-            print("An exception occurred reading the response:\n--->" + str(e))
-            print("---> Command: " + str(cmd))
-            print("---> Response: " + out)
-            print("---> Error: " + error)
-            print("---> Stack Trace:")
-            traceback.print_exc()
-            
-        return obj
-    except Exception as e:
-        print("An exception occurred: " + str(e))
-        traceback.print_exc()
-        return None
-
-def run_experiment(function, experiment, platform="AWS", config={}):
-    """Execute complex experiments using this function. This function leverages the FaaS Runner application
-        to automate experiments and import the results as a pandas dataframe.
-
-    Args:
-        function (method): The cloud function to test.
-        experiment ([type]): A json object containing FaaS Runner experiment parameters. See the FaaS Runner reference
-                for detail on each experiment parameter: https://github.com/wlloyduw/SAAF/tree/master/test
-        config (obj):  Context object to supply other required parameters to the function such as Lambda ARNs.
-        platform (int): The platform you would like to run the experiment on to. Define platform with the Platform enum.
-
-    Returns:
-        dataframe: A pandas dataframe containing all the information from each request. 
-    """
-    
-    functionName = function.__name__
-    
-    if config == None:
-        config = platformData[platform]
-    
-    global startPath
-    os.chdir(startPath)
-    data = None
-    
-    global stop_threads
-    stop_threads["experiment"] = False
-    
-    exp_id = functionName + "-" + str(uuid.uuid4())
-    if 'name' in experiment:
-        exp_id = functionName + "-" + experiment['name'] + "-" + str(uuid.uuid4())
-
-    print("Running experiment: " + exp_id)
-    
-    # Create function file...
-    function = {}
-    function['platform'] = platformData['faas_runner_platform']
-    function['function'] = functionName
-    function['source'] = "../jupyter_workspace/src/functions/" + functionName + "/config.json"
-    function['endpoint'] = ""
-    with open('../../test/functions/interactiveFunction.json', 'w') as json_file:
-        json.dump(function, json_file, indent=4)
-    
-    # Set default values
-    experiment["outputGroups"] = []
-    experiment["ignoreFromGroups"] = []
-    experiment["ignoreByGroup"] = {}
-    experiment["combineSheets"] = True
-    
-    with open('../../test/experiments/interactiveExperiment.json', 'w') as json_file:
-        json.dump(experiment, json_file, indent=4)
-        
-    currentPath = pathlib.Path().absolute()
-    os.chdir("../../test")
-    # try:
-    #     shutil.rmtree("history/interactiveExperiment")
-    # except:
-    #     pass
-    
-    progressWatcher = threading.Thread(target=progress_watcher, 
-        args=(experiment['runs'], experiment['iterations'], len(experiment['memorySettings']), "experiment",))
-    progressWatcher.start()
-    
-    try:
-        
-        historyPath = "history/interactiveExperiment/" + exp_id +"/"
-        command = "./faas_runner.py -f functions/interactiveFunction.json -e experiments/interactiveExperiment.json -o " + historyPath
-        data = subprocess.check_output(command.split()).decode('ascii')
-        #csvReport = glob("history/interactiveExperiment/" + exp_id +"/*.csv")[0]
-        #command = "./tools/report_splitter.py " + csvReport
-        #subprocess.check_output(command.split()).decode('ascii')
-        
-        # Copy all json files into combined folder
-        try:
-            os.mkdir(os.path.join(historyPath, "combined"))
-        except:
-            pass
-        for folder in os.listdir(historyPath):
-            if os.path.isdir(os.path.join(historyPath, folder)):
-                for file in os.listdir(os.path.join(historyPath, folder)):
-                    os.system("mv {} {}".format(os.path.join(historyPath, folder, file), os.path.join(historyPath, "combined", file)))
-                try:
-                    if (folder != "combined"):
-                        os.rmdir(os.path.join(historyPath, folder))
-                except:
-                    pass
-        
-        # Compile results from combined folder
-        command = "./compile_results.py " +  historyPath + "combined" + " " + "experiments/interactiveExperiment.json"
-        subprocess.check_output(command.split()).decode('ascii')
-        
-        command = "./tools/report_splitter.py " + historyPath + "combined/compiled-results-interactiveExperiment.csv"
-        subprocess.check_output(command.split()).decode('ascii')
-        
-        # Generate resport
-        reportPath = historyPath + "combined/compiled-results-interactiveExperiment - split"
-        data = pd.read_csv(reportPath + "/Raw results of each run.csv")
-    except Exception as e:
-        print(e)
-    
-    stop_threads["experiment"] = True
-    progressWatcher.join()
-    
-    os.chdir(currentPath)
-    return data
-
-
-
-
-
-#########################################################################
-#                                                                       #
-#           ALL FURTHER METHODS ARE CALLED BY OTHER METHODS             #
-#                   NOT TO BE EXECUTED DIRECTLY                         #
-#                                                                       #
-#########################################################################
-
-def deploy_function(name, source, platform, config, force_deploy):
-    # Create functions folder...
-    if not os.path.isdir("./functions"):
-        os.mkdir("./functions")
-    if not os.path.isdir("./functions/" + name):
-        os.mkdir("./functions/" + name)
-    
-    functionData = {
-        "source_hash": ""
-    }
-    
-    if os.path.exists("./functions/" + name + "/.faaset.json"):
-        functionData = json.load(open("./functions/" + name + "/.faaset.json"))
-        
-        if platform != functionData['platform']:
-            print("Platform changed! Please move or delete ./function/" + name + " folder to continue. Previous platform: Platform." + functionData['platform'])
-            return None
-    
-    # Load default config if exists in function folder.
-    # Otherwise use the platform one.
-    defaultConfig = platformData[platform]    
-    if os.path.exists("./functions/" + name + "/.default_config.json"):
-        defaultConfig = json.load(open("./functions/" + name + "/.default_config.json"))
-    
-    # Override default values if config is provided.
-    for key in defaultConfig.keys():
-        if key not in config:
-            config[key] = defaultConfig[key]
-    config['function_name'] = name
-
-    sourceHash = base64.b64encode(source.encode('utf-8')).decode('utf-8')
-    
-    if not force_deploy:
-        if sourceHash == functionData["source_hash"]:
-            return None
-
-    # Update function file...
-    functionData["source_hash"] = sourceHash
-    functionData["name"] = name
-    functionData["platform"] = platform
-    #functionData["config"] = config
-    
-    # save json file
-    json.dump(functionData, open("./functions/" + name + "/.faaset.json", "w"), indent=4)
-
-    # Write the handler
-    textfile = open("./functions/" + name + "/handler.py", "w")
-    textfile.write(source)
-    textfile.close()
-    
-    with open("./functions/" + name + "/config.json", 'w') as json_file:
-        json.dump(config, json_file, indent=4)
-    
-    folder = config['location']
-    destination = "./functions/" + name + "/"
-    
-    # loop through all files in folder and copy them to destination if they do not already exist
-    for file in os.listdir(folder):
-        if os.path.isfile(os.path.join(folder, file)):
-            if not (os.path.isfile(os.path.join(destination, file))):
-                shutil.copy(os.path.join(folder, file), destination)
-    
-    # Run publish.sh
-    global stop_threads
-    
-    stop_threads[name] = False
-    buildWatcher = threading.Thread(target=build_watcher, args=("./functions/" + name + "/build.log", name))
-    buildWatcher.start()
-    
-    try:
-        command = "./functions/" + name + "/build.sh ./functions/" + name + "/"
-        with open("./functions/" + name + "/build.log",'w+') as f:
-            proc = subprocess.Popen( command.split(), bufsize=-1, stdout=f, stderr=subprocess.PIPE)
-        o, e = proc.communicate()
-
-        command = "./functions/" + name + "/publish.sh ./functions/" + name + "/"
-        with open("./functions/" + name + "/build.log",'a') as f:
-            proc = subprocess.Popen( command.split(), bufsize=-1, stdout=f, stderr=subprocess.PIPE)
-        o, e = proc.communicate()
-
-    except Exception as e:
-        print("An exception occurred: " + str(e))
-    
-    stop_threads[name] = True
-    
-    
-def reconfigure(function, config):
-    name = function.__name__
-    functionData = {}
-    if os.path.exists("./functions/" + name + "/.faaset.json"):
-        functionData = json.load(open("./functions/" + name + "/.faaset.json"))
-    else:
-        print("Unknown function! " + name)
-        
-    # Load
-    defaultConfig = platformData[functionData["platform"]]    
-    if os.path.exists("./functions/" + name + "/.default_config.json"):
-        defaultConfig = json.load(open("./functions/" + name + "/.default_config.json"))
-    
-    # Override default values if config is provided.
-    for key in defaultConfig.keys():
-        if key not in config:
-            config[key] = defaultConfig[key]
-    config['function_name'] = name
-
-    # Update function file...
-    #functionData["config"] = config
-    
-    # save json file
-    json.dump(functionData, open("./functions/" + name + "/.faaset.json", "w"), indent=4)
-    
-    with open("./functions/" + name + "/config.json", 'w') as json_file:
-        json.dump(config, json_file, indent=4)
-    
-    # Run publish.sh
-    global stop_threads
-    
-    stop_threads[name] = False
-    buildWatcher = threading.Thread(target=build_watcher, args=("./functions/" + name + "/build.log", name))
-    buildWatcher.start()
-    
-    try:
-        command = "./functions/" + name + "/publish.sh ./functions/" + name + "/"
-        with open("./functions/" + name + "/build.log",'w+') as f:
-            proc = subprocess.Popen( command.split(), bufsize=-1, stdout=f, stderr=subprocess.PIPE)
-        o, e = proc.communicate()
-
-    except Exception as e:
-        print("An exception occurred: " + str(e))
-    
-    stop_threads[name] = True
-
-def source_processor(source, functionName, references):
-    source = source.replace("def " + functionName, "\"\"\"\n\ndef yourFunction")
-    source = source.replace(functionName + "(", "yourFunction(")
-    source = "\"\"\" AUTOMATICALLY COMMENTED OUT BY FaaSET \n" + source
-    
-    if (len(references) > 0):
-        source = "# AUTOMATICALLY ADDED:\nimport json\nimport boto3\nclient=boto3.client(\'lambda\')\n" + source
-        for reference in references:
-            childFunctionName = reference.__name__
-            source += """
-#AUTOMATICALLY GENERATED:
-def {childFunctionName}(request, context):
-    response = client.invoke(FunctionName=\'{childFunctionName}\', InvocationType = \'RequestResponse\', Payload = json.dumps(request))
-    return json.load(response[\'Payload\'])""".format(childFunctionName=childFunctionName)
-    return source
-
-def progress_watcher(runs, iterations, memSettings, name):
-    maxValues = runs * iterations * memSettings
-    p_bar = tqdm(total=maxValues, smoothing=True)
-    currentPercent = 0
-    currentProgress = 0
-    while(True):
-        global stop_threads
-        if (stop_threads[name]):
-            p_bar.update(n=round(maxValues - currentProgress))
-            p_bar.clear()
-            break
-        try:
-            progress = open(".progress.txt", "r")
-            percent = int(progress.read())
-            progress.close()
-            if (percent > currentPercent):
-                diff = (percent - currentPercent) / 100
-                currentProgress += diff * runs
-                p_bar.update(n=round(diff * runs))
-                currentPercent = percent
-            elif (percent < currentPercent):
-                diff = ((percent + 100) - currentPercent) / 100
-                currentProgress += diff * runs
-                p_bar.update(n=round(diff * runs))
-                currentPercent = percent
-        except:
-            pass
-        time.sleep(0.5)
-    return None
-
-
-def build_watcher(file_name, name):
-    consoleContents = ""
-    while(True):
-        global stop_threads
-        if (stop_threads[name]):
-            try:
-                progress = open(file_name, "r")
-                data = progress.read()
-                progress.close()
-                printData = data.replace(consoleContents, "")
-                if (printData != ""):
-                    print(printData, end="")
-                consoleContents = data
-            except:
-                pass
-            break
-        try:
-            progress = open(file_name, "r")
-            data = progress.read()
-            progress.close()
-            printData = data.replace(consoleContents, "")
-            if (printData != ""):
-                print(printData, end="")
-            consoleContents = data
-        except:
-            pass
-        time.sleep(0.25)
-    return None
+if __name__ == "__main__":
+    pass

@@ -29,7 +29,7 @@ def callPostProcessor(response, thread_id, run_id, payload, roundTripTime):
 
         if 'runtime' in response:
             response['latency'] = round(roundTripTime - int(response['runtime']), 2)
-
+        
         if 'cpuType' in response and 'cpuModel' in response:
             response['cpuType'] = response['cpuType'] + " - Model " + str(response['cpuModel'])
 
@@ -58,7 +58,7 @@ def callThread(thread_id, runs, function, myPayloads, experiment_name, tags):
         print("Call Payload: " + str(payload))
         response = None
         startTime = time.time()
-        response = FaaSET.test(function=function, payload=payload, outPath=experiment_name, quiet=True, updateStats=False, tags=tags)
+        response = FaaSET.test(function=function, payload=payload, outPath=experiment_name, quiet=True, tags=tags)
         timeSinceStart = round((time.time() - startTime) * 100000) / 100
         callPostProcessor(response, thread_id, i, payload, timeSinceStart)
 

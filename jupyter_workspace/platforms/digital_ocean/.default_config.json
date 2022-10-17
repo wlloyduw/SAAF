@@ -1,7 +1,0 @@
-{
-	"id": "Digital Ocean",
-	"faas_runner_platform": "HTTP",
-	"location": "./platforms/digital_ocean",
-	"timeout": 30000,
-	"memory": 512
-}
