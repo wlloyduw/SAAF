@@ -1,9 +1,7 @@
 import handler
 import json
+import sys
 
-# Load json file into dict
-config = {}
-with open("config.json") as f:
-	config = json.load(f)
+request = json.loads(sys.argv[1])
 
-print(json.dumps(handler.yourFunction(config["test_payload"], {})))
+print(json.dumps(handler.yourFunction(request, {})))

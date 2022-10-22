@@ -3,4 +3,6 @@
 location=$1
 cd "$location" || exit
 
-python3 local_runner.py
+json=$2
+
+python3 local_runner.py "$json"

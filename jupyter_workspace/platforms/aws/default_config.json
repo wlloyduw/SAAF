@@ -1,4 +1,5 @@
 {
+	"version": "1.0",
 	"role": "FAASET_REQUIREMENT",
 	"handler": "lambda_function.lambda_handler",
 	"subnets": "",
