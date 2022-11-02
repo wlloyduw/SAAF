@@ -4,6 +4,7 @@ import subprocess
 import os
 import json
 import FaaSET
+import inspect
 
 def _open_path(button):
     path = button.tooltip
@@ -24,8 +25,13 @@ def _redeploy(button):
     args = button.tooltip.split("/")
     function = args[0]
     platform = args[1]
-    source_folder = "./functions/" + function + "/" + platform + "/"
-    FaaSET.deploy(name=function, platform=platform)
+    config_path = "./functions/" + function + "/" + platform + "/" + "default_config.json"
+    
+    # load config json
+    config = json.load(open(config_path))
+    version = str(round(float(config["version"]) + 0.1, 1))
+    
+    FaaSET.reconfigure(function=function, platform=platform, override_config={"version": version})
     
 def ui(function):
     name = function.__name__
