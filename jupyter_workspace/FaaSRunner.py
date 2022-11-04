@@ -20,24 +20,12 @@ run_results = []
 #
 # Called after a request is made, appends extra data to the payload.
 #
-def callPostProcessor(response, thread_id, run_id, payload, roundTripTime):
+def callPostProcessor(response, thread_id, run_id, payload):
     try:
         response['threadID'] = thread_id
         response['runID'] = run_id
-        response['roundTripTime'] = roundTripTime
-        response['payload'] = payload
-
-        if 'runtime' in response:
-            response['latency'] = round(roundTripTime - int(response['runtime']), 2)
-        
-        if 'cpuType' in response and 'cpuModel' in response:
-            response['cpuType'] = response['cpuType'] + " - Model " + str(response['cpuModel'])
-
-        if 'version' in response:
-            run_results.append(response)
-
+        run_results.append(response)
         print("Run " + str(thread_id) + "." + str(run_id) + " successful.")
-
         return response
 
     except Exception as e:
@@ -57,10 +45,8 @@ def callThread(thread_id, runs, function, myPayloads, experiment_name, tags):
         payload = myPayloads[i]
         print("Call Payload: " + str(payload))
         response = None
-        startTime = time.time()
         response = FaaSET.test(function=function, payload=payload, outPath=experiment_name, quiet=True, tags=tags)
-        timeSinceStart = round((time.time() - startTime) * 100000) / 100
-        callPostProcessor(response, thread_id, i, payload, timeSinceStart)
+        callPostProcessor(response, thread_id, i, payload)
 
 #
 # Run a partest with multiple functions and an experiment all functions will be called concurrently.

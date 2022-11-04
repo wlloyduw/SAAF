@@ -15,6 +15,7 @@ import time
 import traceback
 import uuid
 import re
+import time
 
 STOP_THREADS = {}
 
@@ -38,7 +39,8 @@ def cloud_function(platform="None", config={}, deploy=True, force_deploy=False):
                     inspect.getsource(f), functionName)
                 _deploy_function(functionName, source,
                                 platform, config, force_deploy)
-            results = test(function=f, payload=args[0], quiet=True)
+            if args[0] != None:
+                results = test(function=f, payload=args[0], quiet=True)
             return results
         wrapper.__name__ = f.__name__
         return wrapper
@@ -275,6 +277,8 @@ def reconfigure(function, override_config=None, platform=None):
     if platform is not None:
         function_data['platform'] = platform
         _save_faaset_data(name, function_data)
+    else:
+        platform = function_data['platform']
 
     if override_config is not None:
         config = _load_config(name, platform, override_config)
@@ -296,6 +300,7 @@ def _source_processor(source, functionName):
     source = source.replace(functionName + "(", "yourFunction(")
     source = prefix + source
     source = re.sub(prefix + '.*?' + prefix, '', source, flags=re.DOTALL)
+    source = "# WARNING: Editing this file manually is NOT RECOMMENDED! CHANGES MAY BE LOST!\n" + source
     return source
 
 
@@ -358,14 +363,22 @@ def test(function, payload, quiet=False, outPath="default", tags={}):
     try:
         cmd = [source_folder + "run.sh",
                source_folder, str(json.dumps(payload))]
+        startTime = time.time()
         proc = subprocess.Popen(
             cmd, bufsize=-1, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         o, e = proc.communicate()
+        timeSinceStart = round((time.time() - startTime) * 100000) / 100
         out = str(o.decode('ascii'))
         error = str(e.decode('ascii'))
         obj = {}
         try:
             obj = json.loads(out)
+
+            obj["roundTripTime"] = timeSinceStart
+            obj["payload"] = payload
+            
+            if 'runtime' in obj:
+                obj['latency'] = round(timeSinceStart - int(obj['runtime']), 2)
 
             # Apply tags
             for key in tags:
