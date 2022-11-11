@@ -6,6 +6,7 @@
 	"security_groups": "",
 	"env": "Variables={}",
 	"runtime": "python3.8",
+	"architectures": "x86_64",
 	"timeout": 900,
 	"storage": 512,
 	"profile": "default",

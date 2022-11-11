@@ -15,6 +15,7 @@ runtime=$(jq '.runtime' < ./config.json | tr -d '"')
 storage=$(jq '.storage' < ./config.json | tr -d '"')
 timeout=$(jq '.timeout' < ./config.json | tr -d '"')
 profile=$(jq '.profile' < ./config.json | tr -d '"')
+architectures=$(jq '.architectures' < ./config.json | tr -d '"')
 export AWS_PROFILE=$profile
 
 cd ./.build || exit
@@ -30,6 +31,7 @@ if [ 0 -eq $? ]; then
 		--memory-size "$memory" \
 		--role "$role" \
 		--vpc-config SubnetIds=["$subnets"],SecurityGroupIds=["$security_groups"] \
+		--architectures "$architectures" \
 		--environment "$env" \
 		--timeout "$timeout" \
 		--ephemeral-storage '{"Size": '$storage'}' \
@@ -47,6 +49,7 @@ else
 		--memory-size "$memory" \
 		--role "$role" \
 		--vpc-config SubnetIds=["$subnets"],SecurityGroupIds=["$security_groups"] \
+		--architectures "$architectures" \
 		--environment "$env" \
 		--timeout "$timeout" \
 		--ephemeral-storage '{"Size": '$storage'}' \
