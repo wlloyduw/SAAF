@@ -143,24 +143,47 @@ public class Inspector {
         int start;
         int end;
 
-        //Get CPU Type
-        text = getFileAsString("/proc/cpuinfo");
-        start = text.indexOf("name") + 7;
-        end = start + text.substring(start).indexOf(":");
-        String cpuType = text.substring(start, end - 9).trim();
-        attributes.put("cpuType", cpuType);
+        String cpuType = "unknown";
+        String cpuModel = "unknown";
+        String cpuCores = "unknown";
 
-        //Get CPU Model
-        start = text.indexOf("model") + 9;
-        end = start + text.substring(start).indexOf(":");
-        String cpuModel = text.substring(start, end - 11).trim();
-        attributes.put("cpuModel", cpuModel);
+        try
+        {
+            //Get CPU Type
+            text = getFileAsString("/proc/cpuinfo");
+            start = text.indexOf("name") + 7;
+            if (start > -1)
+            {
+                end = start + text.substring(start).indexOf(":");
+                cpuType = text.substring(start, end - 9).trim();
+            }
 
-        //Get CPU Core Count
-        start = text.indexOf("cpu cores") + 12;
-        end = start + text.substring(start).indexOf(":");
-        String cpuCores = text.substring(start, end - 9).trim();
-        attributes.put("cpuCores", cpuCores);
+            //Get CPU Model
+            start = text.indexOf("model") + 9;
+            if (start > -1)
+            {
+                end = start + text.substring(start).indexOf(":");
+                cpuModel = text.substring(start, end - 11).trim();
+            }
+
+            //Get CPU Core Count
+            start = text.indexOf("cpu cores") + 12;
+            if (start > -1)
+            {
+                end = start + text.substring(start).indexOf(":");
+                cpuCores = text.substring(start, end - 9).trim();
+            }
+        }
+        catch (Exception e)
+        {
+            System.err.println("Difficulty processing /proc/cpuinfo.  Is this an Intel platform?  Some attributes may be unavailable.");
+        }
+        finally
+        {
+            attributes.put("cpuType", cpuType);
+            attributes.put("cpuModel", cpuModel);
+            attributes.put("cpuCores", cpuCores);
+        }
 
         //Get CPU Metrics
         String filename = "/proc/stat";
