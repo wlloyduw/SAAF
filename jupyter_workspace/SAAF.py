@@ -354,17 +354,19 @@ class Inspector:
         try:
             if (self.__inspectedPlatform and self.__inspectedCPUDelta):
                 if self.__attributes['platform'] == "AWS Lambda":
-                    availableCPUs = self.__attributes['functionMemory'] / 1792
+                    availableCPUs = int(self.__attributes['functionMemory']) / 1792
+                    self.__attributes['availableCPUs'] = round(availableCPUs, 3)
                     utilizedCPUs = (self.__attributes['cpuUserDelta'] +
                                     self.__attributes['cpuKernelDelta']) / self.__attributes['userRuntime']
+                    self.__attributes['utilizedCPUs'] = round(utilizedCPUs, 3)
                     if availableCPUs - utilizedCPUs < 0.1:
-                        self.__attributes['recommendedMemory'] = round(0.000556 * (availableCPUs * 1.1) + 0.012346)
+                        self.__attributes['recommendedMemory'] = min(max(round(0.000556 * (availableCPUs * 1.1) + 0.012346), 128), 10240)
                     else:
-                        self.__attributes['recommendedMemory'] = round(0.000556 * utilizedCPUs + 0.012346)
+                        self.__attributes['recommendedMemory'] = min(max(round(0.000556 * utilizedCPUs + 0.012346), 128), 10240)
             else:
                 self.__attributes['SAAFRecommendConfigurationError'] = "CPU, CPU Delta, and Platform must be inspected before recommending a configuration!"
         except Exception as e:
-            self.__attributes['SAAFRecommendConfigurationError'] = "Unable to recommend a configuration."
+            self.__attributes['SAAFRecommendConfigurationError'] = "Unable to recommend a configuration. " + str(e)
         
     #
     # Collect information about the linux kernel.
