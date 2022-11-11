@@ -45,7 +45,7 @@ class Inspector:
         
         self.__startTime = int(round(time.time() * 1000))
         self.__attributes = {
-            "version": 0.61, 
+            "version": 0.7, 
             "lang": "python", 
             "startTime": self.__startTime,
             "invocations": invocations,
@@ -57,10 +57,15 @@ class Inspector:
         self.__networkPolls = []
 
         self.__inspectedCPU = False
+        self.__inspectedCPUDelta = False
         self.__inspectedMemory = False
+        self.__inspectedMemoryDelta = False
         self.__inspectedContainer = False
+        self.__inspectedContainerDelta = False
         self.__inspectedPlatform = False
+        self.__inspectedPlatformDelta = False
         self.__inspectedLinux = False
+        self.__inspectedLinuxDelta = False
         
     #
     # Collect information about the runtime container.
@@ -215,6 +220,7 @@ class Inspector:
     #
     def inspectCPUDelta(self):
         if (self.__inspectedCPU):
+            self.__inspectedCPUDelta = True
             
             self.pollCPUStats()
             totalPolls = len(self.__cpuPolls)
@@ -272,6 +278,7 @@ class Inspector:
     #
     def inspectMemoryDelta(self):
         if (self.__inspectedMemory):
+            self.__inspectedMemoryDelta = True
             if os.path.isfile('/proc/vmstat'):
                 vmStat = ""
                 with open('/proc/vmstat', 'r') as file:
@@ -342,6 +349,22 @@ class Inspector:
                             self.__attributes['host_name'] = os.environ.get('HOSTNAME', None)
                         else:
                             self.__attributes['platform'] = "Unknown Platform"
+    
+    def __recommendConfiguration(self):
+        try:
+            if (self.__inspectedPlatform and self.__inspectedCPUDelta):
+                if self.__attributes['platform'] == "AWS Lambda":
+                    availableCPUs = self.__attributes['functionMemory'] / 1792
+                    utilizedCPUs = (self.__attributes['cpuUserDelta'] +
+                                    self.__attributes['cpuKernelDelta']) / self.__attributes['userRuntime']
+                    if availableCPUs - utilizedCPUs < 0.1:
+                        self.__attributes['recommendedMemory'] = round(0.000556 * (availableCPUs * 1.1) + 0.012346)
+                    else:
+                        self.__attributes['recommendedMemory'] = round(0.000556 * utilizedCPUs + 0.012346)
+            else:
+                self.__attributes['SAAFRecommendConfigurationError'] = "CPU, CPU Delta, and Platform must be inspected before recommending a configuration!"
+        except Exception as e:
+            self.__attributes['SAAFRecommendConfigurationError'] = "Unable to recommend a configuration."
         
     #
     # Collect information about the linux kernel.
@@ -377,6 +400,7 @@ class Inspector:
         deltaTime = int(round(time.time() * 1000))
         self.inspectCPUDelta()
         self.inspectMemoryDelta()
+        self.__recommendConfiguration()
         self.addTimeStamp("frameworkRuntimeDeltas", deltaTime)
         
     #
