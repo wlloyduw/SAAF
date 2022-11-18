@@ -314,8 +314,10 @@ class Inspector:
             self.__attributes['functionMemory'] = os.getenv('AWS_LAMBDA_FUNCTION_MEMORY_SIZE')
             self.__attributes['functionRegion'] = os.getenv('AWS_REGION')
 
-            vmID = runCommand('grep 2:cpu /proc/self/cgroup').replace('\n', '')
-            self.__attributes['vmID'] = vmID[20: 26]
+            with open('/proc/self/cgroup', 'r') as file:
+                vmID = re.search('.*2:cpu.*', file.read())
+                vmID = vmID.group(0).replace('\n', '')
+            self.__attributes['vmID'] = vmID[20:26]
         elif os.getenv('X_GOOGLE_FUNCTION_NAME'):
             self.__attributes['platform'] = "Google Cloud Functions"
             self.__attributes['functionName'] = os.getenv('X_GOOGLE_FUNCTION_NAME')
@@ -325,7 +327,8 @@ class Inspector:
             self.__attributes['platform'] = "IBM Cloud Functions"
             self.__attributes['functionName'] = os.getenv('__OW_ACTION_NAME')
             self.__attributes['functionRegion'] = os.getenv('__OW_API_HOST')
-            self.__attributes["vmID"] = runCommand("cat /sys/hypervisor/uuid").strip()
+            with open('/sys/hypervisor/uuid', 'r') as file:
+                self.__attributes['vmID'] = file.read().strip()
         elif os.getenv('CONTAINER_NAME'):
             self.__attributes['platform'] = "Azure Functions"
             self.__attributes['containerID'] = os.getenv('CONTAINER_NAME')
