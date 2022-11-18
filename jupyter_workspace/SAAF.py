@@ -307,48 +307,38 @@ class Inspector:
     def inspectPlatform(self):
         self.__inspectedPlatform = True
 
-        key = os.environ.get('AWS_LAMBDA_LOG_STREAM_NAME', None)
-        if (key != None):
+        if os.getenv('AWS_LAMBDA_LOG_STREAM_NAME'):
             self.__attributes['platform'] = "AWS Lambda"
-            self.__attributes['containerID'] = key
-            self.__attributes['functionName'] = os.environ.get('AWS_LAMBDA_FUNCTION_NAME', None)
-            self.__attributes['functionMemory'] = os.environ.get('AWS_LAMBDA_FUNCTION_MEMORY_SIZE', None)
-            self.__attributes['functionRegion'] = os.environ.get('AWS_REGION', None)
+            self.__attributes['containerID'] = os.getenv('AWS_LAMBDA_LOG_STREAM_NAME')
+            self.__attributes['functionName'] = os.getenv('AWS_LAMBDA_FUNCTION_NAME')
+            self.__attributes['functionMemory'] = os.getenv('AWS_LAMBDA_FUNCTION_MEMORY_SIZE')
+            self.__attributes['functionRegion'] = os.getenv('AWS_REGION')
 
-            vmID = runCommand('cat /proc/self/cgroup | grep 2:cpu').replace('\n', '')
+            vmID = runCommand('grep 2:cpu /proc/self/cgroup').replace('\n', '')
             self.__attributes['vmID'] = vmID[20: 26]
+        elif os.getenv('X_GOOGLE_FUNCTION_NAME'):
+            self.__attributes['platform'] = "Google Cloud Functions"
+            self.__attributes['functionName'] = os.getenv('X_GOOGLE_FUNCTION_NAME')
+            self.__attributes['functionMemory'] = os.getenv('X_GOOGLE_FUNCTION_MEMORY_MB')
+            self.__attributes['functionRegion'] = os.getenv('X_GOOGLE_FUNCTION_REGION')
+        elif os.getenv('__OW_ACTION_NAME'):
+            self.__attributes['platform'] = "IBM Cloud Functions"
+            self.__attributes['functionName'] = os.getenv('__OW_ACTION_NAME')
+            self.__attributes['functionRegion'] = os.getenv('__OW_API_HOST')
+            self.__attributes["vmID"] = runCommand("cat /sys/hypervisor/uuid").strip()
+        elif os.getenv('CONTAINER_NAME'):
+            self.__attributes['platform'] = "Azure Functions"
+            self.__attributes['containerID'] = os.getenv('CONTAINER_NAME')
+            self.__attributes['functionName'] = os.getenv('WEBSITE_SITE_NAME')
+            self.__attributes['functionRegion'] = os.getenv('Location')
+        elif os.getenv('KUBERNETES_SERVICE_PORT_HTTPS'):
+            self.__attributes['platform'] = "OpenFaaS EKS"
+            self.__attributes['http_host'] = os.getenv('Http_Host')
+            self.__attributes['http_foward'] = os.getenv('Http_X_Forwarded_For')
+            self.__attributes['http_start_time'] = os.getenv('Http_X_Start_Time')
+            self.__attributes['host_name'] = os.getenv('HOSTNAME')
         else:
-            key = os.environ.get('X_GOOGLE_FUNCTION_NAME', None)
-            if (key != None):
-                self.__attributes['platform'] = "Google Cloud Functions"
-                self.__attributes['functionName'] = key
-                self.__attributes['functionMemory'] = os.environ.get('X_GOOGLE_FUNCTION_MEMORY_MB', None)
-                self.__attributes['functionRegion'] = os.environ.get('X_GOOGLE_FUNCTION_REGION', None)
-            else:
-                key = os.environ.get('__OW_ACTION_NAME', None)
-                if (key != None):
-                    self.__attributes['platform'] = "IBM Cloud Functions"
-                    self.__attributes['functionName'] = key
-                    self.__attributes['functionRegion'] = os.environ.get('__OW_API_HOST', None)
-                    self.__attributes["vmID"] = runCommand("cat /sys/hypervisor/uuid").strip()
-
-                else:
-                    key = os.environ.get('CONTAINER_NAME', None)
-                    if (key != None):
-                        self.__attributes['platform'] = "Azure Functions"
-                        self.__attributes['containerID'] = key
-                        self.__attributes['functionName'] = os.environ.get('WEBSITE_SITE_NAME', None)
-                        self.__attributes['functionRegion'] = os.environ.get('Location', None)
-                    else:
-                        key = os.environ.get('KUBERNETES_SERVICE_PORT_HTTPS', None)
-                        if (key != None):
-                            self.__attributes['platform'] = "OpenFaaS EKS"
-                            self.__attributes['http_host'] = os.environ.get('Http_Host', None)
-                            self.__attributes['http_foward'] = os.environ.get('Http_X_Forwarded_For', None)
-                            self.__attributes['http_start_time'] = os.environ.get('Http_X_Start_Time', None)
-                            self.__attributes['host_name'] = os.environ.get('HOSTNAME', None)
-                        else:
-                            self.__attributes['platform'] = "Unknown Platform"
+            self.__attributes['platform'] = "Unknown Platform"
     
     def __recommendConfiguration(self):
         try:
