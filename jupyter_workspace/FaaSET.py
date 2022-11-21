@@ -99,6 +99,15 @@ def _deploy_function(name, source, override_platform, override_config, force_dep
     _write_handler(name, platform, source)
 
     deploy(name, platform)
+    
+    # Check run requirements
+    required_parameters = []
+    for key in config:
+        if config[key] == "FAASET_RUN_REQUIREMENT":
+            required_parameters.append(key)
+    if len(required_parameters) > 0:
+        raise Exception("Missing required parameters to run function: " + str(required_parameters) + "\n Either pass parameters in through the config object parameter or modify default_config.json of the platform or function.")
+    
 
 def _load_config(name, platform, override_config):
     """_summary_
@@ -186,9 +195,12 @@ def _copy_from_platform(name, platform):
     platform_folder = "./platforms/" + platform
     source_folder = "./functions/" + name + "/" + platform + "/"
     
-    if not os.path.exists("./platforms/" + platform + "/default_config.json"):
+    if not os.path.exists(platform_folder + "/default_config.json"):
         raise Exception("No default_config.json file found for platform: " +
                         platform + ". \n Unknown platform.")
+    
+    # Load parent platforms
+    temp_config = json.load(open(platform_folder + "/default_config.json"))
     
     if not os.path.isdir("./functions/" + name):
         os.mkdir("./functions/" + name)
@@ -201,6 +213,20 @@ def _copy_from_platform(name, platform):
         if os.path.isfile(os.path.join(platform_folder, file)):
             if not (os.path.isfile(os.path.join(source_folder, file))):
                 shutil.copy(os.path.join(platform_folder, file), source_folder)
+                
+    # Get files from parent platform...
+    if "faaset_parent_platform" in temp_config:
+        parent_platform = temp_config["faaset_parent_platform"]
+        parent_platform_folder = "./platforms/" + parent_platform
+        os.remove(source_folder + "default_config.json")
+        for file in os.listdir(parent_platform_folder):
+            if os.path.isfile(os.path.join(parent_platform_folder, file)):
+                if not (os.path.isfile(os.path.join(source_folder, file))):
+                    shutil.copy(os.path.join(parent_platform_folder, file), source_folder)
+        parent_config = json.load(open(source_folder + "/default_config.json"))
+        for key in temp_config:
+            parent_config[key] = temp_config[key]
+        json.dump(parent_config, open(source_folder + "/default_config.json", "w"), indent=4)
 
 def _write_handler(name, platform, source_code):
     # Source paths
