@@ -6,5 +6,6 @@
 	"timeout": 900,
 	"storage": 512,
 	"profile": "default",
+	"architectures": "x86_64",
 	"memory": 512
 }

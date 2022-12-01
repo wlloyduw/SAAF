@@ -1,10 +1,4 @@
 {
-	"version": "1.0",
-	"role": "FAASET_REQUIREMENT",
-	"subnets": "",
-	"security_groups": "",
-	"timeout": 900,
-	"storage": 512,
-	"profile": "default",
-	"memory": 512
+	"faaset_parent_platform": "aws_docker",
+	"architectures": "arm64"
 }

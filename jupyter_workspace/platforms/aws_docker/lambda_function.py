@@ -16,7 +16,7 @@ def lambda_handler(event, context):
     
     # Function URL Support
     if 'body' in event:
-            event = json.loads(event['body'])
+        event = json.loads(event['body'])
     
     response = handler.yourFunction(event, context)
     

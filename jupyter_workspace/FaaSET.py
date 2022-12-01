@@ -199,9 +199,6 @@ def _copy_from_platform(name, platform):
         raise Exception("No default_config.json file found for platform: " +
                         platform + ". \n Unknown platform.")
     
-    # Load parent platforms
-    temp_config = json.load(open(platform_folder + "/default_config.json"))
-    
     if not os.path.isdir("./functions/" + name):
         os.mkdir("./functions/" + name)
         
@@ -213,7 +210,10 @@ def _copy_from_platform(name, platform):
         if os.path.isfile(os.path.join(platform_folder, file)):
             if not (os.path.isfile(os.path.join(source_folder, file))):
                 shutil.copy(os.path.join(platform_folder, file), source_folder)
-                
+    
+    # Load parent platforms
+    temp_config = json.load(open(source_folder + "default_config.json"))
+    
     # Get files from parent platform...
     if "faaset_parent_platform" in temp_config:
         parent_platform = temp_config["faaset_parent_platform"]

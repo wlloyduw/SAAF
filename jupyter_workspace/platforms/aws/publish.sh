@@ -41,6 +41,7 @@ if [ 0 -eq $? ]; then
 	echo "Publish: Updating function code..."
 	aws lambda update-function-code --function-name "$function" --zip-file fileb://index.zip
 	aws lambda wait function-updated --function-name "$function"
+	aws lambda create-function-url-config --function-name "$function" --auth-type NONE
 else
 	echo "Publish: Creating new function..."
 	aws lambda create-function \
@@ -56,6 +57,7 @@ else
 		--handler "$handler" \
 		--zip-file fileb://index.zip
 	aws lambda wait function-exists --function-name "$function"
+	aws lambda create-function-url-config --function-name "$function" --auth-type NONE
 fi
 
 echo "Publish: Function deployed!"

@@ -4,7 +4,7 @@ import subprocess
 import os
 import json
 import FaaSET
-import inspect
+import collections
 
 def _open_path(button):
     path = button.tooltip
@@ -34,7 +34,9 @@ def _redeploy(button):
     FaaSET.reconfigure(function=function, platform=platform, override_config={"version": version})
     
 def ui(function):
-    name = function.__name__
+    name = function
+    if (isinstance(function, collections.Callable)):
+        name = function.__name__
     function_path = "./functions/" + name + "/"
     sub_folders = [ f.path for f in os.scandir(function_path) if f.is_dir() ]
     faaset_path = function_path + "FAASET.json"

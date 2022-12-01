@@ -12,6 +12,7 @@ security_groups=$(jq '.security_groups' < ./config.json | tr -d '"')
 timeout=$(jq '.timeout' < ./config.json | tr -d '"')
 storage=$(jq '.storage' < ./config.json | tr -d '"')
 profile=$(jq '.profile' < ./config.json | tr -d '"')
+architectures=$(jq '.architectures' < ./config.json | tr -d '"')
 export AWS_PROFILE=$profile
 
 cd ./.build || exit
@@ -38,6 +39,7 @@ if [ 0 -eq $? ]; then
 		--timeout $timeout \
 		--memory-size $memory \
 		--ephemeral-storage '{"Size": '$storage'}' \
+		--architectures "$architectures" \
 		--vpc-config SubnetIds=[$subnets],SecurityGroupIds=[$security_groups]
 	aws lambda wait function-updated --function-name "$function"
 
@@ -46,17 +48,20 @@ if [ 0 -eq $? ]; then
 		--function-name $function \
 		--image-uri ${registryID}.dkr.ecr.${region}.amazonaws.com/saaf-functions:${function}
 	aws lambda wait function-updated --function-name "$function"
+	aws lambda create-function-url-config --function-name "$function" --auth-type NONE
 else
 	echo "Publish: Creating new function..."
 	aws lambda create-function \
 		--function-name $function \
 		--role $role \
 		--timeout $timeout \
+		--architectures "$architectures" \
 		--ephemeral-storage '{"Size": '$storage'}' \
 		--code $code \
 		--package-type Image \
 		--memory-size $memory
 	aws lambda wait function-exists --function-name "$function"
+	aws lambda create-function-url-config --function-name "$function" --auth-type NONE
 fi
 
 echo "Publish: Function deployed!"
