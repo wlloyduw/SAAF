@@ -1,11 +1,7 @@
-import json
-import logging
+from re import search
+from time import time
+from uuid import uuid4
 import os
-import subprocess
-import re
-import uuid
-import shlex
-import time
 
 #
 # Execute a bash command and get the output.
@@ -20,7 +16,7 @@ def runCommand(command):
 # Global variables that will persist through multiple invocations.
 #
 invocations = 0
-initialization_time = int(round(time.time() * 1000))
+initialization_time = int(round(time() * 1000))
 ticks_per_second = int(runCommand("getconf CLK_TCK"))
 
 #
@@ -43,7 +39,7 @@ class Inspector:
         global initialization_time
         invocations += 1
         
-        self.__startTime = int(round(time.time() * 1000))
+        self.__startTime = int(round(time() * 1000))
         self.__attributes = {
             "version": 0.7, 
             "lang": "python", 
@@ -77,18 +73,15 @@ class Inspector:
         self.__inspectedContainer = True
 
         myUuid = ''
-        newContainer = 1
         if os.path.isfile('/tmp/container-id'):
-            stampFile = open('/tmp/container-id', 'r')
-            stampID = stampFile.readline()
-            myUuid = stampID
-            stampFile.close()
+            with open('/tmp/container-id', 'r') as stampFile:
+                myUuid = stampFile.readline()
             newContainer = 0
         else:
-            stampFile = open('/tmp/container-id', 'w')
-            myUuid = str(uuid.uuid4())
-            stampFile.write(myUuid)
-            stampFile.close()
+            with open('/tmp/container-id', 'w') as stampFile:
+                myUuid = str(uuid4())
+                stampFile.write(myUuid)
+            newContainer = 1
             
         self.__attributes['uuid'] = myUuid
         self.__attributes['newcontainer'] = newContainer
@@ -149,7 +142,7 @@ class Inspector:
     def pollCPUStats(self):
         global ticks_per_second
         
-        timeStamp = int(round(time.time() * 1000))
+        timeStamp = int(round(time() * 1000))
 
         cpuValues = ["cpuUser", "cpuNice", "cpuKernel", "cpuIdle", "cpuIOWait", "cpuIrq", "cpuSoftIrq", "cpuSteal", "cpuGuest", "cpuGuestNice"]
         data = {"time": timeStamp}
@@ -315,7 +308,7 @@ class Inspector:
             self.__attributes['functionRegion'] = os.getenv('AWS_REGION')
 
             with open('/proc/self/cgroup', 'r') as file:
-                vmID = re.search('.*2:cpu.*', file.read())
+                vmID = search('.*2:cpu.*', file.read())
                 vmID = vmID.group(0).replace('\n', '')
             self.__attributes['vmID'] = vmID[20:26]
         elif os.getenv('X_GOOGLE_FUNCTION_NAME'):
@@ -392,7 +385,7 @@ class Inspector:
         if ('frameworkRuntime' in self.__attributes):
             self.addTimeStamp("userRuntime", self.__startTime + self.__attributes['frameworkRuntime'])
 
-        deltaTime = int(round(time.time() * 1000))
+        deltaTime = int(round(time() * 1000))
         self.inspectCPUDelta()
         self.inspectMemoryDelta()
         self.__recommendConfiguration()
@@ -426,7 +419,7 @@ class Inspector:
     def addTimeStamp(self, key, timeSince = None):
         if timeSince == None:
             timeSince = self.__startTime
-        currentTime = int(round(time.time() * 1000))
+        currentTime = int(round(time() * 1000))
         self.__attributes[key] = currentTime - timeSince
         
     #
@@ -437,5 +430,5 @@ class Inspector:
     #
     def finish(self):
         self.addTimeStamp('runtime')
-        self.__attributes['endTime'] = int(round(time.time() * 1000))
+        self.__attributes['endTime'] = int(round(time() * 1000))
         return self.__attributes
