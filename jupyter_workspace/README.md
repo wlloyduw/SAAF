@@ -1,7 +1,7 @@
 # FaaSET - Function-as-a-Service Experiment Toolkit
 
 The FaaSET notebook provides an integrated development environment as a Jupyter notebook to streamline the process of developing Function-as-a-Service (FaaS)
-applications, invoking and testing functions, executing experiments, training performance models, and processing results.
+applications, invoke and test functions, execute experiments, train performance models, and process results.
 The Function-as-a-Service Experiment Toolkit (FaaSET) notebook
 supports many FaaS platforms including AWS Lambda, Google Cloud Functions, IBM Cloud Functions,
 Azure Functions, and OpenFaaS. Platform agnostic functions are written inside a Jupyter notebook as standard Python
