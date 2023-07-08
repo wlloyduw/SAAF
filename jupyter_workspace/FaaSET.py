@@ -367,6 +367,23 @@ def _check_name_compatibility(name, platform):
             raise Exception("Function name must be lowercase and not contain underscores on Google Cloud Functions.")
         
 
+def dynamic_get_payload(main_function, request, references=[], embeds=[]):
+    code = inspect.getsource(main_function)
+    
+    for reference in references:
+        code += "\n\n" + inspect.getsource(reference)
+                
+    index = 0
+    for func in embeds:
+        embed = inspect.getsource(func)
+        embed_encoding = base64.b64encode(embed.encode('utf-8')).decode('utf-8')
+        code = code.replace("FAASET_EMBED_" + str(index), embed_encoding)
+        index += 1
+    
+    encoding = base64.b64encode(code.encode('utf-8')).decode('utf-8')
+    request['function'] = encoding
+    return request
+
 def test(function, payload, quiet=False, outPath="default", tags={}):
     """Runs a function and returns the response object.
 
