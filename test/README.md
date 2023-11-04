@@ -197,6 +197,8 @@ By default FaaS Runner will save each individual JSON payload to a folder alongs
 # Recompile a report.
 ./compile_results.py {FOLDER PATH} {PATH TO EXPERIMENT JSON}
 ```
+The first argument 'FOLDER PATH' is the full path to the folder containing the JSON files to generate a report for.
+The second argument 'PATH TO EXPERIMENT JSON' is the path and filename of the experiment JSON file used to generate the JSON files.
 
 ## Report Splitter
 
