@@ -261,6 +261,10 @@ def deploy(name, platform):
     build_watcher = threading.Thread(target=_build_watcher, args=(
         source_folder + "build.log", name, platform,))
     build_watcher.start()
+    
+    error_watcher = threading.Thread(target=_build_watcher, args=(
+        source_folder + "error.log", name, platform,))
+    error_watcher.start()
 
     # Run the build and publih script....
     _run_script(source_folder, "build.sh")
@@ -271,9 +275,9 @@ def deploy(name, platform):
 def _run_script(source_folder, script_name):
     try:
         command = source_folder + script_name + " " + source_folder
-        with open(source_folder + "build.log", 'w+') as f:
+        with open(source_folder + "build.log", 'w+') as f, open(source_folder + "error.log", 'w+') as e_f:
             proc = subprocess.Popen(
-                command.split(), bufsize=-1, stdout=f, stderr=subprocess.PIPE)
+                command.split(), bufsize=-1, stdout=f, stderr=e_f)
         o, e = proc.communicate()
         time.sleep(0.2) # Make sure the build watcher catches any final output..
     except Exception as e:
