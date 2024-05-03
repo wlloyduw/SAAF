@@ -1,0 +1,18 @@
+
+Login:
+
+Get from the Webpage: Profile -> Login with CLI
+ibmcloud login -a https://cloud.ibm.com -u passcode -p pKuDbRIorl
+
+Target project
+
+ibmcloud ce project select --id c625de0c-f10a-4d51-a9a8-17fc4c00ec57 (FAILS)
+
+
+Making a function:
+
+ibmcloud plugin install code-engine
+
+ibmcloud target -g Default
+
+ibmcloud ce project select -n saaf-test

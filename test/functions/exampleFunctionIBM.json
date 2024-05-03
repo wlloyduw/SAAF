@@ -1,6 +1,0 @@
-{
-	"function": "helloWorld",
-    "platform": "IBM",
-    "source": "../nodejs_template",
-    "endpoint": ""
-}

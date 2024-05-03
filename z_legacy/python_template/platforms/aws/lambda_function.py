@@ -1,11 +1,8 @@
-
 import handler
 import json
-import sys
-import os
 
 #
-# IBM Cloud Functions Default Function
+# AWS Lambda Functions Default Function
 #
 # This hander is used as a bridge to call the platform neutral
 # version in handler.py. This script is put into the scr directory
@@ -13,5 +10,6 @@ import os
 #
 # @param request
 #
-def main(dict):
-	return handler.yourFunction(dict, None)
+def lambda_handler(event, context):
+	return handler.yourFunction(event, context)
+	

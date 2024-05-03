@@ -1,0 +1,6 @@
+{
+	"version": "1.0",
+	"runtime": "python:3.9",
+	"memory": 512,
+	"timeout": 300000
+}
