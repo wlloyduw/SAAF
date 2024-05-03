@@ -82,10 +82,7 @@ class UI:
 
         def on_change(change):
             if change['type'] == 'change' and change['name'] == 'value':
-                source_button.tooltip = "./functions/" + self.name + "/" + change['new'] + "/" 
-                config_button.tooltip = "./functions/" + self.name + "/" + change['new'] + "/" + "default_config.json"
-                reconfigure_button.tooltip = self.name + "/" + change['new']
-                redeploy_button.tooltip = self.name + "/" + change['new']
+                self.platform = change['new']
         platform_dropdown.observe(on_change)
 
         buttons = widgets.HBox([platform_dropdown, source_button, config_button, reconfigure_button, redeploy_button])

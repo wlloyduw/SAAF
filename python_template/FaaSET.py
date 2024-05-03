@@ -252,6 +252,10 @@ def _save_temp_config(name, platform, config):
         json.dump(config, json_file, indent=4)
 
 def deploy(name, platform):
+    
+    if (isinstance(name, collections.Callable)):
+        name = name.__name__
+    
     source_folder = "./functions/" + name + "/" + platform + "/"
     
     # Run publish.sh
@@ -388,7 +392,25 @@ def dynamic_get_payload(main_function, request, references=[], embeds=[]):
     request['function'] = encoding
     return request
 
-def test(function, payload, quiet=False, outPath="default", tags={}):
+def duplicate(function, source_platform, new_name):
+    name = function
+    if (isinstance(function, collections.Callable)):
+        name = function.__name__
+        
+    source_folder = "./functions/" + name + "/" + source_platform + "/"
+    destination_folder  = "./functions/" + name + "/" + new_name + "/"
+
+    shutil.copytree(source_folder, destination_folder)
+    
+def clear(function, platform):
+    name = function
+    if (isinstance(function, collections.Callable)):
+        name = function.__name__
+        
+    source_folder = "./functions/" + name + "/" + platform + "/"
+    shutil.rmtree(source_folder)
+
+def test(function, payload, quiet=False, outPath="default", tags={}, platform=None):
     """Runs a function and returns the response object.
 
     Args:
@@ -401,10 +423,15 @@ def test(function, payload, quiet=False, outPath="default", tags={}):
     Returns:
         _type_: _description_
     """
-    name = function.__name__
-    faaset_path = "./functions/" + name + "/FAASET.json"
-    function_data = json.load(open(faaset_path))
-    platform = function_data["platform"]
+    
+    name = function
+    if (isinstance(function, collections.Callable)):
+        name = function.__name__
+
+    if platform is None:
+        faaset_path = "./functions/" + name + "/FAASET.json"
+        function_data = json.load(open(faaset_path))
+        platform = function_data["platform"]
     source_folder = "./functions/" + name + "/" + platform + "/"
 
     try:
@@ -459,7 +486,7 @@ def test(function, payload, quiet=False, outPath="default", tags={}):
         return None
 
 print("------------------------------------------------------")
-print("             Welcome to FaaSET v3.0!")
+print("             Welcome to FaaSET v3.1!")
 print("------------------------------------------------------")
 
 platforms_directory = os.scandir("./platforms")
