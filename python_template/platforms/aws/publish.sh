@@ -31,7 +31,6 @@ if [ 0 -eq $? ]; then
 		--memory-size "$memory" \
 		--role "$role" \
 		--vpc-config SubnetIds=["$subnets"],SecurityGroupIds=["$security_groups"] \
-		--architectures "$architectures" \
 		--environment "$env" \
 		--timeout "$timeout" \
 		--ephemeral-storage '{"Size": '$storage'}' \

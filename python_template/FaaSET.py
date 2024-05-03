@@ -19,14 +19,14 @@ import time
 
 STOP_THREADS = {}
 
-def cloud_function(platform="None", config={}, deploy=True, force_deploy=False):
+def cloud_function(platform="aws", config={}, deploy=True, force_deploy=False):
     """_summary_
 
     Args:
-        platform (str, optional): _description_. Defaults to "aws".
-        config (dict, optional): _description_. Defaults to {}.
-        deploy (bool, optional): _description_. Defaults to True.
-        force_deploy (bool, optional): _description_. Defaults to False.
+        platform (str, optional): The platform the deploy the function to. Defaults to "aws".
+        config (dict, optional): Config dictionary, define any other configuration details here. Defaults to {}.
+        deploy (bool, optional): Whether the function should be deplyoed at all. Defaults to True.
+        force_deploy (bool, optional): Whether the function should be deployed even if changes are not detected. Defaults to False.
     """
 
     def decorated(f):

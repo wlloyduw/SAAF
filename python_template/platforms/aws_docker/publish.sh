@@ -39,7 +39,6 @@ if [ 0 -eq $? ]; then
 		--timeout $timeout \
 		--memory-size $memory \
 		--ephemeral-storage '{"Size": '$storage'}' \
-		--architectures "$architectures" \
 		--vpc-config SubnetIds=[$subnets],SecurityGroupIds=[$security_groups]
 	aws lambda wait function-updated --function-name "$function"
 
