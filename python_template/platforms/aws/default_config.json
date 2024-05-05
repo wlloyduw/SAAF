@@ -5,7 +5,7 @@
 	"subnets": "",
 	"security_groups": "",
 	"env": "Variables={}",
-	"runtime": "python3.8",
+	"runtime": "python3.12",
 	"architectures": "x86_64",
 	"timeout": 900,
 	"storage": 512,

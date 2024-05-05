@@ -1,0 +1,7 @@
+{
+	"version": "1.0",
+	"handler": "hello_world",
+	"runtime": "python312",
+	"timeout": "540",
+	"memory": 512
+}

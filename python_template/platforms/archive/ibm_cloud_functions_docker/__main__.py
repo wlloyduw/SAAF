@@ -14,5 +14,4 @@ import os
 # @param request
 #
 def main(dict):
-    return {"Wow": "Cool"}
-	#return handler.yourFunction(dict, None)
+	return handler.yourFunction(dict, None)

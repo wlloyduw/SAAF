@@ -4,6 +4,8 @@ location=$1
 cd "$location" || exit
 
 function=$(jq '.function_name' < ./config.json | tr -d '"')
+region=$(jq -c '.region' < ./config.json)
+
 json=$2
 
-gcloud functions call $function --data="$json" --format json | jq -r -c '.result'
+gcloud beta functions call $function --gen2 --region $region --data="$json" --format json | jq -r '.'

@@ -3,7 +3,7 @@
 # Because the one in AWS' docs doesn't work
 
 #FROM python:buster as build-image
-FROM python:3.8-slim-buster
+FROM python:3.12-slim-buster
 
 # Update and install curl. 
 # My test script calls RIE using docker exec and having the container 

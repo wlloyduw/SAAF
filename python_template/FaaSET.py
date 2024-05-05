@@ -389,7 +389,7 @@ def dynamic_get_payload(main_function, request, references=[], embeds=[]):
         index += 1
     
     encoding = base64.b64encode(code.encode('utf-8')).decode('utf-8')
-    request['function'] = encoding
+    request['f'] = encoding
     return request
 
 def duplicate(function, source_platform, new_name):

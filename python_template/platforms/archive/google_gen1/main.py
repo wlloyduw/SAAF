@@ -1,4 +1,3 @@
-import functions_framework
 import handler
 import json
 
@@ -11,9 +10,6 @@ import json
 #
 # @param request
 #
-
-@functions_framework.http
 def hello_world(request):
-    request_json = request.get_json()
-    call = handler.yourFunction(request_json, None)
-    return json.dumps(call)
+	request_json = request.get_json()
+	return json.dumps(handler.yourFunction(request_json, None))
