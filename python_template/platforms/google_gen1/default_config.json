@@ -3,5 +3,7 @@
 	"handler": "hello_world",
 	"runtime": "python312",
 	"timeout": "540",
-	"memory": 512
+	"memory": 512,
+	"project": "FAASET_REQUIREMENT",
+    "region": "us-central1"
 }

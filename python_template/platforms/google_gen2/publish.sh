@@ -16,4 +16,4 @@ cd ./.build || exit
 
 echo "Publish: Deploying function..."
 echo "NOTE: If this is your first time deploying this function and it immediately fails to deploy, make an insignificant change (e.g. add a space to the end of a line) to your function and deploy again."
-printf "y\n" | gcloud beta functions deploy $function --source=. --gen2 --entry-point $handler --runtime $runtime --timeout $timeout --region $region --trigger-http --project $project --memory $memory
+printf "y\n" | gcloud functions deploy $function --source=. --gen2 --allow-unauthenticated --entry-point $handler --runtime $runtime --timeout $timeout --region $region --trigger-http --project $project --memory $memory

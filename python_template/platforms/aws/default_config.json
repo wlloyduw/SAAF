@@ -10,5 +10,6 @@
 	"timeout": 900,
 	"storage": 512,
 	"profile": "default",
+	"region": "us-east-1",
 	"memory": 512
 }
