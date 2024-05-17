@@ -55,21 +55,13 @@ def callThread(thread_id, runs, function, myPayloads, experiment_name, tags):
 def callProcess(http_endpoint, runs, myPayloads):
     for i in range(0, runs): 
         response = None
-        try:
-            startTime = time.time()
-            response = requests.post(http_endpoint, json=myPayloads[i])
-            obj = response.json()
-            obj["callStartTime"] = startTime
-            obj["callEndTime"] = time.time()
-            obj["payload"] = myPayloads[i]
-            run_results.append(obj)
-        except Exception as e:
-            print("Error making request: " + str(e))
-            # Print stack trace
-            import traceback
-            traceback.print_exc()
-            
-            response = None
+        startTime = time.time()
+        response = requests.post(http_endpoint, json=myPayloads[i])
+        obj = response.json()
+        obj["callStartTime"] = startTime
+        obj["callEndTime"] = time.time()
+        obj["payload"] = myPayloads[i]
+        run_results.append(obj)
 
 #
 # Run a partest with multiple functions and an experiment all functions will be called concurrently.
@@ -165,21 +157,23 @@ def fast_experiment(http_endpoint,
     for i in range(processes):
         child_pid = os.fork()
         if child_pid == 0:
-            myList = payloadList[child_index:child_index+runs_per_process]
-            time.sleep(start_delay * 0.75)
-            while time.time() < start_time:
-                continue
-            callProcess(http_endpoint, runs_per_process, myList)
-            time.sleep(end_delay)
-            
-            # Save all runs
-            for run in run_results: 
-                run['roundTripTime'] = (run['callEndTime'] * 1000) - (run['callStartTime'] * 1000)
-                run['latency'] = run['roundTripTime'] - run['runtime']
-                json.dump(run, open("./functions/fast_experiment/experiments/" + experiment_name + "/" + str(uuid.uuid4()) + ".json", "w"), indent=4)
-            
-            time.sleep(end_delay)
-            os._exit(0)
+            try:
+                myList = payloadList[child_index:child_index+runs_per_process]
+                time.sleep(start_delay * 0.9)
+                while time.time() < start_time:
+                    continue
+                callProcess(http_endpoint, runs_per_process, myList)
+                time.sleep(end_delay)
+                
+                # Save all runs
+                for run in run_results: 
+                    run['roundTripTime'] = (run['callEndTime'] * 1000) - (run['callStartTime'] * 1000)
+                    run['latency'] = run['roundTripTime'] - run['runtime']
+                    json.dump(run, open("./functions/fast_experiment/experiments/" + experiment_name + "/" + str(uuid.uuid4()) + ".json", "w"), indent=4)
+                
+                time.sleep(end_delay)
+            finally:
+                os._exit(0)
         else:
             child_processes.append(child_pid)
             child_index += runs_per_process
