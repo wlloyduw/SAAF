@@ -43,6 +43,8 @@ function_urls = json.load(open("sky_mesh.json"))
 
 def hello_world(request, inspector):
     inspector.addAttribute("message", "Hello, World!")
+    import time
+    time.sleep(10)
     return None
 
 payload = FaaSET.dynamic_get_payload(hello_world, {})
@@ -53,9 +55,9 @@ for region in regions.keys():
     try:
         name = "skyf_2048_" + region
         function_url = function_urls[name]
-        data = FaaSRunner.fast_experiment(function_url, processes=100, runs_per_process=1, payloads=[payload], experiment_name=name)
+        data = FaaSRunner.fast_experiment(function_url, processes=1000, runs_per_process=1, payloads=[payload], experiment_name=name)
         # Write data to a csv file it is a dataframe from pandas
-        data.to_csv("./" + name + ".csv")
+        data.to_csv("./functions/fast_experiment/" + name + ".csv")
         print("Finished " + name + " experiment.")
         time.sleep(10)
     except Exception as e:

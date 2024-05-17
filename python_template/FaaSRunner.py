@@ -58,8 +58,8 @@ def callProcess(http_endpoint, runs, myPayloads):
         startTime = time.time()
         response = requests.post(http_endpoint, json=myPayloads[i])
         obj = response.json()
-        obj["callStartTime"] = startTime
         obj["callEndTime"] = time.time()
+        obj["callStartTime"] = startTime
         obj["payload"] = myPayloads[i]
         run_results.append(obj)
 
