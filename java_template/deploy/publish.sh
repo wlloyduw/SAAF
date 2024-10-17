@@ -73,7 +73,9 @@ if [[ ! -z $1 && $1 -eq 1 ]]; then
 
 	echo
 	echo Testing function on AWS Lambda...
-	aws lambda invoke --invocation-type RequestResponse --cli-read-timeout 900 --function-name $function --payload "$json" /dev/stdout
+ 	cliver=`aws --version | cut -d '/' -f 2 | cut -d ' ' -f 1 | cut -d '.' -f 1`
+        if [ cliver=2 ]; then text="--cli-binary-format raw-in-base64-out"; fi
+	aws lambda invoke --invocation-type RequestResponse --cli-read-timeout 900 $text --function-name $function --payload "$json" /dev/stdout
 fi
 
 # Deploy onto IBM Cloud Functions
