@@ -23,22 +23,56 @@ from pipeline_transition import transition_function
 run_results = []
 max_runs = 0
 
+
+def get_aws_version():
+    try:
+        result = subprocess.run(['aws', '--version'], capture_output=True, text=True)
+
+        version_info = result.stdout.strip()
+
+        if 'aws-cli/' in version_info:
+            version = version_info.split('/')[1].split()[0]
+            major_version = int(version.split('.')[0])
+            
+            return major_version
+    except FileNotFoundError:
+        raise "AWS CLI is not installed"
+    except Exception as e:
+        raise f"An error occurred: {e}"
+
+# Example usage:
+aws_version = get_aws_version()
+
 #
 # Make a call using AWS CLI
 #
 def callAWS(function, payload, callAsync):
-    cmd = ['aws', 'lambda', 'invoke', '--invocation-type', 'RequestResponse', '--cli-read-timeout', 
-           '450', '--function-name', str(function['endpoint']), '--payload', payload, '/dev/stdout']
+    global aws_version
+    
+    if (aws_version >= 2):
+        cmd = ['aws', 'lambda', 'invoke', '--invocation-type', 'RequestResponse', '--cli-read-timeout', 
+                '450', '--cli-binary-format', 'raw-in-base64-out', '--function-name', str(function['endpoint']), '--payload', payload, '/dev/stdout']
+    else:
+        cmd = ['aws', 'lambda', 'invoke', '--invocation-type', 'RequestResponse', '--cli-read-timeout', 
+                '450', '--function-name', str(function['endpoint']), '--payload', payload, '/dev/stdout']
     if (callAsync):
-        cmd = ['aws', 'lambda', 'invoke', '--invocation-type', 'Event', '--cli-read-timeout', 
-               '450', '--function-name', str(function['endpoint']), '--payload', '"' + payload + '"', '/dev/stdout']
+        if (aws_version >= 2):
+            cmd = ['aws', 'lambda', 'invoke', '--invocation-type', 'Event', '--cli-read-timeout', 
+                    '450', '--cli-binary-format', 'raw-in-base64-out', '--function-name', str(function['endpoint']), '--payload', '"' + payload + '"', '/dev/stdout']
+        else:
+            cmd = ['aws', 'lambda', 'invoke', '--invocation-type', 'Event', '--cli-read-timeout', 
+                    '450', '--function-name', str(function['endpoint']), '--payload', '"' + payload + '"', '/dev/stdout']
     proc = subprocess.Popen( cmd, bufsize=-1, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     o, e = proc.communicate()
     print("STDOUT: " + str(o.decode('ascii')) + "\nSTDERR: " + str(e.decode('ascii')))
 
     if (callAsync):
         return '{"RESPONSE": "USE S3 PULL TO RETRIEVE RESPONSES", "version":42}'
-    return str(o.decode('ascii')).split('\n')[0][:-1]
+    
+    if (aws_version >= 2):
+        return str(o.decode('ascii').split("}{")[0] + "}")
+    else:
+        return str(o.decode('ascii')).split('\n')[0][:-1]
 
 #
 # Make a call using Google CLI
