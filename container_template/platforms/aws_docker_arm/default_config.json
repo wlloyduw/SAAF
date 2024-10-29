@@ -1,0 +1,4 @@
+{
+	"faaset_parent_platform": "aws_docker",
+	"architectures": "arm64"
+}
