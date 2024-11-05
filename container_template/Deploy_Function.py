@@ -3,19 +3,19 @@ import time
 
 # Apply config, this defines deployment details for your function...
 config = {
-	"version": "1.0",
-	"role": "arn:aws:iam::616835888336:role/service-role/simple_microservice_role",	# REPLACE WITH YOUR ROLE
-	"handler": "lambda_function.lambda_handler",
-	"subnets": "",
-	"security_groups": "",
-	"env": "Variables={}",
-	"runtime": "python3.12",
-	"architectures": "x86_64",
-	"timeout": 900,
-	"storage": 512,
-	"profile": "personal", # REPLACE WITH YOUR PROFILE, this will probably be "default"
-	"region": "us-east-1",
-	"memory": 512
+    "version": "1.0",
+    "role": "arn:aws:iam::616835888336:role/service-role/simple_microservice_role",	# REPLACE WITH YOUR ROLE
+    "handler": "lambda_function.lambda_handler",
+    "subnets": "",
+    "security_groups": "",
+    "env": "Variables={}",
+    "runtime": "python3.12",
+    "architectures": "x86_64",
+    "timeout": 900,
+    "storage": 512,
+    "profile": "personal", # REPLACE WITH YOUR PROFILE, this will probably be "default"
+    "region": "us-east-1",
+    "memory": 512
 }
 
 # CHANGING BASH SCRIPT OR DOCKERFILE
@@ -25,16 +25,24 @@ config = {
 @FaaSET.cloud_function(platform="aws_docker_debian", config=config, force_deploy=True)
 def bash_container(request, context): 
     from SAAF import Inspector
+    import json
+    
     inspector = Inspector() 
     inspector.inspectAll()
     
     import subprocess
-    result = subprocess.run(['bash', 'your_script.sh'], capture_output=True, text=True)
+    json_string = json.dumps(request)
+    result = subprocess.run(['bash', 'your_script.sh', json_string], capture_output=True, text=True)
     
     output = result.stdout
     error = result.stderr
     
-    inspector.addAttribute("standard_output", output)
+    try:
+        object = json.loads(output)
+        for key in object:
+            inspector.addAttribute(key, object[key])
+    except Exception as e:
+        inspector.addAttribute("standard_output", output)
     inspector.addAttribute("error_output", error)
 
     inspector.inspectAllDeltas()  
