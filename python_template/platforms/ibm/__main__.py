@@ -1,8 +1,6 @@
-
 import handler
 import json
 import sys
-import os
 
 #
 # IBM Cloud Functions Default Function
@@ -14,5 +12,4 @@ import os
 # @param request
 #
 def main(dict):
-    return {"Wow": "Cool"}
-	#return handler.yourFunction(dict, None)
+	return handler.yourFunction(dict, None)
