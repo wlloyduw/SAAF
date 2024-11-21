@@ -11,9 +11,9 @@ def yourFunction(request, context):
 
     # Add custom message and finish the function
     if ('name' in request):
-        inspector.addAttribute("message", "Mello " + str(request['name']) + "!")
+        inspector.addAttribute("message", "Hello " + str(request['name']) + "!")
     else:
-        inspector.addAttribute("message", "Dello World!")
+        inspector.addAttribute("message", "Hello World!")
     
     inspector.inspectAllDeltas()
     return inspector.finish()
