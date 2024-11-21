@@ -6,7 +6,7 @@
     "security_groups": "",
     "timeout": 900,
     "storage": 512,
-    "profile": "personal",
+    "profile": "default",
     "architectures": "x86_64",
     "memory": 512,
     "handler": "lambda_function.lambda_handler",
