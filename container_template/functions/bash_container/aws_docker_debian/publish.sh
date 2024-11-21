@@ -1,4 +1,5 @@
 #!/bin/bash
+export AWS_PAGER=""
 
 location=$1
 cd "$location" || exit
@@ -39,13 +40,13 @@ if [ 0 -eq $? ]; then
 		--timeout $timeout \
 		--memory-size $memory \
 		--ephemeral-storage '{"Size": '$storage'}' \
-		--vpc-config SubnetIds=[$subnets],SecurityGroupIds=[$security_groups]
+		--vpc-config SubnetIds=[$subnets],SecurityGroupIds=[$security_groups] 
 	aws lambda wait function-updated --function-name "$function"
 
 	echo "Publish: Updating function code..."
 	aws lambda update-function-code \
 		--function-name $function \
-		--image-uri ${registryID}.dkr.ecr.${region}.amazonaws.com/saaf-functions:${function}
+		--image-uri ${registryID}.dkr.ecr.${region}.amazonaws.com/saaf-functions:${function} 
 	aws lambda wait function-updated --function-name "$function"
 	aws lambda create-function-url-config --function-name "$function" --auth-type NONE
 else
@@ -58,7 +59,7 @@ else
 		--ephemeral-storage '{"Size": '$storage'}' \
 		--code $code \
 		--package-type Image \
-		--memory-size $memory
+		--memory-size $memory 
 	aws lambda wait function-exists --function-name "$function"
 	aws lambda create-function-url-config --function-name "$function" --auth-type NONE
 fi
