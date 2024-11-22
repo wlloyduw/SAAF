@@ -7,7 +7,7 @@
     "timeout": 900,
     "storage": 512,
     "profile": "personal",
-    "architectures": "x86_64",
+    "architectures": "arm64",
     "memory": 512,
     "handler": "lambda_function.lambda_handler",
     "env": "Variables={}",
