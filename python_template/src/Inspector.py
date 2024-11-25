@@ -8,6 +8,22 @@ import shlex
 import time
 
 #
+# Execute a bash command and get the output.
+#
+# @param command An array of strings with each part of the command.
+# @return Standard out of the command.
+#
+def runCommand(command):
+    return os.popen(command).read()
+
+#
+# Global variables that will persist through multiple invocations.
+#
+invocations = 0
+initialization_time = int(round(time.time() * 1000))
+ticks_per_second = int(runCommand("getconf CLK_TCK"))
+
+#
 # SAAF
 #
 # @author Wes Lloyd
@@ -23,25 +39,39 @@ class Inspector:
     # __startTime:  The time the function started running.
     #
     def __init__(self):
+        global invocations
+        global initialization_time
+        invocations += 1
+        
         self.__startTime = int(round(time.time() * 1000))
         self.__attributes = {
-            "version": 0.5, 
+            "version": 0.7, 
             "lang": "python", 
-            "startTime": self.__startTime
+            "startTime": self.__startTime,
+            "invocations": invocations,
+            "initializationTime": initialization_time
         }
 
+        self.__cpuPolls = []
+        self.__memoryPolls = []
+        self.__networkPolls = []
+
         self.__inspectedCPU = False
+        self.__inspectedCPUDelta = False
         self.__inspectedMemory = False
+        self.__inspectedMemoryDelta = False
         self.__inspectedContainer = False
+        self.__inspectedContainerDelta = False
         self.__inspectedPlatform = False
+        self.__inspectedPlatformDelta = False
         self.__inspectedLinux = False
+        self.__inspectedLinuxDelta = False
         
     #
     # Collect information about the runtime container.
     #
     # uuid:            A unique identifier assigned to a container if one does not already exist.
     # newcontainer:    Whether a container is new (no assigned uuid) or if it has been used before.
-    # vmuptime:        The time when the system started in Unix time.
     #
     def inspectContainer(self):
         self.__inspectedContainer = True
@@ -62,16 +92,96 @@ class Inspector:
             
         self.__attributes['uuid'] = myUuid
         self.__attributes['newcontainer'] = newContainer
-
-        upTime = self.runCommand('cat /proc/stat | grep btime')
-        upTime = upTime.replace('btime ', '').strip()
-        self.__attributes['vmuptime'] = int(upTime)
+        
         
     #
     # Collect information about the CPU assigned to this function.
     #
     # cpuType:     The model name of the CPU.
     # cpuModel:    The model number of the CPU.
+    # cpuCores:     The number of vCPUs allocated to the function.
+    # cpuInfo:    Detailed information about all aspects of the CPU.
+    #
+    def inspectCPUInfo(self):
+        with open('/proc/cpuinfo', 'r') as file:
+            cpuInfo = file.read()
+        lines = cpuInfo.split('\n')
+        
+        cpu_info = {}
+        core_list = []
+        cpu_count = 0
+        for line in lines:
+            try:
+                keyValue = line.split(':')
+                key = keyValue[0].strip().replace(" ", "_")
+
+                if key == 'processor':
+                    cpu_count += 1
+                elif key == 'power_management' or key == 'CPU_revision':
+                    core_list.append(cpu_info)
+                    cpu_info = {}
+                    continue
+                
+                value = keyValue[1].strip()
+                
+                if (key == "flags" or key == "bugs" or key == "Features"):
+                    value = value.split(" ")
+                
+                cpu_info[key] = value
+            except Exception as e:
+                pass
+            
+        if 'model_name' in core_list[0]:
+            self.__attributes['cpuType'] = core_list[0]['model_name']
+            self.__attributes['cpuModel'] = core_list[0]['model']
+            self.__attributes['architecture'] = "x86"
+        else:
+            list_len = len(core_list) - 1
+            if 'Model' in core_list[list_len]:
+                self.__attributes['cpuModel'] = core_list[list_len]['Model']
+            self.__attributes['architecture'] = "arm64"
+        self.__attributes['cpuCores'] = int(cpu_count)
+        self.__attributes['cpuInfo'] = core_list
+        
+    #
+    # Collect timing CPU metrics
+    #
+    def pollCPUStats(self):
+        global ticks_per_second
+        
+        timeStamp = int(round(time.time() * 1000))
+
+        cpuValues = ["cpuUser", "cpuNice", "cpuKernel", "cpuIdle", "cpuIOWait", "cpuIrq", "cpuSoftIrq", "cpuSteal", "cpuGuest", "cpuGuestNice"]
+        data = {"time": timeStamp}
+        
+        tick_rate = 1000 / ticks_per_second
+
+        with open('/proc/stat', 'r') as file:
+            stats = file.read()
+        lines = stats.split('\n')
+        lines[0] = lines[0].replace("cpu  ", "cpuTotal ")
+        
+        for line in lines:
+            values = line.split(" ")
+            title = values[0].strip()
+            
+            if ("cpu" in title):
+                index = 1
+                stats = {}
+                for value in cpuValues:
+                    stats[value] = int(values[index]) * (tick_rate)
+                    index += 1
+                data[title] = stats
+            else:
+                if len(values) >= 2:
+                    data[title] = int(values[1])
+                    
+        self.__cpuPolls.append(data)
+        
+        
+    #
+    # Collect information about the CPU assigned to this function.
+    #
     # cpuUsr:      Time spent normally executing in user mode.
     # cpuNice:     Time spent executing niced processes in user mode.
     # cpuKrn:      Time spent executing processes in kernel mode.
@@ -85,22 +195,13 @@ class Inspector:
     def inspectCPU(self):
         self.__inspectedCPU = True
 
-        command = self.runCommand('grep \'model name\t:\' /proc/cpuinfo | head -1')
-        CPUModelName = command.replace('model name\t:', '').strip()
-        self.__attributes['cpuType'] = CPUModelName
-        
-        command = self.runCommand('grep \'model\t\t:\' /proc/cpuinfo | head -1')
-        CPUModel = command.replace('model\t\t: ', '').strip()
-        self.__attributes['cpuModel'] = CPUModel
-        
-        CPUMetrics = self.runCommand('cat /proc/stat | grep "^cpu" | head -1').split()
-        metricNames = ['cpuUsr', 'cpuNice', 'cpuKrn', 'cpuIdle', 'cpuIowait', 'cpuIrq', 'cpuSoftIrq', 'vmcpusteal']
-        for i, name in enumerate(metricNames):
-            self.__attributes[name] = int(CPUMetrics[i + 1]) 
+        self.pollCPUStats()
 
-        contextSwitches = self.runCommand('cat /proc/stat | grep "ctxt"').replace('\n', '').replace('ctxt ', '')
-        self.__attributes['contextSwitches'] = int(contextSwitches)
-        
+        CPUMetrics = ["cpuUser", "cpuNice", "cpuKernel", "cpuIdle", "cpuIOWait", "cpuIrq", "cpuSoftIrq", "cpuSteal", "cpuGuest", "cpuGuestNice"]
+        for metric in CPUMetrics:
+            self.__attributes[metric] = self.__cpuPolls[0]['cpuTotal'][metric]
+
+        self.__attributes['bootTime'] = self.__cpuPolls[0]['btime']
     #
     # Compare information gained from inspectCPU to the current CPU metrics.
     #
@@ -119,18 +220,25 @@ class Inspector:
     #
     def inspectCPUDelta(self):
         if (self.__inspectedCPU):
-            child = os.popen('cat /proc/stat | grep "^cpu" | head -1')
-            CPUMetrics = child.read()
-            CPUMetrics = CPUMetrics.split()
+            self.__inspectedCPUDelta = True
             
-            metricNames = ['cpuUsr', 'cpuNice', 'cpuKrn', 'cpuIdle', 'cpuIowait', 'cpuIrq', 'cpuSoftIrq', 'vmcpusteal']
-            for i, name in enumerate(metricNames):
-                self.__attributes[name + "Delta"] = int(CPUMetrics[i + 1]) - self.__attributes[name]
-
-            contextSwitches = self.runCommand('cat /proc/stat | grep "ctxt"').replace('\n', '').replace('ctxt ', '')
-            self.__attributes['contextSwitchesDelta'] = int(contextSwitches) - self.__attributes['contextSwitches']
+            self.pollCPUStats()
+            totalPolls = len(self.__cpuPolls)
+            
+            CPUMetrics = ["cpuUser", "cpuNice", "cpuKernel", "cpuIdle", "cpuIOWait", "cpuIrq", "cpuSoftIrq", "cpuSteal", "cpuGuest", "cpuGuestNice"]
+            CPUTotal = 0
+            for metric in CPUMetrics:
+                value = self.__cpuPolls[totalPolls - 1]['cpuTotal'][metric]  - self.__cpuPolls[0]['cpuTotal'][metric]
+                self.__attributes[metric + "Delta"] = value
+                CPUTotal += value
         else:
             self.__attributes['SAAFCPUDeltaError'] = "CPU not inspected before collecting deltas!"
+
+    #
+    # Make CPU polls accessible to the function.
+    #
+    def processCPUPolls(self):
+        self.__attributes['cpuPolls'] = self.__cpuPolls
 
     #
     # Inspects /proc/meminfo and /proc/vmstat. Add memory specific attributes:
@@ -170,6 +278,7 @@ class Inspector:
     #
     def inspectMemoryDelta(self):
         if (self.__inspectedMemory):
+            self.__inspectedMemoryDelta = True
             if os.path.isfile('/proc/vmstat'):
                 vmStat = ""
                 with open('/proc/vmstat', 'r') as file:
@@ -184,7 +293,6 @@ class Inspector:
                 self.__attributes['SAAFMemoryDeltaError'] = "/proc/vmstat does not exist!"
         else:
             self.__attributes['SAAFMemoryDeltaError'] = "Memory not inspected before collecting deltas!"
-        pass
         
     #
     # Collect information about the current FaaS platform.
@@ -207,7 +315,7 @@ class Inspector:
             self.__attributes['functionMemory'] = os.environ.get('AWS_LAMBDA_FUNCTION_MEMORY_SIZE', None)
             self.__attributes['functionRegion'] = os.environ.get('AWS_REGION', None)
 
-            vmID = os.popen('cat /proc/self/cgroup | grep 2:cpu').read().replace('\n', '')
+            vmID = runCommand('cat /proc/self/cgroup | grep 2:cpu').replace('\n', '')
             self.__attributes['vmID'] = vmID[20: 26]
         else:
             key = os.environ.get('X_GOOGLE_FUNCTION_NAME', None)
@@ -222,7 +330,7 @@ class Inspector:
                     self.__attributes['platform'] = "IBM Cloud Functions"
                     self.__attributes['functionName'] = key
                     self.__attributes['functionRegion'] = os.environ.get('__OW_API_HOST', None)
-                    self.__attributes["vmID"] = self.runCommand("cat /sys/hypervisor/uuid").strip()
+                    self.__attributes["vmID"] = runCommand("cat /sys/hypervisor/uuid").strip()
 
                 else:
                     key = os.environ.get('CONTAINER_NAME', None)
@@ -232,7 +340,33 @@ class Inspector:
                         self.__attributes['functionName'] = os.environ.get('WEBSITE_SITE_NAME', None)
                         self.__attributes['functionRegion'] = os.environ.get('Location', None)
                     else:
-                        self.__attributes['platform'] = "Unknown Platform"
+                        key = os.environ.get('KUBERNETES_SERVICE_PORT_HTTPS', None)
+                        if (key != None):
+                            self.__attributes['platform'] = "OpenFaaS EKS"
+                            self.__attributes['http_host'] = os.environ.get('Http_Host', None)
+                            self.__attributes['http_foward'] = os.environ.get('Http_X_Forwarded_For', None)
+                            self.__attributes['http_start_time'] = os.environ.get('Http_X_Start_Time', None)
+                            self.__attributes['host_name'] = os.environ.get('HOSTNAME', None)
+                        else:
+                            self.__attributes['platform'] = "Unknown Platform"
+    
+    def __recommendConfiguration(self):
+        try:
+            if (self.__inspectedPlatform and self.__inspectedCPUDelta):
+                if self.__attributes['platform'] == "AWS Lambda":
+                    availableCPUs = int(self.__attributes['functionMemory']) / 1792
+                    self.__attributes['availableCPUs'] = round(availableCPUs, 3)
+                    utilizedCPUs = (self.__attributes['cpuUserDelta'] +
+                                    self.__attributes['cpuKernelDelta']) / self.__attributes['userRuntime']
+                    self.__attributes['utilizedCPUs'] = round(utilizedCPUs, 3)
+                    if availableCPUs - utilizedCPUs < 0.1:
+                        self.__attributes['recommendedMemory'] = min(max(round(0.000556 * (availableCPUs * 1.1) + 0.012346), 128), 10240)
+                    else:
+                        self.__attributes['recommendedMemory'] = min(max(round(0.000556 * utilizedCPUs + 0.012346), 128), 10240)
+            else:
+                self.__attributes['SAAFRecommendConfigurationError'] = "CPU, CPU Delta, and Platform must be inspected before recommending a configuration!"
+        except Exception as e:
+            self.__attributes['SAAFRecommendConfigurationError'] = "Unable to recommend a configuration. " + str(e)
         
     #
     # Collect information about the linux kernel.
@@ -241,13 +375,14 @@ class Inspector:
     #
     def inspectLinux(self):
         self.__inspectedLinux = True
-        self.__attributes['linuxVersion'] = self.runCommand('uname -a').replace('\n', '')
+        self.__attributes['linuxVersion'] = runCommand('uname -a').replace('\n', '')
         
     #
     # Run all data collection methods and record framework runtime.
     #
     def inspectAll(self):
         self.inspectContainer()
+        self.inspectCPUInfo()
         self.inspectPlatform()
         self.inspectLinux()
         self.inspectMemory()
@@ -267,6 +402,7 @@ class Inspector:
         deltaTime = int(round(time.time() * 1000))
         self.inspectCPUDelta()
         self.inspectMemoryDelta()
+        self.__recommendConfiguration()
         self.addTimeStamp("frameworkRuntimeDeltas", deltaTime)
         
     #
@@ -299,15 +435,6 @@ class Inspector:
             timeSince = self.__startTime
         currentTime = int(round(time.time() * 1000))
         self.__attributes[key] = currentTime - timeSince
-
-    #
-    # Execute a bash command and get the output.
-    #
-    # @param command An array of strings with each part of the command.
-    # @return Standard out of the command.
-    #
-    def runCommand(self, command):
-        return os.popen(command).read()
         
     #
     # Finalize the Inspector. Calculator the total runtime and return the dictionary
