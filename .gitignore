@@ -9,3 +9,4 @@ __pycache__
 bash_template/deploy/build/function.zip
 .s3cache
 SAAF.code-workspace
+/juypter_template/dependencies

@@ -13,6 +13,10 @@ def register_mesh(json_path):
     global sky_mesh
     sky_mesh = json.load(open(json_path))
 
+def get_endpoint(location):
+    global sky_mesh
+    return sky_mesh[location]
+
 def run(main_function, request, location, dependencies=[], references=[], embeds=[]):
     global sky_mesh
 
@@ -38,7 +42,7 @@ def run(main_function, request, location, dependencies=[], references=[], embeds
         changed = False
         for dependency in dependencies:
             if not os.path.exists(directory + "/" + dependency):
-                subprocess.run(["python3.12", "-m", "pip", "install", directory, "-t", "/tmp/"])
+                subprocess.run(["python3.12", "-m", "pip", "install", dependency, "-t", directory])
                 changed = True
 
         if changed or not os.path.exists(zip_file):
