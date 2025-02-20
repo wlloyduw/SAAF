@@ -5,6 +5,7 @@
 
 import base64
 import collections
+from collections.abc import Callable
 import inspect
 import json
 import os
@@ -253,7 +254,7 @@ def _save_temp_config(name, platform, config):
 
 def deploy(name, platform):
     
-    if (isinstance(name, collections.Callable)):
+    if (isinstance(name, Callable)):
         name = name.__name__
     
     source_folder = "./functions/" + name + "/" + platform + "/"
@@ -303,7 +304,7 @@ def reconfigure(function, override_config=None, platform=None):
     """
 
     name = function
-    if (isinstance(function, collections.Callable)):
+    if (isinstance(function, Callable)):
         name = function.__name__
     
     function_data = _load_faaset_data(name)
@@ -377,7 +378,7 @@ def _check_name_compatibility(name, platform):
 
 def duplicate(function, source_platform, new_name):
     name = function
-    if (isinstance(function, collections.Callable)):
+    if (isinstance(function, Callable)):
         name = function.__name__
         
     source_folder = "./functions/" + name + "/" + source_platform + "/"
@@ -387,7 +388,7 @@ def duplicate(function, source_platform, new_name):
     
 def clear(function, platform):
     name = function
-    if (isinstance(function, collections.Callable)):
+    if (isinstance(function, Callable)):
         name = function.__name__
         
     source_folder = "./functions/" + name + "/" + platform + "/"
@@ -408,7 +409,7 @@ def test(function, payload, quiet=False, outPath="default", tags={}, platform=No
     """
     
     name = function
-    if (isinstance(function, collections.Callable)):
+    if (isinstance(function, Callable)):
         name = function.__name__
 
     if platform is None:
@@ -427,6 +428,15 @@ def test(function, payload, quiet=False, outPath="default", tags={}, platform=No
         timeSinceStart = round((time.time() - startTime) * 100000) / 100
         out = str(o.decode('ascii'))
         error = str(e.decode('ascii'))
+
+        aws_garbage = """{
+    "StatusCode": 200,
+    "ExecutedVersion": "$LATEST"
+}"""
+
+        if aws_garbage in out:
+            out = out.replace(aws_garbage, "")
+
         obj = {}
         try:
             obj = json.loads(out)

@@ -17,7 +17,7 @@ def get_endpoint(location):
     global sky_mesh
     return sky_mesh[location]
 
-def run(main_function, request, location, dependencies=[], references=[], embeds=[]):
+def get_payload(main_function, request, dependencies=[], references=[], embeds=[]):
     global sky_mesh
 
     code = inspect.getsource(main_function)
@@ -68,6 +68,9 @@ def run(main_function, request, location, dependencies=[], references=[], embeds
     
     encoding = base64.b64encode(code.encode('utf-8')).decode('utf-8')
     request['f'] = encoding
+    return request
 
+def run(main_function, request, location, dependencies=[], references=[], embeds=[]):
+    request = get_payload(main_function, request, dependencies=dependencies, references=references, embeds=embeds)
     response = requests.post(sky_mesh[location], json=request)
     return response.text
