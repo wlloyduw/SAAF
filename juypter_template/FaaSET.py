@@ -20,6 +20,41 @@ import time
 
 STOP_THREADS = {}
 
+aws_regions = {
+    "N. Virginia": "us-east-1",
+    "Ohio": "us-east-2",
+    "N. California": "us-west-1",
+    "Oregon": "us-west-2",
+    "Cape Town": "af-south-1",
+    "Hong Kong": "ap-east-1",
+    "Hyderabad": "ap-south-2",
+    "Jakarta": "ap-southeast-3",
+    "Malaysia": "ap-southeast-5",
+    "Melbourne": "ap-southeast-4",
+    "Mumbai": "ap-south-1",
+    "Osaka": "ap-northeast-3",
+    "Seoul": "ap-northeast-2",
+    "Singapore": "ap-southeast-1",
+    "Sydney": "ap-southeast-2",
+    "Thailand": "ap-southeast-7",
+    "Tokyo": "ap-northeast-1",
+    "Central (Canada)": "ca-central-1",
+    "Calgary": "ca-west-1",
+    "Frankfurt": "eu-central-1",
+    "Ireland": "eu-west-1",
+    "London": "eu-west-2",
+    "Milan": "eu-south-1",
+    "Paris": "eu-west-3",
+    "Spain": "eu-south-2",
+    "Stockholm": "eu-north-1",
+    "Zurich": "eu-central-2",
+    "Central (Mexico)": "mx-central-1",
+    "Bahrain": "me-south-1",
+    "UAE": "me-central-1",
+    "Tel Aviv": "il-central-1",
+    "São Paulo": "sa-east-1"
+}
+
 def cloud_function(platform="aws", config={}, deploy=True, force_deploy=False):
     """_summary_
 
