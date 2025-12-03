@@ -24,4 +24,4 @@ rm -rf ./.build/experiments || true
 
 echo "Build: Building Docker Image..."
 cd .build
-docker build -t ${function} . >> ../build.log
+docker build -t ${function} --provenance=false --sbom=false . >> ../build.log
