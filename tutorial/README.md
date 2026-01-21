@@ -78,6 +78,11 @@ pip3 install requests boto3 botocore
 brew update
 brew install parallel bc curl jq python3 python3-pip nodejs npm maven
 pip3 install requests boto3 botocore
+
+# Fedora
+sudo dnf update
+sudo dnf install parallel bc curl jq python3 python3-pip nodejs npm maven
+pip3 install requests boto3 botocore
 ```
 ## Setting up AWS Lambda
 
@@ -92,6 +97,11 @@ aws configure
 
 # MacOS with Brew. If you do not have brew install it here: https://brew.sh
 brew install awscli python3
+pip3 install --upgrade awscli
+aws configure
+
+# Fedora
+sudo dnf install awscli python3 python3-pip
 pip3 install --upgrade awscli
 aws configure
 ```
