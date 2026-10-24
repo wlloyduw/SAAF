@@ -8,10 +8,10 @@
 	"lambdaSubnets": "",
 	"lambdaSecurityGroups": "",
 	"lambdaEnvironment": "Variables={EXAMPLEVAR1=VAL1,EXAMPLEVAR2=VAL2}",
-	"lambdaRuntime": "nodejs10.x",
+	"lambdaRuntime": "nodejs22.x",
 
 	"googleHandler": "helloWorld",
-	"googleRuntime": "nodejs8",
+	"googleRuntime": "nodejs22",
 
 	"ibmRuntime": "nodejs:8",
 
