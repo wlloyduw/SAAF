@@ -1,6 +1,5 @@
 package saaf;
 
-import java.beans.IntrospectionException;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.io.BufferedReader;
@@ -14,12 +13,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 /**
@@ -30,14 +31,31 @@ import java.util.stream.Collectors;
  */
 public class Inspector {
 
-    private final HashMap<String, Object> attributes;
+    /**
+     * Global variables that will persist through multiple invocations.
+     */
+    private static final AtomicInteger invocations = new AtomicInteger(0);
+    private static final long initializationTime = System.currentTimeMillis();
+    private static final long ticksPerSecond = getTicksPerSecond();
+
+    /**
+     * CPU metrics reported by /proc/stat, in the order they appear.
+     */
+    private static final String[] CPU_METRICS = {"cpuUser", "cpuNice", "cpuKernel", "cpuIdle", "cpuIOWait",
+        "cpuIrq", "cpuSoftIrq", "cpuSteal", "cpuGuest", "cpuGuestNice"};
+
+    private final LinkedHashMap<String, Object> attributes;
+    private final ArrayList<HashMap<String, Object>> cpuPolls;
     private final long startTime;
 
     private boolean inspectedCPU = false;
+    private boolean inspectedCPUDelta = false;
     private boolean inspectedMemory = false;
+    private boolean inspectedMemoryDelta = false;
     private boolean inspectedContainer = false;
     private boolean inspectedPlatform = false;
     private boolean inspectedLinux = false;
+    private boolean inspectedEnvironment = false;
 
     /**
      * Initialize Inspector.
@@ -45,22 +63,29 @@ public class Inspector {
      * attributes: Used to store information collected by each function.
      * version: Inspector version.
      * lang: Function language (java).
+     * startTime: The time the function started running.
+     * invocations: The number of times an Inspector has been created in this instance.
+     * initializationTime: The time SAAF was first loaded by this instance.
      */
     public Inspector() {
-        startTime = System.currentTimeMillis();
-        attributes = new HashMap<>();
+        int invocation = invocations.incrementAndGet();
 
-        attributes.put("version", 0.5);
+        startTime = System.currentTimeMillis();
+        attributes = new LinkedHashMap<>();
+        cpuPolls = new ArrayList<>();
+
+        attributes.put("version", 0.8);
         attributes.put("lang", "java");
         attributes.put("startTime", startTime);
+        attributes.put("invocations", invocation);
+        attributes.put("initializationTime", initializationTime);
     }
 
     /**
      * Collect information about the runtime container.
      *
-     * uuid:         A unique identifier assigned to a container if one does not already exist. 
-     * newcontainer: Whether a container is new (no assigned uuid) or if it has been used before. 
-     * vmuptime:     The time when the system started in Unix time.
+     * uuid:         A unique identifier assigned to a container if one does not already exist.
+     * newcontainer: Whether a container is new (no assigned uuid) or if it has been used before.
      */
     public void inspectContainer() {
         if (inspectedContainer) {
@@ -97,168 +122,151 @@ public class Inspector {
 
         attributes.put("uuid", uuid);
         attributes.put("newcontainer", newContainer);
-
-        //Get VM Uptime
-        String filename = "/proc/stat";
-        f = new File(filename);
-        p = Paths.get(filename);
-        String text;
-        if (f.exists()) {
-            try (BufferedReader br = Files.newBufferedReader(p)) {
-                while ((text = br.readLine()) != null && text.length() != 0) {
-                    // get boot time in ms since epoch 
-                    if (text.contains("btime")) {
-                        String prms[] = text.split(" ");
-                        attributes.put("vmuptime", Long.parseLong(prms[1]));
-                    }
-                }
-                br.close();
-
-            } catch (IOException ioe) {
-                //sb.append("Error reading file=" + filename);
-            }
-        }
     }
 
     /**
      * Collect information about the CPU assigned to this function.
      *
-     * cpuType:    The model name of the CPU. 
-     * cpuModel:   The model number of the CPU. 
-     * cpuCores:   The total number of cpu cores.
-     * cpuUsr:     Time spent normally executing in user mode. 
-     * cpuNice:    Time spent executing niced processes in user mode. 
-     * cpuKrn:     Time spent executing processes in kernel mode. 
-     * cpuIdle:    Time spent idle. 
-     * cpuIowait:  Time spent waiting for I/O to complete. 
-     * cpuIrq:     Time spent servicing interrupts. 
-     * cpuSoftIrq: Time spent servicing software interrupts.
-     * vmcpusteal: Time spent waiting for real CPU while hypervisor is using another virtual CPU.
-     * contextSwitches: Number of context switches.
+     * cpuType:      The model name of the CPU.
+     * cpuModel:     The model number of the CPU.
+     * architecture: The architecture of the CPU (x86 or arm64).
+     * cpuCores:     The number of vCPUs allocated to the function.
+     * cpuInfo:      Detailed information about all aspects of the CPU.
+     */
+    public void inspectCPUInfo() {
+        String[] lines = getFileAsString("/proc/cpuinfo").split("\n");
+
+        HashMap<String, Object> coreInfo = new LinkedHashMap<>();
+        ArrayList<HashMap<String, Object>> coreList = new ArrayList<>();
+        int cpuCount = 0;
+        for (String line : lines) {
+            String[] keyValue = line.split(":", -1);
+            String key = keyValue[0].trim().replace(" ", "_");
+
+            if (key.equals("processor")) {
+                cpuCount++;
+            } else if (key.equals("power_management") || key.equals("CPU_revision")) {
+                coreList.add(coreInfo);
+                coreInfo = new LinkedHashMap<>();
+                continue;
+            }
+
+            if (keyValue.length < 2) {
+                continue;
+            }
+            String value = keyValue[1].trim();
+
+            if (key.equals("flags") || key.equals("bugs") || key.equals("Features")) {
+                coreInfo.put(key, Arrays.asList(value.split(" ", -1)));
+            } else {
+                coreInfo.put(key, value);
+            }
+        }
+
+        if (!coreList.isEmpty() && coreList.get(0).containsKey("model_name")) {
+            attributes.put("cpuType", coreList.get(0).get("model_name"));
+            attributes.put("cpuModel", coreList.get(0).get("model"));
+            attributes.put("architecture", "x86");
+        } else {
+            if (!coreList.isEmpty() && coreList.get(coreList.size() - 1).containsKey("Model")) {
+                attributes.put("cpuModel", coreList.get(coreList.size() - 1).get("Model"));
+            }
+            attributes.put("architecture", "arm64");
+        }
+        attributes.put("cpuCores", cpuCount);
+        attributes.put("cpuInfo", coreList);
+    }
+
+    /**
+     * Collect timing CPU metrics. Each call records a poll of /proc/stat
+     * with all CPU times converted from ticks into milliseconds.
+     */
+    public void pollCPUStats() {
+        HashMap<String, Object> data = new LinkedHashMap<>();
+        data.put("time", System.currentTimeMillis());
+
+        double tickRate = 1000.0 / ticksPerSecond;
+
+        String[] lines = getFileAsString("/proc/stat").split("\n");
+        lines[0] = lines[0].replace("cpu  ", "cpuTotal ");
+
+        for (String line : lines) {
+            String[] values = line.split(" ");
+            String title = values[0].trim();
+
+            try {
+                if (title.contains("cpu")) {
+                    HashMap<String, Object> cpuStats = new LinkedHashMap<>();
+                    for (int i = 0; i < CPU_METRICS.length; i++) {
+                        cpuStats.put(CPU_METRICS[i], Long.parseLong(values[i + 1]) * tickRate);
+                    }
+                    data.put(title, cpuStats);
+                } else if (values.length >= 2) {
+                    data.put(title, Long.parseLong(values[1]));
+                }
+            } catch (NumberFormatException | ArrayIndexOutOfBoundsException e) {
+                //Skip lines that are not in the expected format.
+            }
+        }
+
+        cpuPolls.add(data);
+    }
+
+    /**
+     * Collect information about the CPU assigned to this function.
+     *
+     * cpuUser:      Time spent normally executing in user mode.
+     * cpuNice:      Time spent executing niced processes in user mode.
+     * cpuKernel:    Time spent executing processes in kernel mode.
+     * cpuIdle:      Time spent idle.
+     * cpuIOWait:    Time spent waiting for I/O to complete.
+     * cpuIrq:       Time spent servicing interrupts.
+     * cpuSoftIrq:   Time spent servicing software interrupts.
+     * cpuSteal:     Time spent waiting for real CPU while hypervisor is using another virtual CPU.
+     * cpuGuest:     Time spent running a virtual CPU for guest operating systems.
+     * cpuGuestNice: Time spent running a niced guest.
+     * bootTime:     Time when the host booted in seconds since the Unix epoch.
      */
     public void inspectCPU() {
         inspectedCPU = true;
 
-        String text;
-        int start;
-        int end;
+        pollCPUStats();
 
-        String cpuType = "unknown";
-        String cpuModel = "unknown";
-        String cpuCores = "unknown";
-
-        try
-        {
-            //Get CPU Type
-            text = getFileAsString("/proc/cpuinfo");
-            start = text.indexOf("name") + 7;
-            if (start > -1)
-            {
-                end = start + text.substring(start).indexOf(":");
-                cpuType = text.substring(start, end - 9).trim();
-            }
-
-            //Get CPU Model
-            start = text.indexOf("model") + 9;
-            if (start > -1)
-            {
-                end = start + text.substring(start).indexOf(":");
-                cpuModel = text.substring(start, end - 11).trim();
-            }
-
-            //Get CPU Core Count
-            start = text.indexOf("cpu cores") + 12;
-            if (start > -1)
-            {
-                end = start + text.substring(start).indexOf(":");
-                cpuCores = text.substring(start, end - 9).trim();
-            }
-        }
-        catch (Exception e)
-        {
-            System.err.println("Difficulty processing /proc/cpuinfo.  Is this an Intel platform?  Some attributes may be unavailable.");
-        }
-        finally
-        {
-            attributes.put("cpuType", cpuType);
-            attributes.put("cpuModel", cpuModel);
-            attributes.put("cpuCores", cpuCores);
+        Map<String, Object> cpuTotal = getCPUTotal(0);
+        for (String metric : CPU_METRICS) {
+            attributes.put(metric, cpuTotal.get(metric));
         }
 
-        //Get CPU Metrics
-        String filename = "/proc/stat";
-        File f = new File(filename);
-        Path p = Paths.get(filename);
-        if (f.exists()) {
-            try (BufferedReader br = Files.newBufferedReader(p)) {
-                text = br.readLine();
-                String params[] = text.split(" ");
-
-                String[] metricNames = {"cpuUsr", "cpuNice", "cpuKrn", "cpuIdle",
-                    "cpuIowait", "cpuIrq", "cpuSoftIrq", "vmcpusteal"};
-
-                for (int i = 0; i < metricNames.length; i++) {
-                    attributes.put(metricNames[i], Long.parseLong(params[i + 2]));
-                }
-
-                while ((text = br.readLine()) != null && text.length() != 0) {
-                    if (text.contains("ctxt")) {
-                        String prms[] = text.split(" ");
-                        attributes.put("contextSwitches", Long.parseLong(prms[1]));
-                    }
-                }
-
-                br.close();
-            } catch (IOException ioe) {
-                //sb.append("Error reading file=" + filename);
-            }
-        }
+        attributes.put("bootTime", cpuPolls.get(0).get("btime"));
     }
-    
+
     /**
      * Compare information gained from inspectCPU to the current CPU metrics.
      *
-     * cpuUsrDelta:     Time spent normally executing in user mode. 
-     * cpuNiceDelta:    Time spent executing niced processes in user mode. 
-     * cpuKrnDelta:     Time spent executing processes in kernel mode. 
-     * cpuIdleDelta:    Time spent idle. 
-     * cpuIowaitDelta:  Time spent waiting for I/O to complete. 
-     * cpuIrqDelta:     Time spent servicing interrupts. 
-     * cpuSoftIrqDelta: Time spent servicing software interrupts.
-     * vmcpustealDelta: Time spent waiting for real CPU while hypervisor is using another virtual CPU.
-     * contextSwitchesDelta: Number of context switches.
+     * Note: This function should be called at the end of your function and
+     * must be called AFTER inspectCPU.
+     *
+     * cpuUserDelta:      Time spent normally executing in user mode.
+     * cpuNiceDelta:      Time spent executing niced processes in user mode.
+     * cpuKernelDelta:    Time spent executing processes in kernel mode.
+     * cpuIdleDelta:      Time spent idle.
+     * cpuIOWaitDelta:    Time spent waiting for I/O to complete.
+     * cpuIrqDelta:       Time spent servicing interrupts.
+     * cpuSoftIrqDelta:   Time spent servicing software interrupts.
+     * cpuStealDelta:     Time spent waiting for real CPU while hypervisor is using another virtual CPU.
+     * cpuGuestDelta:     Time spent running a virtual CPU for guest operating systems.
+     * cpuGuestNiceDelta: Time spent running a niced guest.
      */
     public void inspectCPUDelta() {
         if (inspectedCPU) {
-            String text;
+            inspectedCPUDelta = true;
 
-            //Get CPU Metrics
-            String filename = "/proc/stat";
-            File f = new File(filename);
-            Path p = Paths.get(filename);
-            if (f.exists()) {
-                try (BufferedReader br = Files.newBufferedReader(p)) {
-                    text = br.readLine();
-                    String params[] = text.split(" ");
+            pollCPUStats();
 
-                    String[] metricNames = {"cpuUsr", "cpuNice", "cpuKrn", "cpuIdle",
-                        "cpuIowait", "cpuIrq", "cpuSoftIrq", "vmcpusteal"};
-
-                    for (int i = 0; i < metricNames.length; i++) {
-                        attributes.put(metricNames[i] + "Delta", Long.parseLong(params[i + 2]) - (Long)attributes.get(metricNames[i]));
-                    }
-
-                    while ((text = br.readLine()) != null && text.length() != 0) {
-                        if (text.contains("ctxt")) {
-                            String prms[] = text.split(" ");
-                            attributes.put("contextSwitchesDelta", Long.parseLong(prms[1]) - (Long)attributes.get("contextSwitches"));
-                        }
-                    }
-
-                    br.close();
-                } catch (IOException ioe) {
-                    //sb.append("Error reading file=" + filename);
-                }
+            Map<String, Object> first = getCPUTotal(0);
+            Map<String, Object> last = getCPUTotal(cpuPolls.size() - 1);
+            for (String metric : CPU_METRICS) {
+                attributes.put(metric + "Delta", (Double) last.get(metric) - (Double) first.get(metric));
             }
         } else {
             attributes.put("SAAFCPUDeltaError", "CPU not inspected before collecting deltas!");
@@ -266,21 +274,28 @@ public class Inspector {
     }
 
     /**
+     * Make CPU polls accessible to the function.
+     */
+    public void processCPUPolls() {
+        attributes.put("cpuPolls", cpuPolls);
+    }
+
+    /**
      * Inspects /proc/meminfo and /proc/vmstat. Add memory specific attributes:
-     * 
+     *
      * totalMemory:     Total memory allocated to the VM in kB.
      * freeMemory:      Current free memory in kB when inspectMemory is called.
      * pageFaults:      Total number of page faults experienced by the vm since boot.
      * majorPageFaults: Total number of major page faults experienced since boot.
-     * 
+     *
      */
     public void inspectMemory() {
 
         inspectedMemory = true;
         String memInfo = getFileAsString("/proc/meminfo");
         String[] lines = memInfo.split("\n");
-        attributes.put("totalMemory", lines[0].replace("MemTotal:", "").replace("\t", "").replace(" kB", "").replace(" ", ""));
-        attributes.put("freeMemory", lines[1].replace("MemFree:", "").replace("\t", "").replace(" kB", "").replace(" ", ""));
+        attributes.put("totalMemory", Long.parseLong(lines[0].replace("MemTotal:", "").replace(" kB", "").trim()));
+        attributes.put("freeMemory", Long.parseLong(lines[1].replace("MemFree:", "").replace(" kB", "").trim()));
 
         String text;
 
@@ -304,17 +319,20 @@ public class Inspector {
             } catch (IOException ioe) {
                 //sb.append("Error reading file=" + filename);
             }
+        } else {
+            attributes.put("SAAFMemoryError", "/proc/vmstat does not exist!");
         }
     }
 
     /**
      * Inspects /proc/vmstat to see how specific memory stats have changed.
-     * 
+     *
      * pageFaultsDelta:     The number of page faults experienced since inspectMemory was called.
      * majorPageFaultsDelta: The number of major pafe faults since inspectMemory was called.
      */
     public void inspectMemoryDelta() {
         if (inspectedMemory) {
+            inspectedMemoryDelta = true;
             String text;
 
             //Get CPU Metrics
@@ -337,6 +355,8 @@ public class Inspector {
                 } catch (IOException ioe) {
                     //sb.append("Error reading file=" + filename);
                 }
+            } else {
+                attributes.put("SAAFMemoryDeltaError", "/proc/vmstat does not exist!");
             }
         } else {
             attributes.put("SAAFMemoryDeltaError", "Memory not inspected before collecting deltas!");
@@ -368,9 +388,14 @@ public class Inspector {
             attributes.put("functionMemory", System.getenv("AWS_LAMBDA_FUNCTION_MEMORY_SIZE"));
             attributes.put("functionRegion", System.getenv("AWS_REGION"));
 
-            String vmID = runCommand(new String[]{"cat", "/proc/self/cgroup"});
-            int index = vmID.indexOf("sandbox-root");
-            attributes.put("vmID", vmID.substring(index + 13, index + 19));
+            StringBuilder cgroup = new StringBuilder();
+            for (String line : getFileAsString("/proc/self/cgroup").split("\n")) {
+                if (line.contains("2:cpu")) {
+                    cgroup.append(line);
+                }
+            }
+            String vmID = cgroup.toString();
+            attributes.put("vmID", vmID.substring(Math.min(20, vmID.length()), Math.min(26, vmID.length())));
         } else {
             key = System.getenv("X_GOOGLE_FUNCTION_NAME");
             if (key != null) {
@@ -390,13 +415,59 @@ public class Inspector {
                     if (key != null) {
                         attributes.put("platform", "Azure Functions");
                         attributes.put("containerID", key);
-                        attributes.put("functionName", "WEBSITE_SITE_NAME");
+                        attributes.put("functionName", System.getenv("WEBSITE_SITE_NAME"));
                         attributes.put("functionRegion", System.getenv("Location"));
                     } else {
-                        attributes.put("platform", "Unknown Platform");
+                        key = System.getenv("KUBERNETES_SERVICE_PORT_HTTPS");
+                        if (key != null) {
+                            attributes.put("platform", "OpenFaaS EKS");
+                            attributes.put("http_host", System.getenv("Http_Host"));
+                            attributes.put("http_foward", System.getenv("Http_X_Forwarded_For"));
+                            attributes.put("http_start_time", System.getenv("Http_X_Start_Time"));
+                            attributes.put("host_name", System.getenv("HOSTNAME"));
+                        } else {
+                            attributes.put("platform", "Unknown Platform");
+                        }
                     }
                 }
             }
+        }
+    }
+
+    /**
+     * Estimate the CPU utilization of the function and recommend a memory setting.
+     * Requires inspectPlatform, inspectCPU, and inspectCPUDelta. Currently only
+     * supports AWS Lambda.
+     *
+     * availableCPUs:     The number of vCPUs available at the current memory setting.
+     * utilizedCPUs:      The number of vCPUs utilized while running user code.
+     * recommendedMemory: The recommended memory setting for the function.
+     */
+    private void recommendConfiguration() {
+        try {
+            if (inspectedPlatform && inspectedCPUDelta) {
+                if ("AWS Lambda".equals(attributes.get("platform"))) {
+                    Object userRuntime = attributes.get("userRuntime");
+                    if (userRuntime == null || ((Number) userRuntime).longValue() == 0) {
+                        throw new ArithmeticException("userRuntime must be greater than zero.");
+                    }
+
+                    double availableCPUs = Integer.parseInt((String) attributes.get("functionMemory")) / 1792.0;
+                    attributes.put("availableCPUs", Math.round(availableCPUs * 1000) / 1000.0);
+                    double utilizedCPUs = ((Double) attributes.get("cpuUserDelta")
+                            + (Double) attributes.get("cpuKernelDelta")) / ((Number) userRuntime).longValue();
+                    attributes.put("utilizedCPUs", Math.round(utilizedCPUs * 1000) / 1000.0);
+                    if (availableCPUs - utilizedCPUs < 0.1) {
+                        attributes.put("recommendedMemory", Math.min(Math.max(Math.round(0.000556 * (availableCPUs * 1.1) + 0.012346), 128), 10240));
+                    } else {
+                        attributes.put("recommendedMemory", Math.min(Math.max(Math.round(0.000556 * utilizedCPUs + 0.012346), 128), 10240));
+                    }
+                }
+            } else {
+                attributes.put("SAAFRecommendConfigurationError", "CPU, CPU Delta, and Platform must be inspected before recommending a configuration!");
+            }
+        } catch (Exception e) {
+            attributes.put("SAAFRecommendConfigurationError", "Unable to recommend a configuration. " + e.getMessage());
         }
     }
 
@@ -416,10 +487,23 @@ public class Inspector {
     }
 
     /**
+     * Collect all environment variables. Each variable is added as an attribute
+     * using the variable's name as the key.
+     *
+     * Note: This is not called by inspectAll. Environment variables may contain
+     * secrets, such as the temporary AWS credentials provided by AWS Lambda.
+     */
+    public void inspectEnvironment() {
+        inspectedEnvironment = true;
+        attributes.putAll(System.getenv());
+    }
+
+    /**
      * Run all data collection methods and record framework runtime.
      */
     public void inspectAll() {
         this.inspectContainer();
+        this.inspectCPUInfo();
         this.inspectPlatform();
         this.inspectLinux();
         this.inspectMemory();
@@ -441,6 +525,7 @@ public class Inspector {
         long deltaTime = System.currentTimeMillis();
         this.inspectCPUDelta();
         this.inspectMemoryDelta();
+        this.recommendConfiguration();
         this.addTimeStamp("frameworkRuntimeDeltas", deltaTime);
     }
 
@@ -478,7 +563,7 @@ public class Inspector {
     /**
      * Add a custom time stamp to the output. This will append the
      * time in milliseconds between the current time and the timeSince variable.
-     * 
+     *
      * @param key The key to add to the output.
      * @param timeSince The time to compare to.
      */
@@ -495,7 +580,7 @@ public class Inspector {
     public void consumeResponse(Response response) {
         Map<String, Object> responseMap = beanProperties(response);
         if (responseMap == null) {
-            attributes.put("SAAFConsumeReponseError", "There was an error consuming the response object. See logs for details."+             
+            attributes.put("SAAFConsumeReponseError", "There was an error consuming the response object. See logs for details."+
             "Response object may have fields that were null or could not be cast.");
             return;
         }
@@ -525,6 +610,30 @@ public class Inspector {
     public HashMap<String, Object> finish(Response response) {
         consumeResponse(response);
         return finish();
+    }
+
+    /**
+     * Get the CPU times of all vCPUs from a CPU poll.
+     *
+     * @param index The index of the poll.
+     * @return The cpuTotal entry of the poll.
+     */
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> getCPUTotal(int index) {
+        return (Map<String, Object>) cpuPolls.get(index).get("cpuTotal");
+    }
+
+    /**
+     * Get the number of clock ticks per second used by /proc/stat.
+     *
+     * @return The value of CLK_TCK, or 100 if it cannot be read.
+     */
+    private static long getTicksPerSecond() {
+        try {
+            return Long.parseLong(runCommand(new String[]{"getconf", "CLK_TCK"}).trim());
+        } catch (NumberFormatException e) {
+            return 100;
+        }
     }
 
     /**
@@ -585,10 +694,10 @@ public class Inspector {
 
     /**
      * Convert an Object into a Map using getBeanInfo.
-     * 
+     *
      * @param bean The object to collect methods from.
      * @return A HashMap representation of the object.
-     * 
+     *
      * @author https://bit.ly/2ZGg4uW
      */
     private static Map<String, Object> beanProperties(Object bean) {
@@ -617,6 +726,6 @@ public class Inspector {
             // replace this with better error handling
             System.out.println(e.toString());
             return null;
-        } 
+        }
     }
 }
