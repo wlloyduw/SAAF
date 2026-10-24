@@ -45,7 +45,7 @@ class Inspector:
         
         self.__startTime = int(round(time.time() * 1000))
         self.__attributes = {
-            "version": 0.7, 
+            "version": 0.8, 
             "lang": "python", 
             "startTime": self.__startTime,
             "invocations": invocations,
@@ -66,6 +66,7 @@ class Inspector:
         self.__inspectedPlatformDelta = False
         self.__inspectedLinux = False
         self.__inspectedLinuxDelta = False
+        self.__inspectedEnvironment = False
         
     #
     # Collect information about the runtime container.
@@ -376,6 +377,18 @@ class Inspector:
     def inspectLinux(self):
         self.__inspectedLinux = True
         self.__attributes['linuxVersion'] = runCommand('uname -a').replace('\n', '')
+        
+    #
+    # Collect all environment variables. Each variable is added as an attribute
+    # using the variable's name as the key.
+    #
+    # Note: This is not called by inspectAll. Environment variables may contain
+    # secrets, such as the temporary AWS credentials provided by AWS Lambda.
+    #
+    def inspectEnvironment(self):
+        self.__inspectedEnvironment = True
+        for key, value in os.environ.items():
+            self.__attributes[key] = value
         
     #
     # Run all data collection methods and record framework runtime.
