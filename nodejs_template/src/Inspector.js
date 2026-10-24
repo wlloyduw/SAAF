@@ -281,7 +281,7 @@ class Inspector {
             for (let line of lines) {
                 if (line.includes('pgfault')) {
                     this.#attributes['pageFaults'] = parseInt(line.split(' ')[1]);
-                } else if (line.includes('mgmajfault')) {
+                } else if (line.includes('pgmajfault')) {
                     this.#attributes['majorPageFaults'] = parseInt(line.split(' ')[1]);
                 }
             }
@@ -305,7 +305,7 @@ class Inspector {
                 for (let line of lines) {
                     if (line.includes('pgfault')) {
                         this.#attributes['pageFaultsDelta'] = parseInt(line.split(' ')[1]) - this.#attributes['pageFaults'];
-                    } else if (line.includes('mgmajfault')) {
+                    } else if (line.includes('pgmajfault')) {
                         this.#attributes['majorPageFaultsDelta'] = parseInt(line.split(' ')[1]) - this.#attributes['majorPageFaults'];
                     }
                 }

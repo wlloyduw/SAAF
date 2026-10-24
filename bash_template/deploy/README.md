@@ -10,6 +10,7 @@ The project structure is meant to simplify deploying onto each of the supported 
             📁 dependencies
                 ...
             bootstrap
+            Inspector.sh
             function.sh
         📁 deploy
             config.json
@@ -20,7 +21,9 @@ The project structure is meant to simplify deploying onto each of the supported 
 
 The src folder contains all of the code for your function. 
 
-  * [**bootstrap**](../src/bootstrap) is the SAAF itself and is completely independent of any files or folders in this project.
+  * [**Inspector.sh**](../src/Inspector.sh) is SAAF itself and is completely independent of any files or folders in this project.
+
+  * [**bootstrap**](../src/bootstrap) is the AWS Lambda custom runtime. It loads Inspector.sh and your function, then calls your function for each request.
 
   * [**function.sh**](../src/function.sh) file is the handler that AWS Lambda will execute whenever your function is called.
     

@@ -54,6 +54,7 @@ The cpuInfo attribute is omitted for brevity.
   "totalMemory": 16477348,
   "freeMemory": 15749404,
   "pageFaults": 322066,
+  "majorPageFaults": 1404,
   "cpuUser": 13320,
   "cpuNice": 0,
   "cpuKernel": 7420,
@@ -79,6 +80,7 @@ The cpuInfo attribute is omitted for brevity.
   "cpuGuestDelta": 0,
   "cpuGuestNiceDelta": 0,
   "pageFaultsDelta": 48,
+  "majorPageFaultsDelta": 0,
   "frameworkRuntimeDeltas": 0,
   "runtime": 12,
   "endTime": 1792804314978

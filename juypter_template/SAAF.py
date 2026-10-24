@@ -266,7 +266,7 @@ class Inspector:
             for line in lines:
                 if 'pgfault' in line:
                     self.__attributes['pageFaults'] = int(line.split(' ')[1])
-                elif 'mgmajfault' in line:
+                elif 'pgmajfault' in line:
                     self.__attributes['majorPageFaults'] = int(line.split(' ')[1])
         else:
             self.__attributes['SAAFMemoryError'] = "/proc/vmstat does not exist!"
@@ -288,7 +288,7 @@ class Inspector:
                 for line in lines:
                     if 'pgfault' in line:
                         self.__attributes['pageFaultsDelta'] = int(line.split(' ')[1]) - self.__attributes['pageFaults']
-                    elif 'mgmajfault' in line:
+                    elif 'pgmajfault' in line:
                         self.__attributes['majorPageFaultsDelta'] = int(line.split(' ')[1]) - self.__attributes['majorPageFaults']
             else:
                 self.__attributes['SAAFMemoryDeltaError'] = "/proc/vmstat does not exist!"
