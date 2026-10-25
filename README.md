@@ -18,6 +18,7 @@ SAAF also provides tools to automate the process of deploying functions to AWS L
 9. [FaaS Runner](./test/)
 10. [Research with SAAF](./research.md)
 11. [SAAF Tutorial](./tutorial/)
+12. [Lambda Web Functions](./web_template/)
 
 ### Interactive Jupyter Workspace:
 

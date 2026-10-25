@@ -1,0 +1,9 @@
+{
+  "name": "saaf-web-function",
+  "private": true,
+  "main": "index.js",
+  "engines": {
+    "node": ">=24"
+  },
+  "dependencies": {}
+}
