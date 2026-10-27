@@ -59,7 +59,7 @@ declare -ga __saaf_cpu_polls=()
 #
 # Parse /proc/cpuinfo the same way as the other versions of SAAF. cpuInfo
 # contains every vCPU when $verbose is true, otherwise only the first vCPU
-# without the flags, bugs, and Features lists.
+# without the flags, vmx_flags, bugs, and Features lists.
 #
 __saaf_jq_cpu_info='
 reduce (split("\n")[]) as $line ({coreInfo: {}, coreList: [], cpuCount: 0};
@@ -70,11 +70,11 @@ reduce (split("\n")[]) as $line ({coreInfo: {}, coreList: [], cpuCount: 0};
     else
         (if $key == "processor" then .cpuCount += 1 else . end)
         | if ($keyValue | length) < 2 then .
+        elif ($verbose | not) and ($key == "flags" or $key == "vmx_flags" or $key == "bugs" or $key == "Features") then .
         else
             ($keyValue[1] | sub("^\\s+"; "") | sub("\\s+$"; "")) as $value
-            | if $key == "flags" or $key == "bugs" or $key == "Features" then
-                (if $verbose then .coreInfo[$key] = ($value | split(" ")) else . end)
-            else .coreInfo[$key] = $value end
+            | .coreInfo[$key] = (if $key == "flags" or $key == "bugs" or $key == "Features"
+                then $value | split(" ") else $value end)
         end
     end)
 | (.coreList[0] // {}) as $first
@@ -247,7 +247,7 @@ inspectContainer() {
 # architecture:    The architecture of the CPU (x86 or arm64).
 # cpuCores:        The number of vCPUs allocated to the function.
 # cpuInfo:         A list containing the details of only the first vCPU, without the
-#                  flags, bugs, and Features lists.
+#                  flags, vmx_flags, bugs, and Features lists.
 #
 # Note: Use inspectCPUInfoVerbose to collect the details of every vCPU.
 #
@@ -257,7 +257,7 @@ inspectCPUInfo() {
 
 #
 # Collect the same information as inspectCPUInfo, except cpuInfo contains
-# every detail of every vCPU, including the flags, bugs, and Features lists.
+# every detail of every vCPU, including the flags, vmx_flags, bugs, and Features lists.
 #
 inspectCPUInfoVerbose() {
     __saaf_inspect_cpu_info true

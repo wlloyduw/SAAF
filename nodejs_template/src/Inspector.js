@@ -114,7 +114,7 @@ class Inspector {
      * architecture:    The architecture of the CPU (x86 or arm64).
      * cpuCores:        The number of vCPUs allocated to the function.
      * cpuInfo:         A list containing the details of only the first vCPU, without the
-     *                  flags, bugs, and Features lists.
+     *                  flags, vmx_flags, bugs, and Features lists.
      *
      * Note: Use inspectCPUInfoVerbose to collect the details of every vCPU.
      */
@@ -124,7 +124,7 @@ class Inspector {
 
     /**
      * Collect the same information as inspectCPUInfo, except cpuInfo contains
-     * every detail of every vCPU, including the flags, bugs, and Features lists.
+     * every detail of every vCPU, including the flags, vmx_flags, bugs, and Features lists.
      */
     inspectCPUInfoVerbose() {
         this.#inspectCPUInfo(true);
@@ -155,12 +155,13 @@ class Inspector {
                     continue;
                 }
 
+                if (!verbose && ["flags", "vmx_flags", "bugs", "Features"].includes(key)) {
+                    continue;
+                }
+
                 let value = keyValue[1].trim();
 
                 if (key == "flags" || key == "bugs" || key == "Features") {
-                    if (!verbose) {
-                        continue;
-                    }
                     value = value.split(" ");
                 }
 

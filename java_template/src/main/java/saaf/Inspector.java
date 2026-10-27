@@ -132,7 +132,7 @@ public class Inspector {
      * architecture: The architecture of the CPU (x86 or arm64).
      * cpuCores:     The number of vCPUs allocated to the function.
      * cpuInfo:      A list containing the details of only the first vCPU, without the
-     *               flags, bugs, and Features lists.
+     *               flags, vmx_flags, bugs, and Features lists.
      *
      * Note: Use inspectCPUInfoVerbose to collect the details of every vCPU.
      */
@@ -142,7 +142,7 @@ public class Inspector {
 
     /**
      * Collect the same information as inspectCPUInfo, except cpuInfo contains
-     * every detail of every vCPU, including the flags, bugs, and Features lists.
+     * every detail of every vCPU, including the flags, vmx_flags, bugs, and Features lists.
      */
     public void inspectCPUInfoVerbose() {
         inspectCPUInfo(true);
@@ -174,12 +174,13 @@ public class Inspector {
             if (keyValue.length < 2) {
                 continue;
             }
+            if (!verbose && Arrays.asList("flags", "vmx_flags", "bugs", "Features").contains(key)) {
+                continue;
+            }
             String value = keyValue[1].trim();
 
             if (key.equals("flags") || key.equals("bugs") || key.equals("Features")) {
-                if (verbose) {
-                    coreInfo.put(key, Arrays.asList(value.split(" ", -1)));
-                }
+                coreInfo.put(key, Arrays.asList(value.split(" ", -1)));
             } else {
                 coreInfo.put(key, value);
             }

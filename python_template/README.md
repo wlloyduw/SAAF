@@ -122,11 +122,11 @@ The amount of data collected is detemined by which functions are called. If some
 | cpuModel | The model number of the CPU. |
 | architecture | The architecture of the CPU, either x86 or arm64. |
 | cpuCores | The number of vCPUs available to the function instance. |
-| cpuInfo | A list containing every attribute in /proc/cpuinfo for only the first vCPU, except the flags, bugs, and Features lists. Use inspectCPUInfoVerbose() to include every attribute for every vCPU. |
+| cpuInfo | A list containing every attribute in /proc/cpuinfo for only the first vCPU, except the flags, vmx_flags, bugs, and Features lists. Use inspectCPUInfoVerbose() to include every attribute for every vCPU. |
 
 ### inspectCPUInfoVerbose()
 
-Collects the same fields as inspectCPUInfo(), except cpuInfo is a list containing every attribute in /proc/cpuinfo for each vCPU, including the flags, bugs, and Features lists.
+Collects the same fields as inspectCPUInfo(), except cpuInfo is a list containing every attribute in /proc/cpuinfo for each vCPU, including the flags, vmx_flags, bugs, and Features lists.
 
 ### inspectCPU()
 
