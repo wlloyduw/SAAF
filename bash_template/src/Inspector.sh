@@ -57,7 +57,8 @@ declare -ga __saaf_keys=()
 declare -ga __saaf_cpu_polls=()
 
 #
-# Parse /proc/cpuinfo the same way as the other versions of SAAF.
+# Parse /proc/cpuinfo the same way as the other versions of SAAF. cpuInfo
+# contains every vCPU when $verbose is true, otherwise only the first.
 #
 __saaf_jq_cpu_info='
 reduce (split("\n")[]) as $line ({coreInfo: {}, coreList: [], cpuCount: 0};
@@ -79,7 +80,7 @@ reduce (split("\n")[]) as $line ({coreInfo: {}, coreList: [], cpuCount: 0};
 | (if $first | has("model_name") then {cpuType: $first.model_name, cpuModel: $first.model, architecture: "x86"}
     elif $last | has("Model") then {cpuModel: $last.Model, architecture: "arm64"}
     else {architecture: "arm64"} end)
-    + {cpuCores: .cpuCount, cpuInfo: .coreList}'
+    + {cpuCores: .cpuCount, cpuInfo: (if $verbose then .coreList else .coreList[:1] end)}'
 
 #
 # Parse /proc/stat into a CPU poll with all CPU times converted from ticks into ms.
@@ -243,10 +244,30 @@ inspectContainer() {
 # cpuModel:        The model number of the CPU.
 # architecture:    The architecture of the CPU (x86 or arm64).
 # cpuCores:        The number of vCPUs allocated to the function.
-# cpuInfo:         Detailed information about all aspects of the CPU.
+# cpuInfo:         A list containing the details of only the first vCPU.
+#
+# Note: Use inspectCPUInfoVerbose to collect the details of every vCPU.
 #
 inspectCPUInfo() {
-    __saaf_read_entries < <("$SAAF_JQ" -r -R -s "$__saaf_jq_cpu_info$__saaf_jq_entries" /proc/cpuinfo)
+    __saaf_inspect_cpu_info false
+}
+
+#
+# Collect the same information as inspectCPUInfo, except cpuInfo contains
+# the details of every vCPU instead of only the first.
+#
+inspectCPUInfoVerbose() {
+    __saaf_inspect_cpu_info true
+}
+
+#
+# Parse /proc/cpuinfo and add the CPU info attributes.
+#
+# @param verbose "true" to include the details of every vCPU in cpuInfo, otherwise "false".
+#
+__saaf_inspect_cpu_info() {
+    __saaf_read_entries < <("$SAAF_JQ" -r -R -s --argjson verbose "$1" \
+        "$__saaf_jq_cpu_info$__saaf_jq_entries" /proc/cpuinfo)
 }
 
 #

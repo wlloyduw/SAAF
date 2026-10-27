@@ -131,9 +131,28 @@ public class Inspector {
      * cpuModel:     The model number of the CPU.
      * architecture: The architecture of the CPU (x86 or arm64).
      * cpuCores:     The number of vCPUs allocated to the function.
-     * cpuInfo:      Detailed information about all aspects of the CPU.
+     * cpuInfo:      A list containing the details of only the first vCPU.
+     *
+     * Note: Use inspectCPUInfoVerbose to collect the details of every vCPU.
      */
     public void inspectCPUInfo() {
+        inspectCPUInfo(false);
+    }
+
+    /**
+     * Collect the same information as inspectCPUInfo, except cpuInfo contains
+     * the details of every vCPU instead of only the first.
+     */
+    public void inspectCPUInfoVerbose() {
+        inspectCPUInfo(true);
+    }
+
+    /**
+     * Parse /proc/cpuinfo and add the CPU info attributes.
+     *
+     * @param verbose Whether to include the details of every vCPU in cpuInfo.
+     */
+    private void inspectCPUInfo(boolean verbose) {
         String[] lines = getFileAsString("/proc/cpuinfo").split("\n");
 
         HashMap<String, Object> coreInfo = new LinkedHashMap<>();
@@ -174,7 +193,7 @@ public class Inspector {
             attributes.put("architecture", "arm64");
         }
         attributes.put("cpuCores", cpuCount);
-        attributes.put("cpuInfo", coreList);
+        attributes.put("cpuInfo", verbose ? coreList : new ArrayList<>(coreList.subList(0, Math.min(1, coreList.size()))));
     }
 
     /**

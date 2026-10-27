@@ -98,12 +98,30 @@ class Inspector:
     #
     # Collect information about the CPU assigned to this function.
     #
-    # cpuType:     The model name of the CPU.
-    # cpuModel:    The model number of the CPU.
+    # cpuType:      The model name of the CPU.
+    # cpuModel:     The model number of the CPU.
+    # architecture: The architecture of the CPU (x86 or arm64).
     # cpuCores:     The number of vCPUs allocated to the function.
-    # cpuInfo:    Detailed information about all aspects of the CPU.
+    # cpuInfo:      A list containing the details of only the first vCPU.
+    #
+    # Note: Use inspectCPUInfoVerbose to collect the details of every vCPU.
     #
     def inspectCPUInfo(self):
+        self.__inspectCPUInfo(False)
+
+    #
+    # Collect the same information as inspectCPUInfo, except cpuInfo contains
+    # the details of every vCPU instead of only the first.
+    #
+    def inspectCPUInfoVerbose(self):
+        self.__inspectCPUInfo(True)
+
+    #
+    # Parse /proc/cpuinfo and add the CPU info attributes.
+    #
+    # @param verbose Whether to include the details of every vCPU in cpuInfo.
+    #
+    def __inspectCPUInfo(self, verbose):
         with open('/proc/cpuinfo', 'r') as file:
             cpuInfo = file.read()
         lines = cpuInfo.split('\n')
@@ -142,7 +160,7 @@ class Inspector:
                 self.__attributes['cpuModel'] = core_list[list_len]['Model']
             self.__attributes['architecture'] = "arm64"
         self.__attributes['cpuCores'] = int(cpu_count)
-        self.__attributes['cpuInfo'] = core_list
+        self.__attributes['cpuInfo'] = core_list if verbose else core_list[:1]
         
     #
     # Collect timing CPU metrics
