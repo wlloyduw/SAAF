@@ -10,11 +10,12 @@ import time
 #
 # Execute a bash command and get the output.
 #
-# @param command An array of strings with each part of the command.
+# @param command A string containing the command to run. It runs in a shell,
+#                so it may use pipes.
 # @return Standard out of the command.
 #
 def runCommand(command):
-    return os.popen(command).read()
+    return subprocess.run(command, shell=True, stdout=subprocess.PIPE, text=True).stdout
 
 #
 # Global variables that will persist through multiple invocations.
