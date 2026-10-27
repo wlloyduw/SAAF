@@ -58,7 +58,8 @@ declare -ga __saaf_cpu_polls=()
 
 #
 # Parse /proc/cpuinfo the same way as the other versions of SAAF. cpuInfo
-# contains every vCPU when $verbose is true, otherwise only the first.
+# contains every vCPU when $verbose is true, otherwise only the first vCPU
+# without the flags, bugs, and Features lists.
 #
 __saaf_jq_cpu_info='
 reduce (split("\n")[]) as $line ({coreInfo: {}, coreList: [], cpuCount: 0};
@@ -71,8 +72,9 @@ reduce (split("\n")[]) as $line ({coreInfo: {}, coreList: [], cpuCount: 0};
         | if ($keyValue | length) < 2 then .
         else
             ($keyValue[1] | sub("^\\s+"; "") | sub("\\s+$"; "")) as $value
-            | .coreInfo[$key] = (if $key == "flags" or $key == "bugs" or $key == "Features"
-                then $value | split(" ") else $value end)
+            | if $key == "flags" or $key == "bugs" or $key == "Features" then
+                (if $verbose then .coreInfo[$key] = ($value | split(" ")) else . end)
+            else .coreInfo[$key] = $value end
         end
     end)
 | (.coreList[0] // {}) as $first
@@ -244,7 +246,8 @@ inspectContainer() {
 # cpuModel:        The model number of the CPU.
 # architecture:    The architecture of the CPU (x86 or arm64).
 # cpuCores:        The number of vCPUs allocated to the function.
-# cpuInfo:         A list containing the details of only the first vCPU.
+# cpuInfo:         A list containing the details of only the first vCPU, without the
+#                  flags, bugs, and Features lists.
 #
 # Note: Use inspectCPUInfoVerbose to collect the details of every vCPU.
 #
@@ -254,7 +257,7 @@ inspectCPUInfo() {
 
 #
 # Collect the same information as inspectCPUInfo, except cpuInfo contains
-# the details of every vCPU instead of only the first.
+# every detail of every vCPU, including the flags, bugs, and Features lists.
 #
 inspectCPUInfoVerbose() {
     __saaf_inspect_cpu_info true

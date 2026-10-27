@@ -102,7 +102,8 @@ class Inspector:
     # cpuModel:     The model number of the CPU.
     # architecture: The architecture of the CPU (x86 or arm64).
     # cpuCores:     The number of vCPUs allocated to the function.
-    # cpuInfo:      A list containing the details of only the first vCPU.
+    # cpuInfo:      A list containing the details of only the first vCPU, without the
+    #               flags, bugs, and Features lists.
     #
     # Note: Use inspectCPUInfoVerbose to collect the details of every vCPU.
     #
@@ -111,7 +112,7 @@ class Inspector:
 
     #
     # Collect the same information as inspectCPUInfo, except cpuInfo contains
-    # the details of every vCPU instead of only the first.
+    # every detail of every vCPU, including the flags, bugs, and Features lists.
     #
     def inspectCPUInfoVerbose(self):
         self.__inspectCPUInfo(True)
@@ -144,6 +145,8 @@ class Inspector:
                 value = keyValue[1].strip()
                 
                 if (key == "flags" or key == "bugs" or key == "Features"):
+                    if not verbose:
+                        continue
                     value = value.split(" ")
                 
                 cpu_info[key] = value
