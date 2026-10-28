@@ -1,10 +1,10 @@
 # SAAF - Lambda Web Functions
 
-This template deploys a Node.js HTTP server to [AWS Lambda Web Functions](https://docs.aws.amazon.com/lambda/latest/dg/web-functions.html). Lambda runs the server in an execution environment, gives it an HTTPS endpoint, and can reuse that environment for many requests.
+This template deploys a Node.js HTTP server to [AWS Lambda Web Functions](https://docs.aws.amazon.com/lambda/latest/dg/web-functions.html). Lambda runs the server in an execution environment, gives it an HTTPS endpoint, and reuses that environment for later requests.
 
-The function code follows the JavaScript template: `function.js` is the platform-neutral function, and `Inspector.js` is SAAF. The Web Function bridge in `platforms/aws_web/index.js` only accepts HTTP and forwards a parsed request. Deployment scripts follow the Jupyter template: each platform directory has `build.sh`, `publish.sh`, and `run.sh`.
+`src/function.js` is the function and `src/Inspector.js` is SAAF. `platforms/aws_web` holds the HTTP server Lambda loads and the `build.sh`, `publish.sh`, and `run.sh` scripts, following the Jupyter template's platform folders.
 
-Lambda Web Functions currently support the `nodejs24.x` runtime. Each execution environment has 2 GB of memory. The server must listen on the host and port in `AWS_LAMBDA_HTTP_ENDPOINT`.
+Lambda Web Functions support the `nodejs24.x` runtime. Each execution environment has 2 GB of memory and 2 vCPUs, and there is no memory setting.
 
 ### Layout
 
@@ -17,127 +17,66 @@ web_template
     platforms
         aws_web
             index.js      HTTP server Lambda loads
+            config.json   Function name, Region, timeout, and the test payload
             build.sh
             publish.sh
             run.sh
-            default_config.json
-    deploy
-        config.json       Names, region, timeout, and the test payload
-        publish.sh
-        run.sh
-        local.sh
-        local.js
 ```
 
 ## Handler
 
-`index.js` listens as soon as it loads. For each request it:
+`index.js` listens on `AWS_LAMBDA_HTTP_ENDPOINT`. For each request it parses the body as JSON and copies its fields onto the request, so `{"name":"Ada"}` becomes `request.name`. Query parameters fill in fields the body did not set. `method`, `path`, `query`, `headers`, `body`, and `requestId` are reserved for the HTTP request. It then calls `function.js` and returns the object from `Inspector.finish()` as JSON.
 
-1. Reads the body, up to 1 MB.
-2. Parses JSON objects and copies their fields onto the request, so `{"name":"Ada"}` becomes `request.name`. Query parameters fill in fields the body did not set. `method`, `path`, `query`, `headers`, `body`, and `requestId` stay reserved for HTTP data.
-3. Calls `function.js` with that request and a context whose `requestId` is the `lambda-web-request-id` header.
-4. Returns the object from `Inspector.finish()` as `application/json`.
-
-`GET /`, `GET /?name=Ada`, and `POST /` with a JSON body all hit the same function. Branch on `request.method` and `request.path` when a function needs more than one route.
-
-Lambda sends `SIGTERM` when it removes an environment. The bridge closes the server and exits. Cleanup has about one second.
+`GET /?name=Ada` and `POST /` with a JSON body reach the same function. A body that is not JSON returns 400, and an error thrown by the function returns 500. On `SIGTERM`, sent when Lambda removes an environment, the server finishes open requests and exits.
 
 ## SAAF
 
-Create an Inspector at the start of each request, collect metrics, do the work, then collect deltas. Call `finish()` once. `close()` is safe to call again and keeps the in-flight count accurate when a request throws.
+`src/Inspector.js` is the [Node.js Inspector](../nodejs_template/src/Inspector.js) with three changes for Web Functions:
+
+1. `inspectPlatform()` only reports Web Function values: `platform` is always `AWS Lambda Web`, and `functionMemory` and `functionRegion` come from `AWS_LAMBDA_FUNCTION_MEMORY_SIZE` and `AWS_REGION`. Web Functions do not set `AWS_LAMBDA_FUNCTION_NAME` or `AWS_LAMBDA_LOG_STREAM_NAME`, so `functionName` comes from `SAAF_FUNCTION_NAME`, which `publish.sh` sets, and `containerID` and `vmID` are not reported.
+2. `inspectContainer()` uses `crypto.randomUUID()`, so the package has no dependencies.
+3. `recommendConfiguration` is removed. Web Functions run with a fixed 2048 MB, so there is no memory setting to recommend, and `availableCPUs`, `utilizedCPUs`, and `recommendedMemory` are not reported.
+
+Every other method and field matches the Node.js Inspector, including `cpuInfo`, `cpuUser`, `cpuKernel`, and `cpuSteal` in milliseconds, `bootTime`, `pollCPUStats()`, `processCPUPolls()`, and `inspectEnvironment()`.
 
 ```javascript
-const Inspector = require('./Inspector');
+module.exports = function (request, context) {
+    const inspector = new (require('./Inspector'))();
+    inspector.inspectAll();
 
-function yourFunction(request, context) {
-    const inspector = new Inspector();
-    try {
-        inspector.inspectAll();
+    inspector.addAttribute('message', 'Hello ' + request.name + '!');
 
-        inspector.addAttribute('message', 'Hello ' + request.name + '!');
-
-        inspector.inspectAllDeltas();
-        return inspector.finish();
-    } finally {
-        inspector.close();
-    }
-}
+    inspector.inspectAllDeltas();
+    return inspector.finish();
+};
 ```
 
-`inspectAll()` records the container id, platform, kernel, memory, and CPU counters, then stores `frameworkRuntime`. `inspectAllDeltas()` records `userRuntime` and the counter deltas. `finish()` adds `runtime` and `endTime`.
+Web Function environments stay warm and serve later requests in the same process, so `invocations` counts requests in that process and `newcontainer` is `1` only on an environment's first request. The sample function also adds `httpMethod`, `httpPath`, and `requestId` from the HTTP request.
 
-Web Function environments stay warm and serve later requests in the same process. These fields describe that lifetime:
-
-| Field | Meaning |
-| --- | --- |
-| uuid | Written to `/tmp/container-id` on the first request in an environment. |
-| newcontainer | `1` on that first request, then `0` while the environment lives. |
-| invocations | How many Inspectors this process has created. |
-| initializationTime | When this process loaded SAAF, in Unix milliseconds. |
-| inFlightRequests | Inspectors open at the start of this request, including this one. |
-| platform | `AWS Lambda Web` when Lambda runtime variables are present. A local server is `Local`. |
-| functionMemory | `AWS_LAMBDA_FUNCTION_MEMORY_SIZE`, or `2048` when Lambda does not set it. |
-| functionRegion | `AWS_REGION`. |
-| httpMethod, httpPath, requestId | Added by the sample function from the HTTP request. |
-
-CPU and memory counters come from `/proc` and cover the whole environment. With the default `max_concurrency_per_environment` of `1`, a delta belongs to one request. Raising that limit lets one environment handle concurrent requests, and overlapping requests share the same `/proc` counters. `inspectAll()` also reads `/proc` synchronously, which blocks the Node.js event loop for the length of those reads.
-
-The rest of the metric names match the [Node.js Inspector](../nodejs_template/README.md): `cpuUsr`, `cpuKrn`, `vmcpusteal`, `pageFaults`, and their deltas. `majorPageFaults` is read from `pgmajfault`. On a machine without `/proc`, those collectors record `SAAFCPUError` or `SAAFMemoryError` and still return the request timing fields.
+CPU and memory counters come from `/proc` and cover the whole environment. With `max_concurrency_per_environment` set to `1`, a delta belongs to one request. Raising it lets one environment handle concurrent requests, and overlapping requests share the same `/proc` counters.
 
 ## Deploy
 
-Install a current AWS CLI (the release that includes `aws lambda-web`), `jq`, and `curl`. Configure credentials for the target account and Region. From `deploy/`:
+Install an AWS CLI that includes `aws lambda-web` (2.38.5 or later works), plus `jq` and `curl`, and configure credentials for the target account. Then:
 
 ```bash
-./publish.sh
-./run.sh
-./run.sh '{"name":"Ada"}'
+./platforms/aws_web/publish.sh
+./platforms/aws_web/run.sh
+./platforms/aws_web/run.sh '{"name":"Ada"}'
 ```
 
-`publish.sh` builds `platforms/aws_web/.build`, uploads it, and creates or updates the Web Function named in `config.json`. The first deploy can create the execution role and the S3 deployment bucket. The endpoint URL is saved to `deploy/endpoint.url`. `run.sh` POSTs the `test` object and prints the JSON body.
+`publish.sh` runs `build.sh`, which copies `src` and `index.js` into `platforms/aws_web/.build`, then runs `aws lambda-web deploy`. The first deploy creates the function, its `dev` endpoint, an execution role, and an S3 deployment bucket, and prints the endpoint URL. Later deploys keep the same URL. Each deploy creates a revision, and a function can hold 50, so `publish.sh` deletes revisions that no longer serve traffic.
 
-Set `DRY_RUN=1` to print the deploy command without calling AWS:
-
-```bash
-DRY_RUN=1 ./platforms/aws_web/publish.sh
-```
+`run.sh` looks up the `dev` endpoint, POSTs the `test` payload or the JSON argument, and prints the response.
 
 `config.json` fields:
 
 | Field | Role |
 | --- | --- |
-| function_name | Web Function name. 2–64 letters, numbers, hyphens, or underscores. |
-| runtime | `nodejs24.x`. |
-| timeout_seconds | Per-request limit from 3 to 900. The Lambda default is 30. |
-| max_concurrency_per_environment | Concurrent requests in one environment. This template uses 1 so CPU deltas stay tied to one request. |
-| region, profile | AWS CLI target. |
-| endpoint_name | Endpoint to create or update. The default name is `dev`. |
-| endpoint_type | `HomeRegion`, `MultiRegion`, or `PerRegion`. The type cannot change after creation. |
-| auth_type | `ApplicationManaged` lets `run.sh` call the endpoint with curl. `IamAuth` requires signed requests. |
-| auto_deployment_mode | `LatestRevision` sends traffic to each new revision when it becomes active. |
-| execution_role_arn, bucket_name | Optional existing role and versioned deployment bucket. Empty values let `aws lambda-web deploy` create them. |
-| env | Extra environment variables. Lambda rejects reserved names such as `AWS_REGION` and `AWS_LAMBDA_HTTP_ENDPOINT`. |
-| test | JSON body used by `run.sh` when no payload is passed. |
-| endpoint_url | Optional. When set, `run.sh` uses it instead of looking up the endpoint. |
-| function_memory | Documentation for the 2048 MB environment size. Lambda Web Functions do not take a memory setting. |
-
-Edit the function in `src/function.js`, then run `publish.sh` again. The endpoint URL stays the same.
-
-## Run locally
-
-Direct call, with no HTTP server:
-
-```bash
-node deploy/local.js
-```
-
-HTTP server, using the same bridge Lambda loads:
-
-```bash
-./deploy/local.sh
-curl -sS -X POST -H 'Content-Type: application/json' -d '{"name":"Ada"}' http://localhost:3000/
-```
-
-On macOS, Node binds `localhost` to the IPv6 loopback address. Use `http://localhost:3000/` for that local server.
-
-`./deploy/local.sh` sets `AWS_LAMBDA_HTTP_ENDPOINT` to `localhost:3000` when it is unset. Override that variable to bind a different address.
+| function_name | Web Function name. |
+| region | AWS Region to deploy to. |
+| timeout | Per-request limit in seconds, from 3 to 900. |
+| max_concurrency_per_environment | Concurrent requests per environment. Lambda's default is 64. This template uses 1 so CPU and memory deltas belong to one request. |
+| role | Optional execution role ARN. When empty, the first deploy creates one. |
+| env | Environment variables to add, as `{"KEY": "value"}`. |
+| test | JSON payload `run.sh` sends when no argument is given. |
