@@ -1,0 +1,3 @@
+.build/
+# Responses and deploy logs, which contain endpoint URLs that need no authentication.
+results/

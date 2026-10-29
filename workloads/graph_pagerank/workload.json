@@ -1,0 +1,12 @@
+{
+	"name": "graph_pagerank",
+	"description": "PageRank by power iteration over the graph's edges, from the SeBS graph-pagerank benchmark.",
+	"defaults": {
+		"size": 100000,
+		"graph": "tree",
+		"iterations": 100,
+		"loops": 34,
+		"seed": 42,
+		"threads": 1
+	}
+}

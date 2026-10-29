@@ -1,0 +1,10 @@
+{
+	"name": "matrix_calc_service",
+	"description": "Two dense integer matrix multiplications per loop, from matrix_calc_service.",
+	"defaults": {
+		"size": 300,
+		"loops": 34,
+		"seed": 42,
+		"threads": 1
+	}
+}

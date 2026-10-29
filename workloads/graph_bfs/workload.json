@@ -1,0 +1,11 @@
+{
+	"name": "graph_bfs",
+	"description": "Breadth-first search from node 0, from the SeBS graph-bfs benchmark.",
+	"defaults": {
+		"size": 100000,
+		"graph": "tree",
+		"loops": 3300,
+		"seed": 42,
+		"threads": 1
+	}
+}

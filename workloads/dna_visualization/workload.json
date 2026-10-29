@@ -1,0 +1,10 @@
+{
+	"name": "dna_visualization",
+	"description": "Counts the bases of a DNA sequence and computes its squiggle walk, from the SeBS dna-visualization benchmark.",
+	"defaults": {
+		"length": 1000000,
+		"loops": 180,
+		"seed": 42,
+		"threads": 1
+	}
+}

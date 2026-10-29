@@ -1,0 +1,9 @@
+{
+	"name": "binary_trees",
+	"description": "Builds, walks, and drops complete binary trees. Allocation and garbage collection bound.",
+	"defaults": {
+		"depth": 16,
+		"trees": 1500,
+		"threads": 1
+	}
+}

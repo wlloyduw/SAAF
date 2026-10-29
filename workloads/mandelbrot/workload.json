@@ -1,0 +1,10 @@
+{
+	"name": "mandelbrot",
+	"description": "Escape-time Mandelbrot set, one unit per row. Floating-point bound with almost no memory traffic.",
+	"defaults": {
+		"width": 2000,
+		"height": 2000,
+		"iterations": 1000,
+		"threads": 1
+	}
+}

@@ -1,0 +1,11 @@
+{
+	"name": "graph_mst",
+	"description": "Kruskal's minimum spanning tree over randomly weighted edges, from the SeBS graph-mst benchmark.",
+	"defaults": {
+		"size": 100000,
+		"graph": "tree",
+		"loops": 135,
+		"seed": 42,
+		"threads": 1
+	}
+}

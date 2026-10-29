@@ -1,0 +1,13 @@
+{
+	"name": "logistic_regression",
+	"description": "Logistic regression trained by SGD on shards of a synthetic dataset, then averaged, from logistic_regression_parallel.",
+	"defaults": {
+		"samples": 16000,
+		"features": 16,
+		"epochs": 2500,
+		"shards": 16,
+		"learningRate": 0.01,
+		"seed": 42,
+		"threads": 1
+	}
+}

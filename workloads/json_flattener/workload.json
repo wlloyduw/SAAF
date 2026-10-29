@@ -1,0 +1,11 @@
+{
+	"name": "json_flattener",
+	"description": "Recursively flattens a nested object into dotted keys, from json_flattener.",
+	"defaults": {
+		"depth": 10,
+		"breadth": 3,
+		"loops": 10,
+		"seed": 42,
+		"threads": 1
+	}
+}

@@ -1,0 +1,11 @@
+{
+	"name": "http_getter",
+	"description": "Sends HTTP GET requests to a URL and reports their latency, from http_getter.",
+	"defaults": {
+		"url": "https://checkip.amazonaws.com/",
+		"loops": 100,
+		"keepAlive": false,
+		"timeout": 10,
+		"threads": 1
+	}
+}

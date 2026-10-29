@@ -1,0 +1,11 @@
+{
+	"name": "thumbnailer",
+	"description": "Resizes a generated RGB image to a range of sizes, from the SeBS thumbnailer benchmark.",
+	"defaults": {
+		"width": 1920,
+		"height": 1080,
+		"loops": 50,
+		"filter": "bilinear",
+		"threads": 1
+	}
+}

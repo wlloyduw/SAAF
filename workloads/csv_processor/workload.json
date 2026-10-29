@@ -1,0 +1,11 @@
+{
+	"name": "csv_processor",
+	"description": "Element-wise column arithmetic and aggregates over generated columns, from csv_processor.",
+	"defaults": {
+		"size": 100000,
+		"calcs": 14,
+		"loops": 16,
+		"seed": 42,
+		"threads": 1
+	}
+}

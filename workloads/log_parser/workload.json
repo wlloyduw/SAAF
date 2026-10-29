@@ -1,0 +1,10 @@
+{
+	"name": "log_parser",
+	"description": "Parses generated access logs with a regular expression and summarizes them. Regex, string, and hash map bound.",
+	"defaults": {
+		"lines": 100000,
+		"loops": 26,
+		"seed": 42,
+		"threads": 1
+	}
+}

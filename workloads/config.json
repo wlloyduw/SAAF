@@ -1,0 +1,36 @@
+{
+	"prefix": "saaf",
+	"profile": "personal",
+	"region": "us-east-1",
+	"tags": {
+		"project": "saaf-workloads"
+	},
+	"deployments": {
+		"web": {
+			"paradigm": "web",
+			"timeout": 900,
+			"role": "arn:aws:iam::616835888336:role/SAAFMicrovmRole"
+		},
+		"event-2048": {
+			"paradigm": "event",
+			"memory": 2048,
+			"architecture": "arm64",
+			"timeout": 900,
+			"role": "arn:aws:iam::616835888336:role/SAAFMicrovmRole"
+		},
+		"event-3072": {
+			"paradigm": "event",
+			"memory": 3072,
+			"architecture": "arm64",
+			"timeout": 900,
+			"role": "arn:aws:iam::616835888336:role/SAAFMicrovmRole"
+		},
+		"microvm": {
+			"paradigm": "microvm",
+			"memory": 2048,
+			"bucket": "saaf-microvm-616835888336-us-east-1",
+			"build_role": "arn:aws:iam::616835888336:role/SAAFMicrovmRole",
+			"execution_role": "arn:aws:iam::616835888336:role/SAAFMicrovmRole"
+		}
+	}
+}

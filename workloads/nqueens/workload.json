@@ -1,0 +1,8 @@
+{
+	"name": "nqueens",
+	"description": "Counts every n-queens solution by bitmask backtracking. Integer and branch bound.",
+	"defaults": {
+		"n": 15,
+		"threads": 1
+	}
+}

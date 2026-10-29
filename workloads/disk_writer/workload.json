@@ -1,0 +1,11 @@
+{
+	"name": "disk_writer",
+	"description": "Writes files to /tmp and deletes them, optionally with fsync, from disk_writer.",
+	"defaults": {
+		"size": 80,
+		"loops": 60,
+		"sync": false,
+		"dir": "/tmp",
+		"threads": 1
+	}
+}

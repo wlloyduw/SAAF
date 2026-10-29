@@ -1,0 +1,11 @@
+{
+	"name": "disk_write_and_process",
+	"description": "Writes a file to /tmp, then reads it with wc, base64, sha1sum, and cat, from disk_write_and_process.",
+	"defaults": {
+		"size": 112,
+		"loops": 4,
+		"mode": "subprocess",
+		"dir": "/tmp",
+		"threads": 1
+	}
+}

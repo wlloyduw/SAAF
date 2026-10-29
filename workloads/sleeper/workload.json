@@ -1,0 +1,7 @@
+{
+	"name": "sleeper",
+	"description": "Sleeps for time seconds. A control for overhead and idle cost, from sleeper.",
+	"defaults": {
+		"time": 1
+	}
+}

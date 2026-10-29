@@ -1,0 +1,12 @@
+{
+	"function_name": "saaf-event-hello",
+	"region": "us-east-1",
+	"memory": 2048,
+	"ephemeral_storage": 512,
+	"architecture": "arm64",
+	"runtime": "nodejs24.x",
+	"timeout": 900,
+	"role": "",
+	"env": {},
+	"test": {}
+}

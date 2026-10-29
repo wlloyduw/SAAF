@@ -1,0 +1,10 @@
+{
+	"name": "calc_service",
+	"description": "Random writes to three operand arrays with a multiply and divide for each, from SAAF's calcs_service.",
+	"defaults": {
+		"calcs": 100000,
+		"loops": 2400,
+		"seed": 42,
+		"threads": 1
+	}
+}

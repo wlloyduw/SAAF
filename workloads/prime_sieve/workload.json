@@ -1,0 +1,9 @@
+{
+	"name": "prime_sieve",
+	"description": "Counts the primes up to limit with a segmented, odd-only sieve of Eratosthenes. Cache and memory bound.",
+	"defaults": {
+		"limit": 2000000000,
+		"segmentSize": 262144,
+		"threads": 1
+	}
+}

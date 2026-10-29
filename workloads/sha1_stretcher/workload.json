@@ -1,0 +1,11 @@
+{
+	"name": "sha1_stretcher",
+	"description": "Chains of repeated SHA-1 hashes through Node's OpenSSL, from sha1_stretcher.",
+	"defaults": {
+		"input": "a string to process SHA1 hashing on I want this string to be pretty long",
+		"loops": 1800000,
+		"chains": 16,
+		"algorithm": "sha1",
+		"threads": 1
+	}
+}
