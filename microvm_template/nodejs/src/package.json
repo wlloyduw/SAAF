@@ -1,0 +1,9 @@
+{
+  "name": "saaf-microvm-function",
+  "private": true,
+  "main": "index.js",
+  "engines": {
+    "node": ">=24"
+  },
+  "dependencies": {}
+}

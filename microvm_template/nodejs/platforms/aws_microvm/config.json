@@ -1,0 +1,20 @@
+{
+	"function_name": "saaf-microvm-nodejs",
+	"region": "us-east-1",
+	"memory": 2048,
+	"bucket": "",
+	"build_role": "",
+	"execution_role": "",
+	"base_image": "al2023-1",
+	"idle_policy": {
+		"autoResumeEnabled": true,
+		"maxIdleDurationSeconds": 60,
+		"suspendedDurationSeconds": 600
+	},
+	"maximum_duration": 3600,
+	"reuse_microvm": true,
+	"env": {},
+	"test": {
+		"name": "Bob"
+	}
+}
