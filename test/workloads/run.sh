@@ -19,6 +19,13 @@
 cd "$(dirname "$0")" || exit
 config=../../workloads/config.json
 
+# Each request in a burst has its own connection, and macOS allows a process 256 open files by default.
+ulimit -n 4096 2> /dev/null || ulimit -n "$(ulimit -Hn)" 2> /dev/null
+if [[ $(ulimit -n) != unlimited && $(ulimit -n) -lt 2048 ]]; then
+	echo "Run: Only $(ulimit -n) open files are allowed, too few for burst-1000. Raise the hard limit first." >&2
+	exit 1
+fi
+
 if [[ $# -lt 2 ]]; then
 	echo "Usage: ./run.sh <workload|all> <deployment|all> [experiment...]" >&2
 	exit 1
@@ -59,7 +66,8 @@ fi
 experiments_log=./history/experiments.csv
 mkdir -p ./history
 if [[ ! -f $experiments_log ]]; then
-	echo "deployment,workload,experiment,startedAt,finishedAt,status,successfulRequests,timedOutRequests,microvmId" > "$experiments_log"
+	echo "deployment,workload,experiment,startedAt,finishedAt,status,successfulRequests,failedRequests,timedOutRequests,microvmId" \
+		> "$experiments_log"
 fi
 
 # The experiment that is running, as deployment/workload/experiment, when it started, and its MicroVM.
@@ -69,10 +77,11 @@ current_microvm=""
 
 # Append the running experiment's row to experiments.csv, with status $1 and the counts from its log.
 finish_row() {
-	local log=./history/$current.log successful timed_out
+	local log=./history/$current.log successful failed timed_out
 	successful=$(grep -o 'Successful Runs: [0-9]*' "$log" 2> /dev/null | awk '{sum += $3} END {print sum + 0}')
+	failed=$(grep -c '^Run [0-9]*\.[0-9]* failed: ' "$log" 2> /dev/null)
 	timed_out=$(grep -c ' timed out after [0-9]* seconds\.$' "$log" 2> /dev/null)
-	echo "${current//\//,},$current_started,$(date -u '+%Y-%m-%dT%H:%M:%SZ'),$1,$successful,${timed_out:-0},$current_microvm" \
+	echo "${current//\//,},$current_started,$(date -u '+%Y-%m-%dT%H:%M:%SZ'),$1,$successful,${failed:-0},${timed_out:-0},$current_microvm" \
 		>> "$experiments_log"
 	current=""
 }
@@ -133,6 +142,8 @@ for deployment in "${deployments[@]}"; do
 
 			if [[ $paradigm == microvm ]]; then
 				if ! ./microvm.sh start "$workload" "$deployment"; then
+					# microvm.sh terminates a MicroVM it could not start. Stopping again is harmless.
+					./microvm.sh stop "$workload" "$deployment"
 					finish_row "microvm did not start"
 					continue
 				fi

@@ -63,6 +63,7 @@ The event-2048 runtimes are measured. Each workload ran once on event-2048 with 
 
 event-3072 takes the same correction, since its prediction came from the same event function smoke tests. The Web Function and MicroVM runtimes are still predictions. They scale the single-threaded smoke-test runtimes from `workloads/results/smoke-2026-10-29` by the amount of work, divided by the thread speedup measured on an 8-core laptop. Each smoke test was a single cold request, and 5 of these workloads had no MicroVM result, so treat those columns as estimates. Run `pilot` on each deployment first. If a workload is far off, change its payload in `payloads.json` and run `generate.py`.
 
+- **The CPU varies.** Each deployment runs on a mix of Graviton generations, which SAAF reports in `cpuInfo` as `CPU_part`: `0xd0c` is Graviton2, `0xd40` Graviton3, and `0xd4f` Graviton4. In the smoke tests and the calibration, event functions ran mostly on Graviton2, with some Graviton3 and Graviton4. Web Functions ran mostly on Graviton4, and MicroVMs on Graviton3 and Graviton4. The calibration measured one request per workload, so a workload measured on a faster CPU will take longer on Graviton2. graph_bfs, csv_processor, json_flattener, logistic_regression, binary_trees, and graph_mst were measured on Graviton3 or Graviton4, and on Graviton2 they may take 40 to 55 seconds. calc_service was measured on Graviton2 and will be faster on the others. Each report has a `cpuInfo` category that summarizes each CPU separately.
 - **`prime_sieve`** reports `correct` only when `limit` is a power of 10, so with 8.4 billion it reports the count of primes without checking it.
 - **`http_getter`** keeps its defaults: 100 requests to `checkip.amazonaws.com`, about 1 second. Reaching 10 seconds would take thousands of requests per call. Across all four deployments, that is billions of requests to a service we don't own. Point `url` at an endpoint you control before increasing `loops`.
 - **`disk_write_and_process`** uses 1 thread. Each thread writes its own 112 MB file and up to 151 MB of output, and the event functions have 512 MB of `/tmp`.
@@ -93,7 +94,7 @@ Do steps 1 to 3 at least a day before the experiments, so that billing can attri
     `platforms/aws_event/publish.sh` creates each function's URL, with no authentication, and the two permissions a public function URL needs. Anyone with a URL can call the function, as with the Web Functions, so keep the URLs private.
 5. **Finish the MicroVM images.** 12 of the 18 workloads have tested images: binary_trees, calc_service, csv_processor, disk_write_and_process, disk_writer, dna_visualization, graph_bfs, graph_mst, graph_pagerank, http_getter, json_flattener, and log_parser. The builds for logistic_regression, matrix_calc_service, and prime_sieve were left running and still need a test. sleeper, thumbnailer, and zipper still need publishing.
 6. **Fill in the endpoints.** Run `./endpoints.sh`. It reads the Web Function and event function endpoints from AWS, writes `endpoints.json`, and regenerates the function files. `run.sh` skips any deployment whose function file has no endpoint.
-7. **Check the Lambda concurrency quota.** `burst-1000` needs 1,000 concurrent executions, which is the default account quota in a Region. Running two event deployments at once needs twice that. Check the quota with `aws service-quotas get-service-quota --service-code lambda --quota-code L-B99A9384`.
+7. **Check the account's limits.** `burst-1000` needs 1,000 concurrent executions, which is the default account quota in a Region. Running two event deployments at once needs twice that. Check the quota with `aws service-quotas get-service-quota --service-code lambda --quota-code L-B99A9384`, and the Web Functions' settings with `aws lambda-web get-web-account-settings`. A quota increase can take days, so ask for one early if it is needed.
 8. **Run the pilot, and check that the event functions log.** After `./run.sh all all pilot`, `aws logs describe-log-groups --log-group-name-prefix /aws/lambda/saaf-event-` should list a log group for each event function. If one is missing, its execution role cannot write logs, and `usage.py` cannot check that function's bill.
 
 ## Running
@@ -107,7 +108,7 @@ FaaS Runner needs Python 3 with `requests`, and the AWS CLI. The AWS CLI is need
 ./run.sh log_parser microvm sequential-0100 burst-0010 burst-0020
 ```
 
-`run.sh` takes the AWS profile and Region from `workloads/config.json`. It runs one experiment at a time and writes the results to `history/<deployment>/<workload>/`. FaaS Runner's output goes to `<experiment>.log`. After each experiment, it prints the successful requests in each burst, and says so when a timeout stopped the experiment early.
+`run.sh` takes the AWS profile and Region from `workloads/config.json`, and raises the limit on open files to 4096, since each request in a burst has its own connection. It runs one experiment at a time and writes the results to `history/<deployment>/<workload>/`. FaaS Runner's output goes to `<experiment>.log`. After each experiment, it prints the successful requests in each burst, and says so when a timeout stopped the experiment early.
 
 At the predicted runtimes, every experiment for every workload costs roughly:
 
@@ -118,7 +119,18 @@ At the predicted runtimes, every experiment for every workload costs roughly:
 | web | $44 |
 | microvm | about $4 |
 
-The event estimates use the arm64 price of $0.0000133334 per GB-second. The Web Function and MicroVM estimates use third-party figures of $0.0000276944 per vCPU-second and $0.0000036667 per GB-second, so check them against the AWS pricing page. They assume both Web Function vCPUs and all 4 MicroVM vCPUs are busy for each request. They leave out idle Web Function environments and MicroVM snapshot storage.
+The event estimates use the arm64 price of $0.0000133334 per GB-second. The Web Function and MicroVM estimates use third-party figures of $0.0000276944 per vCPU-second and $0.0000036667 per GB-second, so check them against the AWS pricing page. They assume both Web Function vCPUs and all 4 MicroVM vCPUs are busy for each request. They leave out MicroVM image storage, and idle Web Function environments.
+
+Idle Web Function environments are the largest unknown. A Web Function is billed for memory for as long as an environment exists, and AWS doesn't say how long an idle one lasts. `burst-1000` leaves 1,000 environments of 2 GB for each workload, and each minute they stay idle costs about $0.44. Across 18 workloads, that is about $8 per minute of idle time: about $40 if environments last 5 minutes, and about $120 if they last 15.
+
+To find out before spending the budget, run the experiments in stages:
+
+1. Run `pilot` on every deployment.
+2. Run every experiment for one workload on every deployment, for example `./run.sh graph_bfs all`.
+3. Wait a day, then look up that workload's costs in the CUR data. For the Web Function, compare the memory GB-seconds with its active vCPU-seconds to see how long environments stayed idle.
+4. Run the other workloads, or drop `burst-0500` and `burst-1000` from the Web Functions if idle environments cost too much.
+
+An AWS Budgets alert, at $100 and $200 for example, warns by email when costs pass a threshold. Billing data arrives hours late, so an alert doesn't stop spending in time.
 
 ### MicroVMs
 
@@ -140,7 +152,7 @@ The bill is the authority: AWS's CUR 2.0 data, with each resource's ID and tags.
 | Record | Event functions | Web Functions | MicroVMs |
 | --- | --- | --- | --- |
 | CUR 2.0 data | Tagged, by function | Tagged, by Web Function | Images are tagged. MicroVMs cannot be tagged, so match their resource IDs. |
-| `history/experiments.csv` from `run.sh` | Each experiment's UTC start and finish | Same | Same, with the experiment's MicroVM |
+| `history/experiments.csv` from `run.sh` | Each experiment's UTC start and finish, and its successful, failed, and timed-out requests | Same | Same, with the experiment's MicroVM |
 | `history/microvms.jsonl` from `microvm.sh` | | | Lambda's description of each MicroVM when it started, ran, and terminated, labeled with its experiment |
 | `history/microvm-lifetimes.csv` from `usage.py` | | | Every MicroVM of every image: Lambda's `startedAt`, `terminatedAt`, and seconds running |
 | `history/event-usage.csv` from `usage.py` | Invocations and billed duration, from the `REPORT` line Lambda logs for each invocation | | |
@@ -169,10 +181,22 @@ After the experiments:
 
 Don't call the tagged resources outside `run.sh` during the experiments, or the bill will mix those calls in. The pilot runs through `run.sh`, so `experiments.csv` records it.
 
+## Results
+
+Each experiment writes, in `history/<deployment>/<workload>/`:
+
+- `<function>-<experiment>-0MBs-run<N>.csv` for each burst: every successful request's SAAF attributes and FaaS Runner's `roundTripTime`, `latency`, and `runtimeOverlap`, then averages by category (`newcontainer`, `uuid`, and `cpuInfo`).
+- `<function>-<experiment>-0MBs-run<N>/`, with one JSON file for each successful request, holding the same attributes.
+- `<function>-<experiment>-0MBs-COMBINED.csv`, for experiments with more than one burst: all of them together, with an `iteration` column.
+- `<experiment>.log`, FaaS Runner's output, with each failed and timed-out request and its reason.
+
+FaaS Runner stores every value as text, with commas replaced by semicolons so the CSVs stay valid. That includes nested ones like `cpuInfo`. Requests that failed or timed out are only in the log and `experiments.csv`.
+
 ## FaaS Runner Changes
 
-`tools/experiment_caller.py`, `tools/experiment_orchestrator.py`, and `faas_runner.py` have three changes for these experiments:
+`tools/experiment_caller.py`, `tools/experiment_orchestrator.py`, and `faas_runner.py` have four changes for these experiments:
 
 - **Parsing.** Responses are parsed as JSON before `ast.literal_eval`. Six workloads return `true` or `false` (`correct`, `sync`, `keepAlive`, `disk`), which `literal_eval` rejects, so FaaS Runner would have counted every one of their requests as failed.
 - **Headers.** A function file's `headersFile` names a JSON object of extra headers, read for every request. MicroVMs require the `X-aws-proxy-auth` header, and their tokens expire during long experiments.
+- **Failures.** A request whose connection fails, or whose response has no SAAF attributes, such as a 429 when a deployment is throttled, is logged as `Run <thread>.<run> failed:` with the reason. The thread moves on to its next request. Before, a failed connection ended the thread, so a single one ended `sequential-0100`, and an error response was logged as successful, though it was never in the results.
 - **Timeout.** An experiment's `timeout` is the number of seconds an HTTP request waits for its response, 0 for no limit. A request that times out fails, and FaaS Runner sends no more requests in that experiment and skips its remaining iterations. The function keeps running on the platform, and Lambda bills it until it finishes, so the timeout limits waiting rather than cost.

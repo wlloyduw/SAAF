@@ -162,7 +162,11 @@ def callPostProcessor(function, response, thread_id, run_id, payload, roundTripT
             dictionary[key] = str(dictionary[key]).replace(
                 ',', ';').replace('\t', '\\t').replace('\n', '\\n')
 
-        print("Run " + str(thread_id) + "." + str(run_id) + " successful.")
+        # A response without SAAF's version attribute, such as an error, is not in the results.
+        if 'version' in dictionary:
+            print("Run " + str(thread_id) + "." + str(run_id) + " successful.")
+        else:
+            print("Run " + str(thread_id) + "." + str(run_id) + " failed: the response has no SAAF attributes: " + str(response)[:500])
 
         return dictionary
 
@@ -208,6 +212,10 @@ def callThread(thread_id, runs, function, exp, myPayloads):
             except requests.exceptions.Timeout:
                 timed_out_runs.append((thread_id, i))
                 print("Run " + str(thread_id) + "." + str(i) + " timed out after " + str(timeout) + " seconds.")
+                continue
+            # A failed connection fails this request only, so the thread's other requests still run.
+            except requests.exceptions.RequestException as e:
+                print("Run " + str(thread_id) + "." + str(i) + " failed: " + type(e).__name__ + ": " + str(e)[:500])
                 continue
         elif (platform == 'AWS Lambda'):
             response = callAWS(function, payload, callAsync)

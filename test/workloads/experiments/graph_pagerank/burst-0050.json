@@ -24,6 +24,7 @@
     "outputGroups": [
         "newcontainer",
         "uuid",
+        "cpuInfo",
         "zAll"
     ],
     "outputRawOfGroup": [],
@@ -32,9 +33,7 @@
         "newcontainer"
     ],
     "ignoreFromAll": [
-        "zAll",
-        "lang",
-        "version"
+        "zAll"
     ],
     "ignoreFromGroups": [
         "1_run_id",

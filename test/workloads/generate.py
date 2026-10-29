@@ -41,11 +41,13 @@ SETTINGS = {
     # A request with no response after 60 seconds fails, and the experiment stops after that burst.
     "timeout": 60,
     "randomSeed": 42,
-    "outputGroups": ["newcontainer", "uuid", "zAll"],
+    # cpuInfo describes the CPU, which varies between Graviton generations on the same deployment.
+    "outputGroups": ["newcontainer", "uuid", "cpuInfo", "zAll"],
     "outputRawOfGroup": [],
     "showAsList": [],
     "showAsSum": ["newcontainer"],
-    "ignoreFromAll": ["zAll", "lang", "version"],
+    # Every SAAF attribute stays in the CSVs. zAll is FaaS Runner's, a label for its summary.
+    "ignoreFromAll": ["zAll"],
     "ignoreFromGroups": ["1_run_id", "2_thread_id", "startTime", "endTime", "bootTime"],
     "ignoreByGroup": {"newcontainer": ["newcontainer"]},
     "invalidators": {},

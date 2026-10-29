@@ -79,6 +79,10 @@ case $command in
 			echo "MicroVM: $(cat "$state/microvm") is already started for $workload. Stop it first." >&2
 			exit 1
 		fi
+		if [[ ! -f ./functions/$deployment/$workload.json ]]; then
+			echo "MicroVM: functions/$deployment/$workload.json is missing. Run generate.py." >&2
+			exit 1
+		fi
 		mkdir -p "$state"
 
 		# MicroVM commands identify an image by its ARN, not its name.
@@ -119,10 +123,14 @@ case $command in
 		done
 		record "$(tr '[:upper:]' '[:lower:]' <<< "$status")" "$microvm" "$description"
 
+		# The MicroVM is billed from here on, so a failure terminates it.
 		endpoint=$(jq -r '.endpoint' <<< "$description")
-		token || exit 1
-		jq --arg endpoint "https://${endpoint#https://}/" '.endpoint = $endpoint' \
-			"./functions/$deployment/$workload.json" > "$state/function.json" || exit 1
+		if ! token || ! jq --arg endpoint "https://${endpoint#https://}/" '.endpoint = $endpoint' \
+			"./functions/$deployment/$workload.json" > "$state/function.json"; then
+			echo "MicroVM: Could not authorize $microvm. Stopping it." >&2
+			"$0" stop "$workload" "$deployment"
+			exit 1
+		fi
 		echo "MicroVM: $microvm is $status at https://${endpoint#https://}/" >&2
 		;;
 	token)
