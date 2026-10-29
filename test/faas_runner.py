@@ -43,6 +43,7 @@ defaultExperiment = {
     'threads': 10,
     'iterations': 1,
     'sleepTime': 0,
+    'timeout': 0,
     'randomSeed': 42,
     'outputGroups': [],
     'outputRawOfGroup': [],

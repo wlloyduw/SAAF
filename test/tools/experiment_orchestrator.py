@@ -16,6 +16,7 @@ from enum import Enum
 
 from experiment_caller import callExperiment
 from experiment_caller import callPipelineExperiment
+from experiment_caller import timed_out_runs
 from report_generator import report
 from report_generator import write_file
 
@@ -216,13 +217,19 @@ def run_experiment(functions, experiments, outDir):
                         expName) + "-" + str(mem) + "MBs-run" + str(i)
                 write_file(baseFileName, partestResult, openCSV, runList[i])
 
+            # A request that timed out ends the experiment, skipping the remaining iterations.
+            if timed_out_runs:
+                print("STOPPING EXPERIMENT: " + str(len(timed_out_runs)) + " requests timed out after " +
+                    str(exp.get('timeout', 0)) + " seconds in test " + str(i) + ".")
+                break
+
             print("Sleeping before next test...")
             time.sleep(sleepTime)
 
         if (combineSheets):
             print("Generating Combined Report:")
             finalRunList = []
-            for i in range(iterations):
+            for i in range(len(runList)):
                 if (i > warmupBuffer - 1):
                     if runList[i] == None:
                         continue

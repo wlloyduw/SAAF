@@ -23,6 +23,9 @@ from pipeline_transition import transition_function
 run_results = []
 max_runs = 0
 
+# Requests in the current experiment that got no response within the experiment's timeout.
+timed_out_runs = []
+
 
 def get_aws_version():
     try:
@@ -101,11 +104,16 @@ def callIBM(function, payload):
     return str(o.decode('ascii'))
 
 #
-# Make a call using a regular HTTP request
+# Make a call using a regular HTTP request. A function's headersFile is a JSON object of extra headers,
+# read for every request so that a script can replace credentials that expire during an experiment.
 #
-def callHTTP(function, payload):
+def callHTTP(function, payload, timeout=0):
+    headers = {'content-type': 'application/json'}
+    if function.get('headersFile'):
+        with open(function['headersFile']) as file:
+            headers.update(json.load(file))
     response = requests.post(function['endpoint'], data=
-        payload, headers={'content-type': 'application/json'})
+        payload, headers=headers, timeout=timeout or None)
     print("Response: " + str(response))
     return response.text
 
@@ -114,7 +122,11 @@ def callHTTP(function, payload):
 #
 def callPostProcessor(function, response, thread_id, run_id, payload, roundTripTime, pipelineStage):
     try:
-        dictionary = ast.literal_eval(response)
+        # JSON responses can contain true, false, and null, which literal_eval rejects.
+        try:
+            dictionary = json.loads(response)
+        except ValueError:
+            dictionary = ast.literal_eval(response)
         dictionary['2_thread_id'] = thread_id
         dictionary['1_run_id'] = run_id
         if pipelineStage != -1:
@@ -168,8 +180,13 @@ def callPostProcessor(function, response, thread_id, run_id, payload, roundTripT
 #
 def callThread(thread_id, runs, function, exp, myPayloads):
     callAsync = exp['callAsync']
+    timeout = exp.get('timeout', 0)
 
     for i in range(0, runs): 
+
+        # After any request times out, the experiment makes no more requests.
+        if timed_out_runs:
+            break
 
         callPayload = myPayloads[i]
         print("Call Payload: " + str(callPayload))
@@ -186,7 +203,12 @@ def callThread(thread_id, runs, function, exp, myPayloads):
 
         # Make call depending on platform.
         if (platform == 'HTTP' or platform == 'Azure'):
-            response = callHTTP(function, payload)
+            try:
+                response = callHTTP(function, payload, timeout)
+            except requests.exceptions.Timeout:
+                timed_out_runs.append((thread_id, i))
+                print("Run " + str(thread_id) + "." + str(i) + " timed out after " + str(timeout) + " seconds.")
+                continue
         elif (platform == 'AWS Lambda'):
             response = callAWS(function, payload, callAsync)
         elif (platform == 'Google'):
@@ -271,6 +293,7 @@ def callExperiment(functionList, exp):
 
     global run_results
     run_results = []
+    del timed_out_runs[:]
 
     threads = exp['threads']
     total_runs = exp['runs']
@@ -290,7 +313,8 @@ def callExperiment(functionList, exp):
             if (func['platform'] == "HTTP" or func['platform'] == "Azure"):
                     function_calls.append({
                     'platform': "HTTP",
-                    'endpoint': func['endpoint']
+                    'endpoint': func['endpoint'],
+                    'headersFile': func.get('headersFile', '')
                 })
             else:
                 function_calls.append({
@@ -300,7 +324,8 @@ def callExperiment(functionList, exp):
         else:
             function_calls.append({
                 'platform': "HTTP",
-                'endpoint': func['endpoint']
+                'endpoint': func['endpoint'],
+                'headersFile': func.get('headersFile', '')
             })
 
     # Duplicate payloads so that the number of payloads >= number of runs.
