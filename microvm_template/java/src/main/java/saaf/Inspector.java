@@ -393,14 +393,16 @@ public class Inspector {
     /**
      * Collect information about the AWS Lambda MicroVM.
      *
-     * The image name, memory, and Region come from SAAF_FUNCTION_NAME,
-     * SAAF_FUNCTION_MEMORY, and SAAF_FUNCTION_REGION, which publish.sh sets on the
-     * image. The MicroVM ID comes from /tmp/microvm-id, which the server writes when
-     * Lambda calls the /run hook after the MicroVM starts.
+     * Lambda sets AWS_LAMBDA_MICROVM_IMAGE_NAME, AWS_LAMBDA_MICROVM_IMAGE_VERSION,
+     * and AWS_REGION. It does not set the memory, so that comes from
+     * SAAF_FUNCTION_MEMORY, which publish.sh sets on the image. The MicroVM ID
+     * comes from /tmp/microvm-id, which the server writes when Lambda calls the
+     * /run hook after the MicroVM starts.
      *
      * platform:        Always "AWS Lambda MicroVM".
      * containerID:     The MicroVM ID.
      * functionName:    The name of the MicroVM image.
+     * functionVersion: The version of the MicroVM image.
      * functionMemory:  The baseline memory of the MicroVM in MB.
      * functionRegion:  The region the MicroVM runs in.
      */
@@ -416,9 +418,10 @@ public class Inspector {
         if (!microvmID.isEmpty()) {
             attributes.put("containerID", microvmID);
         }
-        attributes.put("functionName", System.getenv("SAAF_FUNCTION_NAME"));
+        attributes.put("functionName", System.getenv("AWS_LAMBDA_MICROVM_IMAGE_NAME"));
+        attributes.put("functionVersion", System.getenv("AWS_LAMBDA_MICROVM_IMAGE_VERSION"));
         attributes.put("functionMemory", System.getenv("SAAF_FUNCTION_MEMORY"));
-        attributes.put("functionRegion", System.getenv("SAAF_FUNCTION_REGION"));
+        attributes.put("functionRegion", System.getenv("AWS_REGION"));
     }
 
     /**

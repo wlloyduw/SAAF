@@ -55,7 +55,7 @@ Each server listens on port 8080, where Lambda sends the MicroVM's traffic and i
 
 Each Inspector is its language template's Inspector with the same kind of changes web_template makes:
 
-1. `inspectPlatform()` only reports MicroVM values. `platform` is always `AWS Lambda MicroVM`, and `containerID` is the MicroVM ID from `/tmp/microvm-id`. `functionName`, `functionMemory`, and `functionRegion` come from `SAAF_FUNCTION_NAME`, `SAAF_FUNCTION_MEMORY`, and `SAAF_FUNCTION_REGION`, which `publish.sh` sets as image environment variables. `vmID` is not reported.
+1. `inspectPlatform()` only reports MicroVM values. `platform` is always `AWS Lambda MicroVM`, and `containerID` is the MicroVM ID from `/tmp/microvm-id`. `functionName`, `functionVersion`, and `functionRegion` come from `AWS_LAMBDA_MICROVM_IMAGE_NAME`, `AWS_LAMBDA_MICROVM_IMAGE_VERSION`, and `AWS_REGION`, which Lambda sets in every MicroVM. Lambda does not set the memory, so `functionMemory` comes from `SAAF_FUNCTION_MEMORY`, which `publish.sh` sets as an image environment variable. `vmID` is not reported.
 2. `recommendConfiguration` is removed. It assumes Lambda's 1792 MB per vCPU, while MicroVMs have 2048 MB per vCPU and burst to 4 times their baseline, so `availableCPUs`, `utilizedCPUs`, and `recommendedMemory` are not reported.
 3. In Node.js, `inspectContainer()` uses `crypto.randomUUID()`, so the package has no dependencies.
 
@@ -150,5 +150,5 @@ Running MicroVMs are billed for their baseline memory and vCPUs whether or not t
 | idle_policy | Passed to `run-microvm`. `maxIdleDurationSeconds` (at least 60) without traffic before the MicroVM is suspended, `suspendedDurationSeconds` suspended before it is terminated, and `autoResumeEnabled` to resume it when a request arrives. |
 | maximum_duration | Seconds a MicroVM can exist, running or suspended, from 1 to 28800. |
 | reuse_microvm | `true` to send requests to an existing MicroVM on the latest image version, `false` to start a new MicroVM for every request. |
-| env | Environment variables to add to the image, as `{"KEY": "value"}`. An image holds up to 50, and `publish.sh` adds 3. |
+| env | Environment variables to add to the image, as `{"KEY": "value"}`. An image holds up to 50, and `publish.sh` adds `SAAF_FUNCTION_MEMORY`. |
 | test | JSON payload `run.sh` sends when no argument is given. |

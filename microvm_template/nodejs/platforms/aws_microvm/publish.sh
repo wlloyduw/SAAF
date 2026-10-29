@@ -28,9 +28,8 @@ echo "Publish: Uploading code artifact..."
 artifact="s3://$bucket/$function.zip"
 aws s3 cp ./.build/app.zip "$artifact" || exit 1
 
-# MicroVMs are not Lambda functions, so SAAF reads the image name, memory, and Region from these.
-env=$(jq -c --arg region "$AWS_REGION" '.env + {SAAF_FUNCTION_NAME: .function_name,
-	SAAF_FUNCTION_MEMORY: (.memory | tostring), SAAF_FUNCTION_REGION: $region}' < ./config.json)
+# Lambda sets the image name, version, and Region in each MicroVM, but not its memory, so SAAF reads that from here.
+env=$(jq -c '.env + {SAAF_FUNCTION_MEMORY: (.memory | tostring)}' < ./config.json)
 
 # The server answers /ready during the build and /run when each MicroVM starts.
 hooks='{"port":8080,
