@@ -1,9 +1,10 @@
 /**
- * SAAF Inspector for AWS Lambda Web Functions.
+ * SAAF
  *
- * Collection methods match nodejs_template/src/Inspector.js so experiment
- * fields stay comparable. Process-lifetime counters match juypter_template/SAAF.py
- * because one Web Function environment serves many requests.
+ * The nodejs_template Inspector with changes for AWS Lambda Web Functions:
+ * inspectPlatform only reports Web Function values, crypto.randomUUID replaces
+ * the uuid package, and recommendConfiguration is removed because Web Function
+ * memory is fixed.
  *
  * @author Wes Lloyd
  * @author Wen Shu
@@ -13,358 +14,364 @@
 const { execSync } = require('child_process');
 const crypto = require('crypto');
 const fs = require('fs');
-const os = require('os');
 
-const CONTAINER_ID_PATH = '/tmp/container-id';
-const CPU_METRICS = ['cpuUsr', 'cpuNice', 'cpuKrn', 'cpuIdle', 'cpuIowait', 'cpuIrq', 'cpuSoftIrq', 'vmcpusteal'];
-
-let invocations = 0;
-let inFlight = 0;
-const initializationTime = Date.now();
-
-function cpuSample(statText) {
-    const lines = statText.split('\n');
-    const cpuLine = lines.find((line) => /^cpu\s+/.test(line));
-    if (!cpuLine) {
-        return null;
+/**
+ * Execute a bash command and get the output.
+ *
+ * @param command A string containing the command to run.
+ * @return Standard out of the command.
+ */
+function runCommand(command) {
+    try {
+        return execSync(command, { encoding : 'utf8' });
+    } catch (e) {
+        return e.stdout || '';
     }
-
-    const values = cpuLine.trim().split(/\s+/).slice(1).map((value) => parseInt(value, 10));
-    const sample = {};
-    CPU_METRICS.forEach((name, index) => {
-        if (Number.isFinite(values[index])) {
-            sample[name] = values[index];
-        }
-    });
-
-    const ctxt = lines.find((line) => line.startsWith('ctxt'));
-    if (ctxt) {
-        const switches = parseInt(ctxt.trim().split(/\s+/)[1], 10);
-        if (Number.isFinite(switches)) {
-            sample.contextSwitches = switches;
-        }
-    }
-
-    const btime = lines.find((line) => line.startsWith('btime'));
-    if (btime) {
-        const boot = parseInt(btime.trim().split(/\s+/)[1], 10);
-        if (Number.isFinite(boot)) {
-            sample.vmuptime = boot;
-        }
-    }
-
-    return sample;
 }
 
+/**
+ * Global variables that will persist through multiple invocations.
+ */
+let invocations = 0;
+const initializationTime = Date.now();
+const ticksPerSecond = parseInt(runCommand("getconf CLK_TCK")) || 100;
+
+/**
+ * CPU metrics reported by /proc/stat, in the order they appear.
+ */
+const cpuMetrics = ["cpuUser", "cpuNice", "cpuKernel", "cpuIdle", "cpuIOWait",
+                    "cpuIrq", "cpuSoftIrq", "cpuSteal", "cpuGuest", "cpuGuestNice"];
+
 class Inspector {
+
+    #attributes;
+    #startTime;
+    #cpuPolls;
+
+    #inspectedCPU;
+    #inspectedCPUDelta;
+    #inspectedMemory;
+    #inspectedMemoryDelta;
+    #inspectedContainer;
+    #inspectedPlatform;
+    #inspectedLinux;
+    #inspectedEnvironment;
+
     /**
      * Initialize SAAF.
      *
-     * attributes:          Information collected for this request.
-     * startTime:           Unix epoch in ms when this request's Inspector was created.
-     * invocations:         Requests that have constructed an Inspector in this process.
-     * initializationTime:  Unix epoch in ms when this process first loaded SAAF.
-     * inFlightRequests:    Inspectors opened and not yet closed, including this one.
+     * attributes:  Used to store information collected by each function.
+     * startTime:   The time the function started running.
      */
     constructor() {
-        this.startTime = Date.now();
         invocations += 1;
-        inFlight += 1;
-        this._open = true;
 
-        this.attributes = {
-            version: 0.8,
-            lang: 'node.js',
-            startTime: this.startTime,
-            invocations: invocations,
-            initializationTime: initializationTime,
-            inFlightRequests: inFlight
+        this.#startTime = Date.now();
+        this.#attributes = {
+            "version": 0.8,
+            "lang": "node.js",
+            "startTime": this.#startTime,
+            "invocations": invocations,
+            "initializationTime": initializationTime
         };
 
-        this.inspectedCPU = false;
-        this.inspectedMemory = false;
-        this.inspectedContainer = false;
-        this.inspectedPlatform = false;
-        this.inspectedLinux = false;
-        this.cpuSample = null;
+        this.#cpuPolls = [];
+
+        this.#inspectedCPU = false;
+        this.#inspectedCPUDelta = false;
+        this.#inspectedMemory = false;
+        this.#inspectedMemoryDelta = false;
+        this.#inspectedContainer = false;
+        this.#inspectedPlatform = false;
+        this.#inspectedLinux = false;
+        this.#inspectedEnvironment = false;
     }
 
     /**
-     * Collect information about the runtime environment.
+     * Collect information about the runtime container.
      *
-     * uuid:            Identifier persisted at /tmp/container-id for this environment.
-     * newcontainer:    1 the first time this environment is seen, otherwise 0.
-     * vmuptime:        Boot time of the host in seconds since the Unix epoch.
+     * uuid:            A unique identifier assigned to a container if one does not already exist.
+     * newcontainer:    Whether a container is new (no assigned uuid) or if it has been used before.
      */
     inspectContainer() {
-        this.inspectedContainer = true;
+        this.#inspectedContainer = true;
 
         let myUuid = '';
         let newContainer = 1;
-        try {
-            if (fs.existsSync(CONTAINER_ID_PATH)) {
-                myUuid = fs.readFileSync(CONTAINER_ID_PATH, { encoding: 'utf8' }).trim();
-                newContainer = 0;
-            } else {
-                myUuid = crypto.randomUUID();
-                fs.writeFileSync(CONTAINER_ID_PATH, myUuid);
-            }
-        } catch (err) {
-            myUuid = myUuid || crypto.randomUUID();
-            this.attributes.SAAFContainerError = 'Unable to persist container id: ' + err.message;
+        if (fs.existsSync('/tmp/container-id')) {
+            myUuid = fs.readFileSync('/tmp/container-id', { encoding : 'utf8' });
+            newContainer = 0;
+        } else {
+            myUuid = crypto.randomUUID();
+            fs.writeFileSync('/tmp/container-id', myUuid);
         }
 
-        this.attributes.uuid = myUuid;
-        this.attributes.newcontainer = newContainer;
-
-        const stat = this.readText('/proc/stat');
-        const sample = stat ? cpuSample(stat) : null;
-        if (sample && sample.vmuptime != null) {
-            this.attributes.vmuptime = sample.vmuptime;
-        }
+        this.#attributes['uuid'] = myUuid;
+        this.#attributes['newcontainer'] = newContainer;
     }
 
     /**
-     * Collect information about the CPU assigned to this environment.
+     * Collect information about the CPU assigned to this function.
      *
-     * Values are cumulative counters from /proc/stat, in clock ticks.
-     * On a Web Function these counters cover the whole environment, so a
-     * delta includes CPU used by other requests that overlap this one.
+     * cpuType:         The model name of the CPU.
+     * cpuModel:        The model number of the CPU.
+     * architecture:    The architecture of the CPU (x86 or arm64).
+     * cpuCores:        The number of vCPUs allocated to the function.
+     * cpuInfo:         Detailed information about all aspects of the CPU.
+     */
+    inspectCPUInfo() {
+        let cpuInfo = fs.readFileSync('/proc/cpuinfo', 'utf8');
+        let lines = cpuInfo.split('\n');
+
+        let coreInfo = {};
+        let coreList = [];
+        let cpuCount = 0;
+        for (let line of lines) {
+            try {
+                let keyValue = line.split(':');
+                let key = keyValue[0].trim().replace(/ /g, '_');
+
+                if (key == 'processor') {
+                    cpuCount += 1;
+                } else if (key == 'power_management' || key == 'CPU_revision') {
+                    coreList.push(coreInfo);
+                    coreInfo = {};
+                    continue;
+                }
+
+                let value = keyValue[1].trim();
+
+                if (key == "flags" || key == "bugs" || key == "Features") {
+                    value = value.split(" ");
+                }
+
+                coreInfo[key] = value;
+            } catch (e) {
+            }
+        }
+
+        if ('model_name' in coreList[0]) {
+            this.#attributes['cpuType'] = coreList[0]['model_name'];
+            this.#attributes['cpuModel'] = coreList[0]['model'];
+            this.#attributes['architecture'] = "x86";
+        } else {
+            let listLen = coreList.length - 1;
+            if ('Model' in coreList[listLen]) {
+                this.#attributes['cpuModel'] = coreList[listLen]['Model'];
+            }
+            this.#attributes['architecture'] = "arm64";
+        }
+        this.#attributes['cpuCores'] = cpuCount;
+        this.#attributes['cpuInfo'] = coreList;
+    }
+
+    /**
+     * Collect timing CPU metrics. Each call records a poll of /proc/stat
+     * with all CPU times converted from ticks into milliseconds.
+     */
+    pollCPUStats() {
+        let timeStamp = Date.now();
+
+        let data = {"time": timeStamp};
+
+        let tickRate = 1000 / ticksPerSecond;
+
+        let stats = fs.readFileSync('/proc/stat', 'utf8');
+        let lines = stats.split('\n');
+        lines[0] = lines[0].replace("cpu  ", "cpuTotal ");
+
+        for (let line of lines) {
+            let values = line.split(" ");
+            let title = values[0].trim();
+
+            if (title.includes("cpu")) {
+                let cpuStats = {};
+                for (let i = 0; i < cpuMetrics.length; i++) {
+                    cpuStats[cpuMetrics[i]] = parseInt(values[i + 1]) * tickRate;
+                }
+                data[title] = cpuStats;
+            } else if (values.length >= 2) {
+                data[title] = parseInt(values[1]);
+            }
+        }
+
+        this.#cpuPolls.push(data);
+    }
+
+    /**
+     * Collect information about the CPU assigned to this function.
+     *
+     * cpuUser:         Time spent normally executing in user mode.
+     * cpuNice:         Time spent executing niced processes in user mode.
+     * cpuKernel:       Time spent executing processes in kernel mode.
+     * cpuIdle:         Time spent idle.
+     * cpuIOWait:       Time spent waiting for I/O to complete.
+     * cpuIrq:          Time spent servicing interrupts.
+     * cpuSoftIrq:      Time spent servicing software interrupts.
+     * cpuSteal:        Time spent waiting for real CPU while hypervisor is using another virtual CPU.
+     * cpuGuest:        Time spent running a virtual CPU for guest operating systems.
+     * cpuGuestNice:    Time spent running a niced guest.
+     * bootTime:        Time when the host booted in seconds since the Unix epoch.
      */
     inspectCPU() {
-        const info = this.readText('/proc/cpuinfo');
-        const stat = this.readText('/proc/stat');
-        const sample = stat ? cpuSample(stat) : null;
+        this.#inspectedCPU = true;
 
-        if (!info && !sample) {
-            this.attributes.SAAFCPUError = '/proc/cpuinfo and /proc/stat are not available';
-            return;
+        this.pollCPUStats();
+
+        for (let metric of cpuMetrics) {
+            this.#attributes[metric] = this.#cpuPolls[0]['cpuTotal'][metric];
         }
 
-        this.inspectedCPU = true;
-
-        if (info) {
-            const modelName = info.match(/^model name\s*:\s*(.+)$/m);
-            const hardware = info.match(/^Hardware\s*:\s*(.+)$/m);
-            const model = info.match(/^model\s*:\s*(.+)$/m);
-            const processors = info.match(/^processor\s*:/gm);
-            if (modelName) {
-                this.attributes.cpuType = modelName[1].trim();
-            } else if (hardware) {
-                this.attributes.cpuType = hardware[1].trim();
-            }
-            if (model) {
-                this.attributes.cpuModel = model[1].trim();
-            }
-            if (processors) {
-                this.attributes.cpuCores = processors.length;
-            }
-        }
-
-        if (!sample) {
-            this.inspectedCPU = false;
-            this.attributes.SAAFCPUError = '/proc/stat is not available';
-            return;
-        }
-
-        this.cpuSample = sample;
-        CPU_METRICS.forEach((name) => {
-            if (sample[name] != null) {
-                this.attributes[name] = sample[name];
-            }
-        });
-        if (sample.contextSwitches != null) {
-            this.attributes.contextSwitches = sample.contextSwitches;
-        }
-        if (sample.vmuptime != null && this.attributes.vmuptime == null) {
-            this.attributes.vmuptime = sample.vmuptime;
-        }
+        this.#attributes['bootTime'] = this.#cpuPolls[0]['btime'];
     }
 
     /**
-     * Compare current /proc/stat counters with the inspectCPU sample.
-     * Call this at the end of the request, after inspectCPU.
+     * Compare information gained from inspectCPU to the current CPU metrics.
+     *
+     * Note: This function should be called at the end of your function and
+     * must be called AFTER inspectCPU.
+     *
+     * cpuUserDelta:        Time spent normally executing in user mode.
+     * cpuNiceDelta:        Time spent executing niced processes in user mode.
+     * cpuKernelDelta:      Time spent executing processes in kernel mode.
+     * cpuIdleDelta:        Time spent idle.
+     * cpuIOWaitDelta:      Time spent waiting for I/O to complete.
+     * cpuIrqDelta:         Time spent servicing interrupts.
+     * cpuSoftIrqDelta:     Time spent servicing software interrupts.
+     * cpuStealDelta:       Time spent waiting for real CPU while hypervisor is using another virtual CPU.
+     * cpuGuestDelta:       Time spent running a virtual CPU for guest operating systems.
+     * cpuGuestNiceDelta:   Time spent running a niced guest.
      */
     inspectCPUDelta() {
-        if (!this.inspectedCPU || !this.cpuSample) {
-            this.attributes.SAAFCPUDeltaError = 'CPU not inspected before collecting deltas!';
-            return;
-        }
+        if (this.#inspectedCPU) {
+            this.#inspectedCPUDelta = true;
 
-        const stat = this.readText('/proc/stat');
-        const sample = stat ? cpuSample(stat) : null;
-        if (!sample) {
-            this.attributes.SAAFCPUDeltaError = '/proc/stat is not available';
-            return;
-        }
+            this.pollCPUStats();
+            let totalPolls = this.#cpuPolls.length;
 
-        CPU_METRICS.forEach((name) => {
-            if (sample[name] != null && this.cpuSample[name] != null) {
-                this.attributes[name + 'Delta'] = sample[name] - this.cpuSample[name];
+            for (let metric of cpuMetrics) {
+                this.#attributes[metric + "Delta"] = this.#cpuPolls[totalPolls - 1]['cpuTotal'][metric] - this.#cpuPolls[0]['cpuTotal'][metric];
             }
-        });
-        if (sample.contextSwitches != null && this.cpuSample.contextSwitches != null) {
-            this.attributes.contextSwitchesDelta = sample.contextSwitches - this.cpuSample.contextSwitches;
+        } else {
+            this.#attributes['SAAFCPUDeltaError'] = "CPU not inspected before collecting deltas!";
         }
     }
 
     /**
-     * Inspect /proc/meminfo and /proc/vmstat.
+     * Make CPU polls accessible to the function.
+     */
+    processCPUPolls() {
+        this.#attributes['cpuPolls'] = this.#cpuPolls;
+    }
+
+    /**
+     * Inspects /proc/meminfo and /proc/vmstat. Add memory specific attributes:
      *
-     * totalMemory:      Total memory in kB.
-     * freeMemory:       Free memory in kB when inspectMemory is called.
-     * pageFaults:       Page faults since boot.
-     * majorPageFaults:  Major page faults since boot.
+     * totalMemory:     Total memory allocated to the VM in kB.
+     * freeMemory:      Current free memory in kB when inspectMemory is called.
+     * pageFaults:      Total number of page faults experienced by the vm since boot.
+     * majorPageFaults: Total number of major page faults experienced since boot.
      */
     inspectMemory() {
-        const memInfo = this.readText('/proc/meminfo');
-        if (!memInfo) {
-            this.attributes.SAAFMemoryError = '/proc/meminfo is not available';
-            return;
-        }
+        this.#inspectedMemory = true;
+        let memInfo = fs.readFileSync('/proc/meminfo', 'utf8');
+        let lines = memInfo.split('\n');
+        this.#attributes['totalMemory'] = parseInt(lines[0].replace("MemTotal:", "").replace(" kB", "").trim());
+        this.#attributes['freeMemory'] = parseInt(lines[1].replace("MemFree:", "").replace(" kB", "").trim());
 
-        this.inspectedMemory = true;
-        memInfo.split('\n').forEach((line) => {
-            if (line.startsWith('MemTotal:')) {
-                this.attributes.totalMemory = parseInt(line.replace(/MemTotal:\s+/, '').replace(' kB', ''), 10);
-            } else if (line.startsWith('MemFree:')) {
-                this.attributes.freeMemory = parseInt(line.replace(/MemFree:\s+/, '').replace(' kB', ''), 10);
+        if (fs.existsSync('/proc/vmstat')) {
+            let vmStat = fs.readFileSync('/proc/vmstat', 'utf8');
+            lines = vmStat.split('\n');
+            for (let line of lines) {
+                if (line.includes('pgfault')) {
+                    this.#attributes['pageFaults'] = parseInt(line.split(' ')[1]);
+                } else if (line.includes('pgmajfault')) {
+                    this.#attributes['majorPageFaults'] = parseInt(line.split(' ')[1]);
+                }
             }
-        });
-
-        const vmStat = this.readText('/proc/vmstat');
-        if (!vmStat) {
-            this.attributes.SAAFMemoryError = '/proc/vmstat does not exist!';
-            return;
+        } else {
+            this.#attributes['SAAFMemoryError'] = "/proc/vmstat does not exist!";
         }
-
-        vmStat.split('\n').forEach((line) => {
-            const parts = line.trim().split(/\s+/);
-            if (parts[0] === 'pgfault') {
-                this.attributes.pageFaults = parseInt(parts[1], 10);
-            } else if (parts[0] === 'pgmajfault' || parts[0] === 'mgmajfault') {
-                this.attributes.majorPageFaults = parseInt(parts[1], 10);
-            }
-        });
     }
 
     /**
-     * Change in page faults since inspectMemory.
+     * Inspects /proc/vmstat to see how specific memory stats have changed.
+     *
+     * pageFaultsDelta:     The number of page faults experienced since inspectMemory was called.
+     * majorPageFaultsDelta: The number of major pafe faults since inspectMemory was called.
      */
     inspectMemoryDelta() {
-        if (!this.inspectedMemory) {
-            this.attributes.SAAFMemoryDeltaError = 'Memory not inspected before collecting deltas!';
-            return;
-        }
-
-        const vmStat = this.readText('/proc/vmstat');
-        if (!vmStat) {
-            this.attributes.SAAFMemoryDeltaError = '/proc/vmstat does not exist!';
-            return;
-        }
-
-        vmStat.split('\n').forEach((line) => {
-            const parts = line.trim().split(/\s+/);
-            if (parts[0] === 'pgfault' && this.attributes.pageFaults != null) {
-                this.attributes.pageFaultsDelta = parseInt(parts[1], 10) - this.attributes.pageFaults;
-            } else if ((parts[0] === 'pgmajfault' || parts[0] === 'mgmajfault') && this.attributes.majorPageFaults != null) {
-                this.attributes.majorPageFaultsDelta = parseInt(parts[1], 10) - this.attributes.majorPageFaults;
+        if (this.#inspectedMemory) {
+            this.#inspectedMemoryDelta = true;
+            if (fs.existsSync('/proc/vmstat')) {
+                let vmStat = fs.readFileSync('/proc/vmstat', 'utf8');
+                let lines = vmStat.split('\n');
+                for (let line of lines) {
+                    if (line.includes('pgfault')) {
+                        this.#attributes['pageFaultsDelta'] = parseInt(line.split(' ')[1]) - this.#attributes['pageFaults'];
+                    } else if (line.includes('pgmajfault')) {
+                        this.#attributes['majorPageFaultsDelta'] = parseInt(line.split(' ')[1]) - this.#attributes['majorPageFaults'];
+                    }
+                }
+            } else {
+                this.#attributes['SAAFMemoryDeltaError'] = "/proc/vmstat does not exist!";
             }
-        });
+        } else {
+            this.#attributes['SAAFMemoryDeltaError'] = "Memory not inspected before collecting deltas!";
+        }
     }
 
     /**
-     * Collect information about the current FaaS platform.
+     * Collect information about the AWS Lambda Web Function.
      *
-     * Lambda Web Functions are recognized by AWS_LAMBDA_HTTP_ENDPOINT together
-     * with a Lambda runtime variable such as AWS_LAMBDA_METADATA_API.
-     * A local server that only sets AWS_LAMBDA_HTTP_ENDPOINT is reported as Local.
+     * Web Functions do not set AWS_LAMBDA_FUNCTION_NAME or AWS_LAMBDA_LOG_STREAM_NAME,
+     * so the name comes from SAAF_FUNCTION_NAME, which publish.sh sets, and there is
+     * no containerID or vmID to read.
+     *
+     * platform:        Always "AWS Lambda Web".
+     * functionName:    The name of the function.
+     * functionMemory:  The memory of the execution environment, fixed at 2048 MB.
+     * functionRegion:  The region the function is deployed onto.
      */
     inspectPlatform() {
-        this.inspectedPlatform = true;
+        this.#inspectedPlatform = true;
 
-        if (this.isLambdaWeb()) {
-            const memory = process.env.AWS_LAMBDA_FUNCTION_MEMORY_SIZE;
-            this.attributes.platform = 'AWS Lambda Web';
-            this.attributes.functionName = process.env.AWS_LAMBDA_FUNCTION_NAME || null;
-            this.attributes.functionMemory = memory != null && memory !== '' ? (Number(memory) || memory) : 2048;
-            this.attributes.functionRegion = process.env.AWS_REGION || process.env.AWS_DEFAULT_REGION || null;
-            this.attributes.hostName = os.hostname();
-            this.attributes.httpEndpoint = process.env.AWS_LAMBDA_HTTP_ENDPOINT || null;
-            if (process.env.AWS_LAMBDA_LOG_STREAM_NAME) {
-                this.attributes.containerID = process.env.AWS_LAMBDA_LOG_STREAM_NAME;
-            }
-            this.readVmId();
-            return;
-        }
-
-        if (process.env.AWS_LAMBDA_HTTP_ENDPOINT && !process.env.AWS_LAMBDA_LOG_STREAM_NAME) {
-            this.attributes.platform = 'Local';
-            this.attributes.hostName = os.hostname();
-            return;
-        }
-
-        if (process.env.AWS_LAMBDA_LOG_STREAM_NAME) {
-            this.attributes.platform = 'AWS Lambda';
-            this.attributes.containerID = process.env.AWS_LAMBDA_LOG_STREAM_NAME;
-            this.attributes.functionName = process.env.AWS_LAMBDA_FUNCTION_NAME;
-            this.attributes.functionMemory = process.env.AWS_LAMBDA_FUNCTION_MEMORY_SIZE;
-            this.attributes.functionRegion = process.env.AWS_REGION;
-            this.readVmId();
-            return;
-        }
-
-        if (process.env.X_GOOGLE_FUNCTION_NAME) {
-            this.attributes.platform = 'Google Cloud Functions';
-            this.attributes.functionName = process.env.X_GOOGLE_FUNCTION_NAME;
-            this.attributes.functionMemory = process.env.X_GOOGLE_FUNCTION_MEMORY_MB;
-            this.attributes.functionRegion = process.env.X_GOOGLE_FUNCTION_REGION;
-            return;
-        }
-
-        if (process.env.__OW_ACTION_NAME) {
-            this.attributes.platform = 'IBM Cloud Functions';
-            this.attributes.functionName = process.env.__OW_ACTION_NAME;
-            this.attributes.functionRegion = process.env.__OW_API_HOST;
-            const vmID = this.runCommand('cat /sys/hypervisor/uuid').trim();
-            if (vmID) {
-                this.attributes.vmID = vmID;
-            }
-            return;
-        }
-
-        if (process.env.CONTAINER_NAME) {
-            this.attributes.platform = 'Azure Functions';
-            this.attributes.containerID = process.env.CONTAINER_NAME;
-            this.attributes.functionName = process.env.WEBSITE_SITE_NAME;
-            this.attributes.functionRegion = process.env.Location;
-            return;
-        }
-
-        this.attributes.platform = 'Unknown Platform';
+        this.#attributes['platform'] = "AWS Lambda Web";
+        this.#attributes['functionName'] = process.env.SAAF_FUNCTION_NAME;
+        this.#attributes['functionMemory'] = process.env.AWS_LAMBDA_FUNCTION_MEMORY_SIZE;
+        this.#attributes['functionRegion'] = process.env.AWS_REGION;
     }
 
     /**
-     * linuxVersion: uname -a output.
-     * architecture: uname -m output.
+     * Collect information about the linux kernel.
+     *
+     * linuxVersion:    The version of the linux kernel.
      */
     inspectLinux() {
-        this.inspectedLinux = true;
-        const version = this.runCommand('uname -a').replace('\n', '').trim();
-        const architecture = this.runCommand('uname -m').replace('\n', '').trim();
-        if (version) {
-            this.attributes.linuxVersion = version;
-        }
-        if (architecture) {
-            this.attributes.architecture = architecture;
+        this.#inspectedLinux = true;
+        this.#attributes['linuxVersion'] = runCommand('uname -a').replace(/\n/g, '');
+    }
+
+    /**
+     * Collect all environment variables. Each variable is added as an attribute
+     * using the variable's name as the key.
+     *
+     * Note: This is not called by inspectAll. Environment variables may contain
+     * secrets, such as the temporary AWS credentials provided by AWS Lambda.
+     */
+    inspectEnvironment() {
+        this.#inspectedEnvironment = true;
+        for (let [key, value] of Object.entries(process.env)) {
+            this.#attributes[key] = value;
         }
     }
 
     /**
-     * Run the initial collectors and record how long they took.
+     * Run all data collection methods and record framework runtime.
      */
     inspectAll() {
         this.inspectContainer();
+        this.inspectCPUInfo();
         this.inspectPlatform();
         this.inspectLinux();
         this.inspectMemory();
@@ -373,110 +380,68 @@ class Inspector {
     }
 
     /**
-     * Run delta collectors. userRuntime is the time after framework startup
-     * and before delta collection, which is the user-function window.
+     * Run all delta collection methods add userRuntime attribute to further isolate
+     * use code runtime from time spent collecting data.
      */
     inspectAllDeltas() {
-        if (Object.prototype.hasOwnProperty.call(this.attributes, 'frameworkRuntime')) {
-            this.addTimeStamp('userRuntime', this.startTime + this.attributes.frameworkRuntime);
+
+        // Add the 'userRuntime' timestamp.
+        if ('frameworkRuntime' in this.#attributes) {
+            this.addTimeStamp('userRuntime', this.#startTime + this.#attributes['frameworkRuntime']);
         }
 
-        const deltaTime = Date.now();
+        let deltaTime = Date.now();
         this.inspectCPUDelta();
         this.inspectMemoryDelta();
         this.addTimeStamp('frameworkRuntimeDeltas', deltaTime);
     }
 
     /**
-     * Add a custom attribute to the SAAF object.
+     * Add a custom attribute to the output.
+     *
+     * @param key A string to use as the key value.
+     * @param value The value to associate with that key.
      */
     addAttribute(key, value) {
-        this.attributes[key] = value;
+        this.#attributes[key] = value;
     }
 
     /**
-     * Read an attribute already stored on this Inspector.
+     * Gets a custom attribute from the attribute list.
+     *
+     * @param key The key of the attribute.
+     * @return The object associated with the key.
      */
     getAttribute(key) {
-        return this.attributes[key];
+        return this.#attributes[key];
     }
 
     /**
-     * Store milliseconds from timeSince (or request start) until now.
+     * Add custom time stamps to the output. The key value determines the name
+     * of the attribute and the value will be the time from Inspector initialization
+     * to this function call. Add timeSince to compare current time to a different time.
+     *
+     * @param key The name of the time stamp.
+     * @param timeSince Optional time in ms to compare the current time to.
      */
-    addTimeStamp(key, timeSince) {
+    addTimeStamp(key, timeSince = null) {
         if (timeSince == null) {
-            timeSince = this.startTime;
+            timeSince = this.#startTime;
         }
-        this.attributes[key] = Date.now() - timeSince;
+        let currentTime = Date.now();
+        this.#attributes[key] = currentTime - timeSince;
     }
 
     /**
-     * Execute a command and return stdout. Failures return an empty string.
-     */
-    runCommand(command) {
-        try {
-            return execSync(command, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
-        } catch (err) {
-            return '';
-        }
-    }
-
-    /**
-     * Record total runtime and return the collected attributes.
-     * Also releases this request from the in-flight count.
+     * Finalize the Inspector. Calculate the total runtime and return the JSON object
+     * containing all attributes collected.
+     *
+     * @return Attributes collected by the Inspector.
      */
     finish() {
         this.addTimeStamp('runtime');
-        this.attributes.endTime = Date.now();
-        const attributes = this.attributes;
-        this.close();
-        return attributes;
-    }
-
-    /**
-     * Drop this request from the in-flight count. Safe to call more than once.
-     */
-    close() {
-        if (!this._open) {
-            return;
-        }
-        this._open = false;
-        inFlight = Math.max(0, inFlight - 1);
-    }
-
-    readText(path) {
-        try {
-            return fs.readFileSync(path, { encoding: 'utf8' });
-        } catch (err) {
-            return null;
-        }
-    }
-
-    isLambdaWeb() {
-        if (!process.env.AWS_LAMBDA_HTTP_ENDPOINT) {
-            return false;
-        }
-        return Boolean(
-            process.env.AWS_LAMBDA_METADATA_API ||
-            process.env.AWS_LAMBDA_FUNCTION_NAME ||
-            process.env.AWS_EXECUTION_ENV ||
-            process.env.AWS_LAMBDA_LOG_GROUP_NAME ||
-            process.env.AWS_LAMBDA_LOG_STREAM_NAME ||
-            process.env.AWS_LAMBDA_FUNCTION_MEMORY_SIZE
-        );
-    }
-
-    readVmId() {
-        const cgroup = this.readText('/proc/self/cgroup');
-        if (!cgroup) {
-            return;
-        }
-        const index = cgroup.indexOf('sandbox-root');
-        if (index === -1) {
-            return;
-        }
-        this.attributes.vmID = cgroup.substring(index + 13, index + 19);
+        this.#attributes['endTime'] = Date.now();
+        return this.#attributes;
     }
 }
 

@@ -1,0 +1,11 @@
+{
+	"function_name": "saaf-web-hello",
+	"region": "us-east-1",
+	"timeout": 30,
+	"max_concurrency_per_environment": 1,
+	"role": "",
+	"env": {},
+	"test": {
+		"name": "Bob"
+	}
+}
