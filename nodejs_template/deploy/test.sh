@@ -52,7 +52,7 @@ if [[ ! -z $1 && $1 -eq 1 ]]; then
 
 	echo
 	echo Testing function on AWS Lambda...
-	aws lambda invoke --invocation-type RequestResponse --cli-read-timeout 900 --function-name $function --payload "$json" /dev/stdout
+	aws lambda invoke --invocation-type RequestResponse --cli-binary-format raw-in-base64-out --cli-read-timeout 900 --function-name $function --payload "$json" /dev/stdout
 
 fi
 

@@ -37,7 +37,7 @@ web_template
 2. `inspectContainer()` uses `crypto.randomUUID()`, so the package has no dependencies.
 3. `recommendConfiguration` is removed. Web Functions run with a fixed 2048 MB, so there is no memory setting to recommend, and `availableCPUs`, `utilizedCPUs`, and `recommendedMemory` are not reported.
 
-Every other method and field matches the Node.js Inspector, including `cpuInfo`, `cpuUser`, `cpuKernel`, and `cpuSteal` in milliseconds, `bootTime`, `pollCPUStats()`, `processCPUPolls()`, and `inspectEnvironment()`.
+Every other method and field matches the Node.js Inspector, including `inspectCPUInfo()`, which reports only the first vCPU without its flags, `inspectCPUInfoVerbose()`, `cpuUser`, `cpuKernel`, and `cpuSteal` in milliseconds, `bootTime`, `pollCPUStats()`, `processCPUPolls()`, and `inspectEnvironment()`.
 
 ```javascript
 module.exports = function (request, context) {

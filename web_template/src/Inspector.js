@@ -117,9 +117,29 @@ class Inspector {
      * cpuModel:        The model number of the CPU.
      * architecture:    The architecture of the CPU (x86 or arm64).
      * cpuCores:        The number of vCPUs allocated to the function.
-     * cpuInfo:         Detailed information about all aspects of the CPU.
+     * cpuInfo:         A list containing the details of only the first vCPU, without the
+     *                  flags, vmx_flags, bugs, and Features lists.
+     *
+     * Note: Use inspectCPUInfoVerbose to collect the details of every vCPU.
      */
     inspectCPUInfo() {
+        this.#inspectCPUInfo(false);
+    }
+
+    /**
+     * Collect the same information as inspectCPUInfo, except cpuInfo contains
+     * every detail of every vCPU, including the flags, vmx_flags, bugs, and Features lists.
+     */
+    inspectCPUInfoVerbose() {
+        this.#inspectCPUInfo(true);
+    }
+
+    /**
+     * Parse /proc/cpuinfo and add the CPU info attributes.
+     *
+     * @param verbose Whether to include the details of every vCPU in cpuInfo.
+     */
+    #inspectCPUInfo(verbose) {
         let cpuInfo = fs.readFileSync('/proc/cpuinfo', 'utf8');
         let lines = cpuInfo.split('\n');
 
@@ -136,6 +156,10 @@ class Inspector {
                 } else if (key == 'power_management' || key == 'CPU_revision') {
                     coreList.push(coreInfo);
                     coreInfo = {};
+                    continue;
+                }
+
+                if (!verbose && ["flags", "vmx_flags", "bugs", "Features"].includes(key)) {
                     continue;
                 }
 
@@ -162,7 +186,7 @@ class Inspector {
             this.#attributes['architecture'] = "arm64";
         }
         this.#attributes['cpuCores'] = cpuCount;
-        this.#attributes['cpuInfo'] = coreList;
+        this.#attributes['cpuInfo'] = verbose ? coreList : coreList.slice(0, 1);
     }
 
     /**

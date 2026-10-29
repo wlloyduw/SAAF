@@ -65,17 +65,22 @@ if [[ ! -z $1 && $1 -eq 1 ]]; then
 	cp -R ../deploy/node_modules/* ./build/node_modules
 
 	# Zip and submit to AWS Lambda.
+	# Lambda rejects a change while another update is still in progress, so wait for each one to finish.
 	cd ./build
 	zip -X -r ./index.zip *
 	aws lambda create-function --function-name $function --runtime $lambdaRuntime --role $lambdaRole --timeout 900 --handler $lambdaHandler --zip-file fileb://index.zip
+	aws lambda wait function-active-v2 --function-name $function
 	aws lambda update-function-code --function-name $function --zip-file fileb://index.zip
+	aws lambda wait function-updated-v2 --function-name $function
 	aws lambda update-function-configuration --function-name $function --memory-size $memory --runtime $lambdaRuntime \
 		--vpc-config SubnetIds=[$lambdaSubnets],SecurityGroupIds=[$lambdaSecurityGroups] --environment "$lambdaEnvironment"
+	aws lambda wait function-updated-v2 --function-name $function
 	cd ..
 
+	# AWS CLI v2 reads --payload as base64 unless told it is raw JSON.
 	echo
 	echo Testing function on AWS Lambda...
-	aws lambda invoke --invocation-type RequestResponse --cli-read-timeout 900 --function-name $function --payload "$json" /dev/stdout
+	aws lambda invoke --invocation-type RequestResponse --cli-binary-format raw-in-base64-out --cli-read-timeout 900 --function-name $function --payload "$json" /dev/stdout
 
 fi
 
