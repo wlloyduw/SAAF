@@ -1,0 +1,7 @@
+# FaaS Runner results, and MicroVM endpoints and auth tokens from microvm.sh.
+history/
+.microvm/
+# The endpoints need no authentication, so they stay out of the repository. endpoints.sh writes them
+# from AWS, and generate.py writes the function files from them.
+endpoints.json
+functions/

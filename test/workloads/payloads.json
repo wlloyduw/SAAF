@@ -1,0 +1,92 @@
+{
+    "binary_trees": {
+        "payload": {"depth": 16, "trees": 12000, "threads": 0},
+        "predictedSeconds": {"web": 11, "event-2048": 29, "event-3072": 20, "microvm": [8, 22]},
+        "measured": {"event-2048": 26.5}
+    },
+    "calc_service": {
+        "payload": {"calcs": 100000, "loops": 11000, "seed": 42, "threads": 0},
+        "predictedSeconds": {"web": 6, "event-2048": 28, "event-3072": 19, "microvm": [6, 19]},
+        "measured": {"event-2048": 51.8}
+    },
+    "csv_processor": {
+        "payload": {"size": 100000, "calcs": 14, "loops": 110, "seed": 42, "threads": 0},
+        "predictedSeconds": {"web": 11, "event-2048": 27, "event-3072": 19, "microvm": [7, 24]},
+        "measured": {"event-2048": 19.7}
+    },
+    "disk_write_and_process": {
+        "payload": {"size": 112, "loops": 19, "mode": "subprocess", "dir": "/tmp", "threads": 1},
+        "predictedSeconds": {"web": 16, "event-2048": 29, "event-3072": 30, "microvm": [23, 23]},
+        "measured": {"event-2048": 27.2}
+    },
+    "disk_writer": {
+        "payload": {"size": 80, "loops": 430, "sync": false, "dir": "/tmp", "threads": 1},
+        "predictedSeconds": {"web": 7, "event-2048": 28, "event-3072": 22, "microvm": [19, 19]},
+        "measured": {"event-2048": 27.9}
+    },
+    "dna_visualization": {
+        "payload": {"length": 1000000, "loops": 1900, "seed": 42, "threads": 0},
+        "predictedSeconds": {"web": 12, "event-2048": 28, "event-3072": 19, "microvm": [9, 28]},
+        "measured": {"event-2048": 27.8}
+    },
+    "graph_bfs": {
+        "payload": {"size": 100000, "graph": "tree", "loops": 49000, "seed": 42, "threads": 0},
+        "predictedSeconds": {"web": 13, "event-2048": 28, "event-3072": 19, "microvm": [10, 29]},
+        "measured": {"event-2048": 17.0}
+    },
+    "graph_mst": {
+        "payload": {"size": 100000, "graph": "tree", "loops": 1000, "seed": 42, "threads": 0},
+        "predictedSeconds": {"web": 12, "event-2048": 28, "event-3072": 18, "microvm": [11, 38]},
+        "measured": {"event-2048": 24.8}
+    },
+    "graph_pagerank": {
+        "payload": {"size": 100000, "graph": "tree", "iterations": 100, "loops": 200, "seed": 42, "threads": 0},
+        "predictedSeconds": {"web": 9, "event-2048": 29, "event-3072": 19, "microvm": [6, 19]},
+        "measured": {"event-2048": 40.2}
+    },
+    "http_getter": {
+        "payload": {"url": "https://checkip.amazonaws.com/", "loops": 100, "keepAlive": false, "timeout": 10, "threads": 1},
+        "predictedSeconds": {"web": 1, "event-2048": 1, "event-3072": 1, "microvm": [1, 1]},
+        "measured": {"event-2048": 0.7}
+    },
+    "json_flattener": {
+        "payload": {"depth": 10, "breadth": 3, "loops": 72, "seed": 42, "threads": 0},
+        "predictedSeconds": {"web": 13, "event-2048": 28, "event-3072": 19, "microvm": [12, 29]},
+        "measured": {"event-2048": 19.1}
+    },
+    "log_parser": {
+        "payload": {"lines": 100000, "loops": 140, "seed": 42, "threads": 0},
+        "predictedSeconds": {"web": 8, "event-2048": 27, "event-3072": 18, "microvm": [7, 18]},
+        "measured": {"event-2048": 31.3}
+    },
+    "logistic_regression": {
+        "payload": {"samples": 16000, "features": 16, "epochs": 28000, "shards": 16, "learningRate": 0.01, "seed": 42, "threads": 0},
+        "predictedSeconds": {"web": 15, "event-2048": 28, "event-3072": 18, "microvm": [9, 35]},
+        "measured": {"event-2048": 21.1}
+    },
+    "matrix_calc_service": {
+        "payload": {"size": 300, "loops": 230, "seed": 42, "threads": 0},
+        "predictedSeconds": {"web": 9, "event-2048": 28, "event-3072": 19, "microvm": [7, 21]},
+        "measured": {"event-2048": 31.0}
+    },
+    "prime_sieve": {
+        "payload": {"limit": 8400000000, "segmentSize": 262144, "threads": 0},
+        "predictedSeconds": {"web": 11, "event-2048": 28, "event-3072": 18, "microvm": [8, 24]},
+        "measured": {"event-2048": 24.5}
+    },
+    "sleeper": {
+        "payload": {"time": 10},
+        "predictedSeconds": {"web": 10, "event-2048": 10, "event-3072": 10, "microvm": [10, 10]},
+        "measured": {"event-2048": 10.0}
+    },
+    "thumbnailer": {
+        "payload": {"width": 1920, "height": 1080, "loops": 360, "filter": "bilinear", "threads": 0},
+        "predictedSeconds": {"web": 7, "event-2048": 28, "event-3072": 19, "microvm": [5, 17]},
+        "measured": {"event-2048": 28.5}
+    },
+    "zipper": {
+        "payload": {"files": 3, "size": 4, "loops": 44, "level": 6, "data": "text", "disk": false, "dir": "/tmp", "seed": 42, "threads": 0},
+        "predictedSeconds": {"web": 16, "event-2048": 28, "event-3072": 19, "microvm": [13, 35]},
+        "measured": {"event-2048": 27.8}
+    }
+}

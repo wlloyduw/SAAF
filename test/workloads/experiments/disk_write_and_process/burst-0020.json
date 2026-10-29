@@ -1,0 +1,58 @@
+{
+    "payloads": [
+        {
+            "size": 112,
+            "loops": 19,
+            "mode": "subprocess",
+            "dir": "/tmp",
+            "threads": 1
+        }
+    ],
+    "runs": 20,
+    "threads": 20,
+    "iterations": 10,
+    "callWithCLI": false,
+    "callAsync": false,
+    "memorySettings": [],
+    "parentPayload": {},
+    "payloadFolder": "",
+    "shufflePayloads": false,
+    "sleepTime": 10,
+    "timeout": 60,
+    "randomSeed": 42,
+    "outputGroups": [
+        "newcontainer",
+        "uuid",
+        "zAll"
+    ],
+    "outputRawOfGroup": [],
+    "showAsList": [],
+    "showAsSum": [
+        "newcontainer"
+    ],
+    "ignoreFromAll": [
+        "zAll",
+        "lang",
+        "version"
+    ],
+    "ignoreFromGroups": [
+        "1_run_id",
+        "2_thread_id",
+        "startTime",
+        "endTime",
+        "bootTime"
+    ],
+    "ignoreByGroup": {
+        "newcontainer": [
+            "newcontainer"
+        ]
+    },
+    "invalidators": {},
+    "removeDuplicateContainers": false,
+    "overlapFilter": "functionName",
+    "openCSV": false,
+    "warmupBuffer": 0,
+    "passPayloads": false,
+    "transitions": {},
+    "combineSheets": true
+}

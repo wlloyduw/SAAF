@@ -1,0 +1,58 @@
+{
+    "payloads": [
+        {
+            "width": 1920,
+            "height": 1080,
+            "loops": 360,
+            "filter": "bilinear",
+            "threads": 0
+        }
+    ],
+    "runs": 10,
+    "threads": 10,
+    "iterations": 10,
+    "callWithCLI": false,
+    "callAsync": false,
+    "memorySettings": [],
+    "parentPayload": {},
+    "payloadFolder": "",
+    "shufflePayloads": false,
+    "sleepTime": 10,
+    "timeout": 60,
+    "randomSeed": 42,
+    "outputGroups": [
+        "newcontainer",
+        "uuid",
+        "zAll"
+    ],
+    "outputRawOfGroup": [],
+    "showAsList": [],
+    "showAsSum": [
+        "newcontainer"
+    ],
+    "ignoreFromAll": [
+        "zAll",
+        "lang",
+        "version"
+    ],
+    "ignoreFromGroups": [
+        "1_run_id",
+        "2_thread_id",
+        "startTime",
+        "endTime",
+        "bootTime"
+    ],
+    "ignoreByGroup": {
+        "newcontainer": [
+            "newcontainer"
+        ]
+    },
+    "invalidators": {},
+    "removeDuplicateContainers": false,
+    "overlapFilter": "functionName",
+    "openCSV": false,
+    "warmupBuffer": 0,
+    "passPayloads": false,
+    "transitions": {},
+    "combineSheets": true
+}
