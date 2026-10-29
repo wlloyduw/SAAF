@@ -20,6 +20,10 @@ if [[ -z $bucket || -z $build_role ]]; then
 	exit 1
 fi
 
+# MicroVM commands identify an image by its ARN, not its name.
+account=$(aws sts get-caller-identity --query Account --output text) || exit 1
+image="arn:aws:lambda:$AWS_REGION:$account:microvm-image:$function"
+
 echo "Publish: Uploading code artifact..."
 artifact="s3://$bucket/$function.zip"
 aws s3 cp ./.build/app.zip "$artifact" || exit 1
@@ -43,33 +47,36 @@ args=(--code-artifact "uri=$artifact"
 	--environment-variables "$env")
 
 echo "Publish: Building image..."
-if aws lambda-microvms get-microvm-image --image-identifier "$function" > /dev/null 2>&1; then
-	aws lambda-microvms update-microvm-image --image-identifier "$function" "${args[@]}" > /dev/null || exit 1
+if aws lambda-microvms get-microvm-image --image-identifier "$image" > /dev/null 2>&1; then
+	version=$(aws lambda-microvms update-microvm-image --image-identifier "$image" "${args[@]}" \
+		--query imageVersion --output text) || exit 1
 else
-	aws lambda-microvms create-microvm-image --name "$function" "${args[@]}" > /dev/null || exit 1
+	version=$(aws lambda-microvms create-microvm-image --name "$function" "${args[@]}" \
+		--query imageVersion --output text) || exit 1
 fi
 
-echo "Publish: Waiting for Lambda to build and snapshot the image..."
+# Each create or update builds a new image version. The image stays usable while it builds,
+# so wait on this version rather than the image.
+echo "Publish: Waiting for Lambda to build and snapshot version $version..."
 while true; do
-	image=$(aws lambda-microvms get-microvm-image --image-identifier "$function") || exit 1
-	state=$(jq -r '.state' <<< "$image")
+	build=$(aws lambda-microvms get-microvm-image-version --image-identifier "$image" --image-version "$version") || exit 1
+	state=$(jq -r '.state' <<< "$build")
 	case $state in
-		CREATED | UPDATED)
+		SUCCESSFUL)
 			break
 			;;
-		CREATE_FAILED | UPDATE_FAILED)
-			echo "Publish: Build failed. $(jq -r '.stateReason // empty' <<< "$image")"
+		FAILED)
+			echo "Publish: Build failed. $(jq -r '.stateReason // empty' <<< "$build")"
 			echo "Publish: Build logs are in CloudWatch under /aws/lambda-microvms/$function"
 			exit 1
 			;;
 	esac
-	echo "Publish: Image is $state..."
+	echo "Publish: Version $version is $state..."
 	sleep 10
 done
-version=$(jq -r '.latestActiveImageVersion' <<< "$image")
 
 echo "Publish: Terminating MicroVMs running older image versions..."
-for microvm in $(aws lambda-microvms list-microvms --image-identifier "$function" --output text \
+for microvm in $(aws lambda-microvms list-microvms --image-identifier "$image" --output text \
 	--query "items[?imageVersion!='$version' && state!='TERMINATING' && state!='TERMINATED'].microvmId"); do
 	aws lambda-microvms terminate-microvm --microvm-identifier "$microvm" > /dev/null
 done

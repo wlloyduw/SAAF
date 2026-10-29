@@ -7,10 +7,14 @@
 # fields from the JSON body and query string are copied onto the request, and the
 # SAAF attributes it returns are sent back as JSON.
 #
-# Requests are handled one at a time, so CPU and memory deltas belong to one request.
+# Each connection is served on its own thread, so an idle keep-alive connection, such
+# as one left open when the snapshot was taken, cannot block the /run hook or later
+# requests. A lock still runs the function one request at a time, so CPU and memory
+# deltas belong to one request.
 #
 import json
-from http.server import BaseHTTPRequestHandler, HTTPServer
+import threading
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlsplit, parse_qsl
 
 import handler
@@ -18,6 +22,7 @@ import handler
 PORT = 8080
 HOOKS = "/aws/lambda-microvms/runtime/v1/"
 RESERVED = {"method", "path", "query", "headers", "body"}
+FUNCTION_LOCK = threading.Lock()
 
 
 def apply_fields(target, source):
@@ -89,7 +94,9 @@ class Server(BaseHTTPRequestHandler):
         apply_fields(request, query)
 
         try:
-            self.send_json(200, handler.yourFunction(request, {}))
+            with FUNCTION_LOCK:
+                response = handler.yourFunction(request, {})
+            self.send_json(200, response)
         except Exception as e:
             self.send_json(500, {"error": str(e)})
 
@@ -100,6 +107,6 @@ class Server(BaseHTTPRequestHandler):
 
 
 if __name__ == "__main__":
-    server = HTTPServer(("0.0.0.0", PORT), Server)
+    server = ThreadingHTTPServer(("0.0.0.0", PORT), Server)
     print("SAAF MicroVM server listening on port " + str(PORT), flush=True)
     server.serve_forever()

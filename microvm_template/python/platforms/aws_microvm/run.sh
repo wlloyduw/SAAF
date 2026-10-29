@@ -14,12 +14,16 @@ reuse=$(jq -r '.reuse_microvm' < ./config.json)
 export AWS_REGION=$(jq -r '.region' < ./config.json)
 json=${1:-$(jq -c '.test' < ./config.json)}
 
-image=$(aws lambda-microvms get-microvm-image --image-identifier "$function") || exit 1
-version=$(jq -r '.latestActiveImageVersion' <<< "$image")
+# MicroVM commands identify an image by its ARN, not its name.
+account=$(aws sts get-caller-identity --query Account --output text) || exit 1
+image="arn:aws:lambda:$AWS_REGION:$account:microvm-image:$function"
+
+version=$(aws lambda-microvms get-microvm-image --image-identifier "$image" \
+	--query latestActiveImageVersion --output text) || exit 1
 
 microvm=""
 if [[ $reuse == true ]]; then
-	microvm=$(aws lambda-microvms list-microvms --image-identifier "$function" --image-version "$version" --output text \
+	microvm=$(aws lambda-microvms list-microvms --image-identifier "$image" --image-version "$version" --output text \
 		--query "items[?state=='RUNNING' || state=='SUSPENDED'].microvmId | [0]")
 	if [[ $microvm == None ]]; then
 		microvm=""
@@ -27,7 +31,7 @@ if [[ $reuse == true ]]; then
 fi
 
 if [[ -z $microvm ]]; then
-	args=(--image-identifier "$(jq -r '.imageArn' <<< "$image")" --image-version "$version"
+	args=(--image-identifier "$image" --image-version "$version"
 		--ingress-network-connectors "arn:aws:lambda:$AWS_REGION:aws:network-connector:aws-network-connector:ALL_INGRESS"
 		--egress-network-connectors "arn:aws:lambda:$AWS_REGION:aws:network-connector:aws-network-connector:INTERNET_EGRESS"
 		--idle-policy "$(jq -c '.idle_policy' < ./config.json)"
